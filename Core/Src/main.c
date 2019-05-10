@@ -374,6 +374,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	 uint8_t activecmd[4] = {0, 0, 0, 0};
+	 uint32_t Timeout = 500;
+
+
   /* USER CODE END 1 */
 
   /* Enable I-Cache---------------------------------------------------------*/
@@ -442,12 +446,19 @@ int main(void)
   setSyncWords(SX, SX->SX_settings->syncWords[0], 0x00, 0x00);
   setRX(SX, SX->SX_settings->periodBase, 8000);
 
+  // Screen stuff
+  HAL_StatusTypeDef status_active = HAL_QSPI_Transmit(&hqspi, activecmd, Timeout);
+  Putty_printf("Status active: %d \r\n", status_active);
+  int i = 0; // for led toggle
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
 	  /*
 	   * Check for empty battery
 	   */
@@ -492,6 +503,7 @@ int main(void)
 		  //printBaseStationData();
 //		  printReceivedData(&receivedData);
 //		  printRobotStateData(&stateInfo);
+
 	  }
     /* USER CODE END WHILE */
 
