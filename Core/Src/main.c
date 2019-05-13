@@ -145,6 +145,7 @@ static void MX_TIM11_Init(void);
 static void MX_TIM12_Init(void);
 static void MX_TIM13_Init(void);
 static void MX_TIM14_Init(void);
+static void MX_GFXSIMULATOR_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -303,6 +304,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
+void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi) {
+
+}
+
 void printReceivedData(ReceivedData* receivedData) {
 	Putty_printf("\n\r");
 	Putty_printf("-----Received robot data-------\n\r");
@@ -364,6 +369,34 @@ void printBaseStation() {
 	Putty_printf("\n\r");
 }
 
+// SCREEN
+typedef enum {
+    SCREEN_ACTIVE =  0x00,
+    SCREEN_STANDBY = 0x41,//default
+    SCREEN_SLEEP =   0x42,
+    SCREEN_POWERDOWN = 0x50,
+}SCREEN_POWER_MODE;
+
+uint8_t activecmd[4] = {SCREEN_ACTIVE, 0, 0, 0};
+uint32_t Timeout = 10;
+
+QSPI_CommandTypeDef READ_ACTIVE = {
+		.InstructionMode 	= QSPI_INSTRUCTION_NONE,
+		.Instruction 		= 0,
+		.AddressMode 		= QSPI_ADDRESS_1_LINE,
+		.AddressSize 		= QSPI_ADDRESS_32_BITS,
+		.Address 			= 0x3020D0,
+		.AlternateByteMode 	= QSPI_ALTERNATE_BYTES_NONE,
+		.AlternateBytes 	= 0,
+		.AlternateBytesSize = 0,
+		.DataMode 			= QSPI_DATA_1_LINE, // QSPI_DATA_4_LINES
+		.DummyCycles 		= 0,
+		.NbData 			= 2,
+		.DdrMode 			= QSPI_DDR_MODE_DISABLE,
+		.DdrHoldHalfCycle 	= QSPI_DDR_HHC_ANALOG_DELAY,
+		.SIOOMode 			= QSPI_SIOO_INST_EVERY_CMD
+};
+
 /* USER CODE END 0 */
 
 /**
@@ -373,10 +406,6 @@ void printBaseStation() {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
-	 uint8_t activecmd[4] = {0, 0, 0, 0};
-	 uint32_t Timeout = 500;
-
 
   /* USER CODE END 1 */
 
@@ -424,6 +453,7 @@ int main(void)
   MX_TIM12_Init();
   MX_TIM13_Init();
   MX_TIM14_Init();
+  MX_GFXSIMULATOR_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -446,10 +476,91 @@ int main(void)
   setSyncWords(SX, SX->SX_settings->syncWords[0], 0x00, 0x00);
   setRX(SX, SX->SX_settings->periodBase, 8000);
 
-  // Screen stuff
-  HAL_StatusTypeDef status_active = HAL_QSPI_Transmit(&hqspi, activecmd, Timeout);
-  Putty_printf("Status active: %d \r\n", status_active);
-  int i = 0; // for led toggle
+  // Screen stuff!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+//  Putty_printf("State qspi: %d \r\n", hqspi.State);
+//  HAL_QSPI_SetTimeout(&hqspi, Timeout);
+////  HAL_StatusTypeDef status_hz = HAL_QSPI_Command(&hqspi, &PWM_HZ_BACKLIGHT, hqspi.Timeout);
+////  Putty_printf("Status command: %d \r\n", status_hz);
+//  HAL_StatusTypeDef status_active = HAL_QSPI_Transmit(&hqspi, &activecmd[0], hqspi.Timeout);
+//  Putty_printf("Status transmit: %d \r\n", status_active);
+//  Putty_printf("State qspi: %d \r\n", hqspi.State);
+
+  /* Configure the command */
+  uint8_t pData[4];
+  for (int k = 0; k < 1; k++) {
+  	  Putty_printf("HAL_QSPI_Command \n\r");
+      if (HAL_QSPI_Command(&hqspi, &READ_ACTIVE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    	  Putty_printf("HAL_ERROR\n");
+          return HAL_ERROR;
+      }
+
+      /* Reception of the data */
+      Putty_printf("HAL_QSPI_Receive \n\r");
+      if (HAL_QSPI_Receive(&hqspi, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+          Putty_printf("HAL_ERROR\n"); // Timeout after 5000mS
+          return HAL_ERROR;
+      }
+
+      for (int i = 0; i < 4; i++){
+    	  Putty_printf("yes baby %d \n\r", pData[i]);
+      }
+  }
+
+  uint8_t pData2[4] = {250, 0, 0, 0};
+
+
+  QSPI_CommandTypeDef s_command;
+
+      /* Initialize the read command */
+      s_command.InstructionMode    = QSPI_INSTRUCTION_NONE;
+      s_command.Instruction        = 0;
+      s_command.AddressMode        = QSPI_ADDRESS_NONE;
+      s_command.AddressSize        = QSPI_ADDRESS_24_BITS;
+      s_command.Address            = 0;
+      s_command.AlternateByteMode  = QSPI_ALTERNATE_BYTES_1_LINE;
+      s_command.AlternateBytes     = 0x3020D0;
+      s_command.AlternateBytesSize = QSPI_ALTERNATE_BYTES_24_BITS;
+      s_command.DataMode           = QSPI_DATA_1_LINE;
+      s_command.DummyCycles        = 0;
+      s_command.NbData             = 4;
+      s_command.DdrMode            = QSPI_DDR_MODE_DISABLE;
+      s_command.DdrHoldHalfCycle   = QSPI_DDR_HHC_ANALOG_DELAY;
+      s_command.SIOOMode           = QSPI_SIOO_INST_EVERY_CMD;
+
+      /* Configure the command */
+      Putty_printf("HAL_QSPI_Command\n\r");
+          if (HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        	  Putty_printf("HAL_ERROR\n\r");
+              return HAL_ERROR;
+          }
+
+          /* Reception of the data */
+          Putty_printf("HAL_QSPI_Transmit \n\r");
+          if (HAL_QSPI_Transmit(&hqspi, pData2, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        	  Putty_printf("HAL_ERROR\n");
+              return HAL_ERROR;
+          }
+
+          for (int k = 0; k < 1; k++) {
+          	  Putty_printf("HAL_QSPI_Command \n\r");
+              if (HAL_QSPI_Command(&hqspi, &READ_ACTIVE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+            	  Putty_printf("HAL_ERROR\n");
+                  return HAL_ERROR;
+              }
+
+              /* Reception of the data */
+              Putty_printf("HAL_QSPI_Receive \n\r");
+              if (HAL_QSPI_Receive(&hqspi, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+                  Putty_printf("HAL_ERROR\n"); // Timeout after 5000mS
+                  return HAL_ERROR;
+              }
+
+              for (int i = 0; i < 4; i++){
+            	  Putty_printf("yes baby %d \n\r", pData[i]);
+              }
+          }
+
+
 
   /* USER CODE END 2 */
 
@@ -572,6 +683,27 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief GFXSIMULATOR Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GFXSIMULATOR_Init(void)
+{
+
+  /* USER CODE BEGIN GFXSIMULATOR_Init 0 */
+
+  /* USER CODE END GFXSIMULATOR_Init 0 */
+
+  /* USER CODE BEGIN GFXSIMULATOR_Init 1 */
+
+  /* USER CODE END GFXSIMULATOR_Init 1 */
+  /* USER CODE BEGIN GFXSIMULATOR_Init 2 */
+
+  /* USER CODE END GFXSIMULATOR_Init 2 */
+
+}
+
+/**
   * @brief I2C1 Initialization Function
   * @param None
   * @retval None
@@ -634,10 +766,10 @@ static void MX_QUADSPI_Init(void)
   /* USER CODE END QUADSPI_Init 1 */
   /* QUADSPI parameter configuration*/
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 255;
+  hqspi.Init.ClockPrescaler = 254;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = 1;
+  hqspi.Init.FlashSize = 31;
   hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
   hqspi.Init.FlashID = QSPI_FLASH_ID_2;
@@ -1498,8 +1630,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LB_FR_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LB_Locked_Pin ID0_Pin ID1_Pin Battery_empty_Pin */
-  GPIO_InitStruct.Pin = LB_Locked_Pin|ID0_Pin|ID1_Pin|Battery_empty_Pin;
+  /*Configure GPIO pins : LB_Locked_Pin ID0_Pin ID1_Pin */
+  GPIO_InitStruct.Pin = LB_Locked_Pin|ID0_Pin|ID1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -1550,6 +1682,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(RB_Locked_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Battery_empty_Pin */
+  GPIO_InitStruct.Pin = Battery_empty_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(Battery_empty_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Geneva_cal_sensor_Pin */
   GPIO_InitStruct.Pin = Geneva_cal_sensor_Pin;
