@@ -380,18 +380,18 @@ typedef enum {
 uint8_t activecmd[4] = {SCREEN_ACTIVE, 0, 0, 0};
 uint32_t Timeout = 10;
 
-QSPI_CommandTypeDef READ_ACTIVE = {
+QSPI_CommandTypeDef SCREEN_COMMAND = {
 		.InstructionMode 	= QSPI_INSTRUCTION_NONE,
 		.Instruction 		= 0,
 		.AddressMode 		= QSPI_ADDRESS_1_LINE,
-		.AddressSize 		= QSPI_ADDRESS_32_BITS,
-		.Address 			= 0x3020D0,
+		.AddressSize 		= QSPI_ADDRESS_24_BITS,
+		.Address 			= 0x0,
 		.AlternateByteMode 	= QSPI_ALTERNATE_BYTES_NONE,
 		.AlternateBytes 	= 0,
 		.AlternateBytesSize = 0,
 		.DataMode 			= QSPI_DATA_1_LINE, // QSPI_DATA_4_LINES
 		.DummyCycles 		= 0,
-		.NbData 			= 2,
+		.NbData 			= 0x3,
 		.DdrMode 			= QSPI_DDR_MODE_DISABLE,
 		.DdrHoldHalfCycle 	= QSPI_DDR_HHC_ANALOG_DELAY,
 		.SIOOMode 			= QSPI_SIOO_INST_EVERY_CMD
@@ -456,7 +456,6 @@ int main(void)
   MX_GFXSIMULATOR_Init();
   /* USER CODE BEGIN 2 */
 
-
   Putty_Init();
   wheels_Init();
   stateControl_Init();
@@ -477,88 +476,135 @@ int main(void)
   setRX(SX, SX->SX_settings->periodBase, 8000);
 
   // Screen stuff!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
-//  Putty_printf("State qspi: %d \r\n", hqspi.State);
-//  HAL_QSPI_SetTimeout(&hqspi, Timeout);
-////  HAL_StatusTypeDef status_hz = HAL_QSPI_Command(&hqspi, &PWM_HZ_BACKLIGHT, hqspi.Timeout);
-////  Putty_printf("Status command: %d \r\n", status_hz);
-//  HAL_StatusTypeDef status_active = HAL_QSPI_Transmit(&hqspi, &activecmd[0], hqspi.Timeout);
-//  Putty_printf("Status transmit: %d \r\n", status_active);
-//  Putty_printf("State qspi: %d \r\n", hqspi.State);
+  // Send power down command
+  SCREEN_COMMAND.AddressMode = QSPI_ADDRESS_NONE;
+  uint8_t pwrdown[3] = {0x50, 0x0, 0x0};
 
-  /* Configure the command */
-  uint8_t pData[4];
-  for (int k = 0; k < 1; k++) {
-  	  Putty_printf("HAL_QSPI_Command \n\r");
-      if (HAL_QSPI_Command(&hqspi, &READ_ACTIVE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-    	  Putty_printf("HAL_ERROR\n");
-          return HAL_ERROR;
-      }
-
-      /* Reception of the data */
-      Putty_printf("HAL_QSPI_Receive \n\r");
-      if (HAL_QSPI_Receive(&hqspi, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-          Putty_printf("HAL_ERROR\n"); // Timeout after 5000mS
-          return HAL_ERROR;
-      }
-
-      for (int i = 0; i < 4; i++){
-    	  Putty_printf("yes baby %d \n\r", pData[i]);
-      }
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+  	  return HAL_ERROR;
   }
 
-  uint8_t pData2[4] = {250, 0, 0, 0};
+  if (HAL_QSPI_Transmit(&hqspi, pwrdown, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+   	  return HAL_ERROR;
+  }
+  HAL_Delay(100);
+
+  // Send active command
+  SCREEN_COMMAND.AddressMode = QSPI_ADDRESS_1_LINE;
+  uint8_t pData[3] = {0x0, 0x0, 0x0};
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+	  Putty_printf("cmdHAL_ERROR \n\r");
+	  return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Transmit(&hqspi, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+  	  return HAL_ERROR;
+  }
+  HAL_Delay(500);
+
+  // Read if active command got through
+  SCREEN_COMMAND.Address = 0x302000;
+  SCREEN_COMMAND.DummyCycles = 8;
+  SCREEN_COMMAND.NbData = 0x1;
+  uint8_t readActiveData = 0x0;
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+  	  return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Receive(&hqspi, &readActiveData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+	  Putty_printf("cmdHAL_ERROR \n\r");
+	  return HAL_ERROR;
+  }
+  Putty_printf("readActiveData: %X \n\r", readActiveData);
+
+  // Read backlight value
+  SCREEN_COMMAND.AddressMode = QSPI_ADDRESS_1_LINE;
+  SCREEN_COMMAND.Address = 0x3020D0;
+  SCREEN_COMMAND.NbData = 0x1;
+  SCREEN_COMMAND.DummyCycles = 8;
+  uint8_t readBacklightValue = 0x0;
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+  	  return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Receive(&hqspi, &readBacklightValue, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+	  Putty_printf("cmdHAL_ERROR \n\r");
+	  return HAL_ERROR;
+  }
+  Putty_printf("readBacklightValue: %X \n\r", readBacklightValue);
+
+  // Write to bit 7 of REG_GPIO
+  SCREEN_COMMAND.Address = 0x302094;
+  SCREEN_COMMAND.NbData = 0x1;
+  SCREEN_COMMAND.DummyCycles = 8;
+  uint8_t readDispPin = 0x0;
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+   	  Putty_printf("cmdHAL_ERROR \n\r");
+   	  return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Receive(&hqspi, &readDispPin, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+ 	  Putty_printf("cmdHAL_ERROR \n\r");
+ 	  return HAL_ERROR;
+  }
+  Putty_printf("readDispPin: %X \n\r", readDispPin);
+
+  SCREEN_COMMAND.Address = 0xB02094;
+  SCREEN_COMMAND.DummyCycles = 0;
+  uint8_t writeDispPin = 0x82;
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+	  Putty_printf("cmdHAL_ERROR \n\r");
+  	  return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Transmit(&hqspi, &writeDispPin, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+   	  return HAL_ERROR;
+  }
+
+  SCREEN_COMMAND.Address = 0x302094;
+  SCREEN_COMMAND.NbData = 0x1;
+  SCREEN_COMMAND.DummyCycles = 8;
+  readDispPin = 0x0;
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+   	  Putty_printf("cmdHAL_ERROR \n\r");
+   	  return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Receive(&hqspi, &readDispPin, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  	  Putty_printf("cmdHAL_ERROR \n\r");
+   	  return HAL_ERROR;
+  }
+  Putty_printf("readDispPin: %X \n\r", readDispPin);
+  HAL_Delay(1000);
+
+  // Set PWM Duty lower (changes brightness)
+  SCREEN_COMMAND.Address = 0xB020D4;
+  SCREEN_COMMAND.DummyCycles = 0;
+  uint8_t writePWMDuty = 0x20;
+
+  if (HAL_QSPI_Command(&hqspi, &SCREEN_COMMAND, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+	  Putty_printf("cmdHAL_ERROR \n\r");
+      return HAL_ERROR;
+  }
+
+  if (HAL_QSPI_Transmit(&hqspi, &writePWMDuty, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+   	  Putty_printf("cmdHAL_ERROR \n\r");
+   	  return HAL_ERROR;
+  }
 
 
-  QSPI_CommandTypeDef s_command;
-
-      /* Initialize the read command */
-      s_command.InstructionMode    = QSPI_INSTRUCTION_NONE;
-      s_command.Instruction        = 0;
-      s_command.AddressMode        = QSPI_ADDRESS_NONE;
-      s_command.AddressSize        = QSPI_ADDRESS_24_BITS;
-      s_command.Address            = 0;
-      s_command.AlternateByteMode  = QSPI_ALTERNATE_BYTES_1_LINE;
-      s_command.AlternateBytes     = 0x3020D0;
-      s_command.AlternateBytesSize = QSPI_ALTERNATE_BYTES_24_BITS;
-      s_command.DataMode           = QSPI_DATA_1_LINE;
-      s_command.DummyCycles        = 0;
-      s_command.NbData             = 4;
-      s_command.DdrMode            = QSPI_DDR_MODE_DISABLE;
-      s_command.DdrHoldHalfCycle   = QSPI_DDR_HHC_ANALOG_DELAY;
-      s_command.SIOOMode           = QSPI_SIOO_INST_EVERY_CMD;
-
-      /* Configure the command */
-      Putty_printf("HAL_QSPI_Command\n\r");
-          if (HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-        	  Putty_printf("HAL_ERROR\n\r");
-              return HAL_ERROR;
-          }
-
-          /* Reception of the data */
-          Putty_printf("HAL_QSPI_Transmit \n\r");
-          if (HAL_QSPI_Transmit(&hqspi, pData2, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-        	  Putty_printf("HAL_ERROR\n");
-              return HAL_ERROR;
-          }
-
-          for (int k = 0; k < 1; k++) {
-          	  Putty_printf("HAL_QSPI_Command \n\r");
-              if (HAL_QSPI_Command(&hqspi, &READ_ACTIVE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            	  Putty_printf("HAL_ERROR\n");
-                  return HAL_ERROR;
-              }
-
-              /* Reception of the data */
-              Putty_printf("HAL_QSPI_Receive \n\r");
-              if (HAL_QSPI_Receive(&hqspi, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-                  Putty_printf("HAL_ERROR\n"); // Timeout after 5000mS
-                  return HAL_ERROR;
-              }
-
-              for (int i = 0; i < 4; i++){
-            	  Putty_printf("yes baby %d \n\r", pData[i]);
-              }
-          }
 
 
 
