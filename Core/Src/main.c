@@ -456,7 +456,7 @@ int main(void)
   dribbler_Init();
   buzzer_Init();
   display_Init();
-  
+
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
   uint16_t ID = get_Id();
@@ -671,7 +671,7 @@ static void MX_QUADSPI_Init(void)
   /* USER CODE END QUADSPI_Init 1 */
   /* QUADSPI parameter configuration*/
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 254;
+  hqspi.Init.ClockPrescaler = 9;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = 31;

@@ -12,32 +12,40 @@ uint8_t displaySetPowerdown[3] = {0x50, 0x0, 0x0};
 uint8_t displaySetSleep[3] = {0x41, 0x0, 0x0};
 uint8_t displaySetStandby[3] = {0x41, 0x0, 0x0};
 uint8_t displaySetActive[3] = {0x0, 0x0, 0x0};
-uint8_t displayGetActive[1] = {0x0};
-uint8_t displayGetHCYCLE[2] = {0x0, 0x0};
-uint8_t displaySetHCYCLE[2] = {0x24, 0x2};
-uint8_t displaySetHOFFSET[2] = {0x2B, 0x0};
-uint8_t displatSetHSYNC0[2] = {0x0, 0x0};
-uint8_t displaySetHSYNC1[2] = {0x29, 0x0};
-uint8_t displaySetVCYCLE[2] = {0x24, 0x1};
-uint8_t displaySetV0FFSET[2] = {0xC, 0x0};
-uint8_t displaySetVSYNC0[2] = {0x0, 0x0};
-uint8_t displaySetVSYNC1[2] = {0xA, 0x0};
-uint8_t displaySetSWIZZLE[1] = {0x0};
-uint8_t displaySetPCLK_POL[1] = {0x1};
-uint8_t displaySetCSPREAD[1] = {0x1};
-uint8_t displaySetHSIZE[2] = {0xE0, 0x1};
-uint8_t displaySetVSIZE[2] = {0x10, 0x1};
-uint8_t displayGetCLEARRGB[4] = {0x0, 0x0, 0x0, 0x0};
-uint8_t displaySetCLEARRGB[4] = {0x2, 0x0, 0x0, 0x0};
-uint8_t displaySetCLEAR[4] = {0x26, 0x0, 0x0, 0x07};
-uint8_t displaySetDISPLAY[4] = {0x0, 0x0, 0x0, 0x0};
-uint8_t displaySetDLSWAP[1] = {0x02};
-uint8_t displaySetGPIO_DIR[1] = {0x80};
-uint8_t displaySetGPIO[1] = {0x80};
-uint8_t displaySetPCLK[1] = {0x5};
+uint8_t HCYCLE[2] = {0x24, 0x2};
+uint8_t HOFFSET[2] = {0x2B, 0x0};
+uint8_t HSYNC0[2] = {0x0, 0x0};
+uint8_t HSYNC1[2] = {0x29, 0x0};
+uint8_t VCYCLE[2] = {0x24, 0x1};
+uint8_t V0FFSET[2] = {0xC, 0x0};
+uint8_t VSYNC0[2] = {0x0, 0x0};
+uint8_t VSYNC1[2] = {0xA, 0x0};
+uint8_t SWIZZLE[1] = {0x0};
+uint8_t PCLK_POL[1] = {0x1};
+uint8_t CSPREAD[1] = {0x1};
+uint8_t HSIZE[2] = {0xE0, 0x1};
+uint8_t VSIZE[2] = {0x10, 0x1};
+
+uint8_t CLEARRGB[4] = {0x0, 0x0, 0xCC, 0x02};
+uint8_t CLEAR[4] = {0x7, 0x0, 0x0, 0x26};
+uint8_t DISPLAY[4] = {0x0, 0x0, 0x0, 0x0};
+uint8_t DLSWAP[1] = {0x02};
+uint8_t GPIO_DIR[1] = {0x80};
+uint8_t GPIO[1] = {0x80};
+uint8_t PCLK[1] = {0x5};
+
+// get data
+uint8_t getData1[1] = {0x0};
+uint8_t getData2[2] = {0x0, 0x0};
+uint8_t getData3[3] = {0x0, 0x0, 0x0};
+uint8_t getData4[4] = {0x0, 0x0, 0x0, 0x0};
 
 /* FUNCTIONS */
 HAL_StatusTypeDef writeDisplay(uint32_t address, uint32_t size, uint8_t* data){
+
+	if (address != 0x000000) {
+		address |= 0x800000;
+	}
 
 	// Create write command
 	QSPI_CommandTypeDef WRITE_COMMAND = {
@@ -123,34 +131,36 @@ HAL_StatusTypeDef display_Init(){
 	HAL_Delay(300); // needs up to 300ms to start up
 
 	/* Configure display registers */
-	writeDisplay(DISPLAY_SET_REG_HCYCLE, 0x2, displaySetHCYCLE);
-	writeDisplay(DISPLAY_SET_REG_HOFFSET, 0x2, displaySetHOFFSET);
-	writeDisplay(DISPLAY_SET_REG_HSYNC0, 0x2, displatSetHSYNC0);
-	writeDisplay(DISPLAY_SET_REG_HSYNC1, 0x2, displaySetHSYNC1);
-	writeDisplay(DISPLAY_SET_REG_VCYCLE, 0x2, displaySetVCYCLE);
-	writeDisplay(DISPLAY_SET_REG_VOFFSET, 0x2, displaySetV0FFSET);
-	writeDisplay(DISPLAY_SET_REG_VSYNC0, 0x2, displaySetVSYNC0);
-	writeDisplay(DISPLAY_SET_REG_VSYNC1, 0x2, displaySetVSYNC1);
-	writeDisplay(DISPLAY_SET_REG_SWIZZLE, 0x1, displaySetSWIZZLE);
-	writeDisplay(DISPLAY_SET_REG_PCLK_POL, 0x1, displaySetPCLK_POL);
-	writeDisplay(DISPLAY_SET_REG_CSPREAD, 0x1, displaySetCSPREAD);
-	writeDisplay(DISPLAY_SET_REG_HSIZE, 0x2, displaySetHSIZE);
-	writeDisplay(DISPLAY_SET_REG_VSIZE, 0x2, displaySetVSIZE);
+	writeDisplay(REG_HCYCLE, 0x2, HCYCLE);
+	writeDisplay(REG_HOFFSET, 0x2, HOFFSET);
+	writeDisplay(REG_HSYNC0, 0x2, HSYNC0);
+	writeDisplay(REG_HSYNC1, 0x2, HSYNC1);
+	writeDisplay(REG_VCYCLE, 0x2, VCYCLE);
+	writeDisplay(REG_VOFFSET, 0x2, V0FFSET);
+	writeDisplay(REG_VSYNC0, 0x2, VSYNC0);
+	writeDisplay(REG_VSYNC1, 0x2, VSYNC1);
+	writeDisplay(REG_SWIZZLE, 0x1, SWIZZLE);
+	writeDisplay(REG_PCLK_POL, 0x1, PCLK_POL); // 0 before, now 1
+	writeDisplay(REG_CSPREAD, 0x1, CSPREAD);
+	writeDisplay(REG_HSIZE, 0x2, HSIZE);
+	writeDisplay(REG_VSIZE, 0x2, VSIZE);
 
 	/* Write first display list */
-	writeDisplay(DISPLAY_SET_CLEAR_COLOR_RGB, 0x4, displaySetCLEARRGB); // TODO: make function
-	writeDisplay(DISPLAY_SET_CLEAR, 0x4, displaySetCLEAR); // TODO: make function
-	writeDisplay(DISPLAY_SET_DISPLAY, 0x4, displaySetDISPLAY); // TODO: make function
-	writeDisplay(DISPLAY_SET_REG_DLSWAP, 0x1, displaySetDLSWAP); // TODO: check if ok
-	writeDisplay(DISPLAY_SET_REG_GPIO_DIR, 0x1, displaySetGPIO_DIR);
-	writeDisplay(DISPLAY_SET_REG_GPIO, 0x1, displaySetGPIO); // turn display on
-//	writeDisplay(DISPLAY_SET_REG_PCLK, 0x1, displaySetPCLK);
+	writeDisplay(RAM_DL + 0x0, 0x4, CLEARRGB); // TODO: make function
+	writeDisplay(RAM_DL + 0x4, 0x4, CLEAR); // TODO: make function
+	writeDisplay(RAM_DL + 0x8, 0x4, DISPLAY);
+
+	/*  */
+	writeDisplay(REG_DLSWAP, 0x1, DLSWAP); // Display list swap
+	writeDisplay(REG_GPIO_DIR, 0x1, GPIO_DIR); //
+	writeDisplay(REG_GPIO, 0x1, GPIO); // Enable display bit
+	writeDisplay(REG_PCLK, 0x1, PCLK); // After this display is visible on the LCD
 
 	return HAL_OK;
 }
 
 uint8_t CLEAR_COLOR_RGB(uint8_t red, uint8_t green, uint8_t blue){
 
-	return displaySetCLEARRGB;
+	return *CLEARRGB;
 }
 
