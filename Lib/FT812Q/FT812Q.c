@@ -6,8 +6,10 @@
  */
 
 #include "FT812Q.h"
+#include "string.h"
 
 /* DATA */
+uint8_t data[4]; // used by functions
 uint8_t displaySetPowerdown[3] = {0x50, 0x0, 0x0};
 uint8_t displaySetSleep[3] = {0x41, 0x0, 0x0};
 uint8_t displaySetStandby[3] = {0x41, 0x0, 0x0};
@@ -25,14 +27,21 @@ uint8_t PCLK_POL[1] = {0x1};
 uint8_t CSPREAD[1] = {0x1};
 uint8_t HSIZE[2] = {0xE0, 0x1};
 uint8_t VSIZE[2] = {0x10, 0x1};
+uint8_t DITHER[1] = {0x1};
 
-uint8_t CLEARRGB[4] = {0x0, 0x0, 0xCC, 0x02};
-uint8_t CLEAR[4] = {0x7, 0x0, 0x0, 0x26};
 uint8_t DISPLAY[4] = {0x0, 0x0, 0x0, 0x0};
 uint8_t DLSWAP[1] = {0x02};
 uint8_t GPIO_DIR[1] = {0x80};
 uint8_t GPIO[1] = {0x80};
 uint8_t PCLK[1] = {0x5};
+uint8_t END[4] = {0x0, 0x0, 0x0, 0x21};
+
+/* BEGIN */
+uint8_t BITMAPS[4] = {0x1, 0x0, 0x0, 0x1F};
+uint8_t POINTS[4] = {0x2, 0x0, 0x0, 0x1F};
+uint8_t LINES[4] = {0x3, 0x0, 0x0, 0x1F};
+uint8_t LINE_STRIP[4] = {0x4, 0x0, 0x0, 0x1F};
+uint8_t RECTS[4] = {0x9, 0x0, 0x0, 0x1F};
 
 // get data
 uint8_t getData1[1] = {0x0};
@@ -43,6 +52,7 @@ uint8_t getData4[4] = {0x0, 0x0, 0x0, 0x0};
 /* FUNCTIONS */
 HAL_StatusTypeDef writeDisplay(uint32_t address, uint32_t size, uint8_t* data){
 
+	// For writing, the address must start with '01' and then the address
 	if (address != 0x000000) {
 		address |= 0x800000;
 	}
@@ -140,14 +150,15 @@ HAL_StatusTypeDef display_Init(){
 	writeDisplay(REG_VSYNC0, 0x2, VSYNC0);
 	writeDisplay(REG_VSYNC1, 0x2, VSYNC1);
 	writeDisplay(REG_SWIZZLE, 0x1, SWIZZLE);
-	writeDisplay(REG_PCLK_POL, 0x1, PCLK_POL); // 0 before, now 1
+	writeDisplay(REG_PCLK_POL, 0x1, PCLK_POL);
 	writeDisplay(REG_CSPREAD, 0x1, CSPREAD);
-	writeDisplay(REG_HSIZE, 0x2, HSIZE);
-	writeDisplay(REG_VSIZE, 0x2, VSIZE);
+	writeDisplay(REG_DITHER, 0x1, DITHER);
+	writeDisplay(REG_HSIZE, 0x2, HSIZE); // 480
+	writeDisplay(REG_VSIZE, 0x2, VSIZE); // 272
 
 	/* Write first display list */
-	writeDisplay(RAM_DL + 0x0, 0x4, CLEARRGB); // TODO: make function
-	writeDisplay(RAM_DL + 0x4, 0x4, CLEAR); // TODO: make function
+	writeDisplay(RAM_DL + 0x0, 0x4, CLEAR_COLOR_RGB(0, 100, 150));
+	writeDisplay(RAM_DL + 0x4, 0x4, CLEAR(1, 1, 1));
 	writeDisplay(RAM_DL + 0x8, 0x4, DISPLAY);
 
 	/*  */
@@ -159,8 +170,56 @@ HAL_StatusTypeDef display_Init(){
 	return HAL_OK;
 }
 
-uint8_t CLEAR_COLOR_RGB(uint8_t red, uint8_t green, uint8_t blue){
-
-	return *CLEARRGB;
+void drawDot() {
+	writeDisplay(RAM_DL + 0x0, 0x4, CLEAR_COLOR_RGB(0, 0, 0));
+	writeDisplay(RAM_DL + 0x4, 0x4, CLEAR(1, 1, 1));
+	writeDisplay(RAM_DL + 0x8, 0x4, COLOR_RGB(204, 0, 0));
+	writeDisplay(RAM_DL + 0xC, 0x4, POINT_SIZE(160));
+	writeDisplay(RAM_DL + 0x10, 0x4, POINTS);
+	writeDisplay(RAM_DL + 0x14, 0x4, drawPoint(255, 255));
+	writeDisplay(RAM_DL + 0x18, 0x4, END);
+	writeDisplay(RAM_DL + 0x1C, 0x4, DISPLAY);
+	writeDisplay(REG_DLSWAP, 0x1, DLSWAP); // Display list swap
 }
 
+uint8_t* CLEAR(uint8_t c, uint8_t s, uint8_t t){
+	// c = Clear color buffer
+	// s = Clear stencil buffer
+	// t = Clear tag buffer
+
+	data[0] = (c << 2) + (s << 1) + t;
+	data[1] = 0;
+	data[2] = 0;
+	data[3] = 0x26;
+	return data;
+}
+
+uint8_t* CLEAR_COLOR_RGB(uint8_t red, uint8_t green, uint8_t blue){
+	data[0] = blue;
+	data[1] = green;
+	data[2] = red;
+	data[3] = 0x02;
+	return data;
+}
+
+uint8_t* COLOR_RGB(uint8_t red, uint8_t green, uint8_t blue){
+	data[0] = blue;
+	data[1] = green;
+	data[2] = red;
+	data[3] = 0x04;
+	return data;
+}
+
+uint8_t* POINT_SIZE(uint16_t size){
+	data[0] = size & 0xFF;
+	data[1] = (size >> 8) & 0xFF;
+	data[2] = 0;
+	data[3] = 0x0D;
+	return data;
+}
+
+uint8_t* drawPoint(uint16_t x, uint16_t y){
+	uint32_t temp = (0x2 << 30) | ((x&0x1FF) << 21) | ((y&0x1FF) << 12);
+	memcpy(data,(uint8_t*)&temp,4);
+	return data;
+}

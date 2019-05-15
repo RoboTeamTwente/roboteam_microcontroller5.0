@@ -35,6 +35,7 @@
 #define	REG_VSIZE			0x302048
 #define REG_DLSWAP			0x302054
 #define REG_PCLK			0x302070
+#define REG_DITHER			0x302060
 
 /* MEMORY MAP*/
 #define RAM_DL				0x300000

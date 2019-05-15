@@ -457,6 +457,8 @@ int main(void)
   buzzer_Init();
   display_Init();
 
+  drawDot();
+
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
   uint16_t ID = get_Id();
