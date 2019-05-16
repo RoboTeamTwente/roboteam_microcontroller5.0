@@ -371,23 +371,6 @@ void printBaseStation() {
 	Putty_printf("\n\r");
 }
 
-//QSPI_CommandTypeDef SCREEN_COMMAND = {
-//		.InstructionMode 	= QSPI_INSTRUCTION_NONE,
-//		.Instruction 		= 0,
-//		.AddressMode 		= QSPI_ADDRESS_1_LINE,
-//		.AddressSize 		= QSPI_ADDRESS_24_BITS,
-//		.Address 			= 0x0,
-//		.AlternateByteMode 	= QSPI_ALTERNATE_BYTES_NONE,
-//		.AlternateBytes 	= 0,
-//		.AlternateBytesSize = 0,
-//		.DataMode 			= QSPI_DATA_1_LINE, // QSPI_DATA_4_LINES
-//		.DummyCycles 		= 0,
-//		.NbData 			= 0x3,
-//		.DdrMode 			= QSPI_DDR_MODE_DISABLE,
-//		.DdrHoldHalfCycle 	= QSPI_DDR_HHC_ANALOG_DELAY,
-//		.SIOOMode 			= QSPI_SIOO_INST_EVERY_CMD
-//};
-
 /* USER CODE END 0 */
 
 /**
@@ -462,10 +445,13 @@ int main(void)
 //  drawLine();
 //  drawExample();
 
+
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
   uint16_t ID = get_Id();
   Putty_printf("ID: %u\n\r",ID);
+
+  drawMainScreen(ID);
 
   // start the pingpong operation
   SX->SX_settings->syncWords[0] = robot_syncWord[ID];

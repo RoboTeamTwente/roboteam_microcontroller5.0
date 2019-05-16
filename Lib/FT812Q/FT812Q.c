@@ -94,7 +94,7 @@ void display_Init(){
 	writeDisplay	(REG_VSIZE, 	0x2, 	VSIZE); 	// 272
 
 	/* Write first display list */
-	writeDisplay	(RAM_DL + 0x0, 	0x4, 	CLEAR_COLOR_RGB(204, 0, 0)); // RoboTeam Red
+	writeDisplay	(RAM_DL + 0x0, 	0x4, 	CLEAR_COLOR_RGB(0, 0, 0)); // RoboTeam Red
 	writeDisplay	(RAM_DL + 0x4, 	0x4, 	CLEAR(1, 1, 1));
 	writeDisplay	(RAM_DL + 0x8, 	0x4, 	DISPLAY);
 
