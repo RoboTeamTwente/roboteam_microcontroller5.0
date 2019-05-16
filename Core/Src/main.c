@@ -460,7 +460,7 @@ int main(void)
 //  drawPoint();
 //  drawLetter();
 //  drawLine();
-  drawExample();
+//  drawExample();
 
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);

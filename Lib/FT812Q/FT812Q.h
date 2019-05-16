@@ -32,12 +32,5 @@ uint8_t* 	VERTEX_FORMAT		(uint8_t size);
 uint8_t* 	POINT_DATA			(uint16_t x, uint16_t y); // Construct data for a point at (x,y)
 uint8_t* 	LETTER_DATA			(uint16_t x, uint16_t y, uint8_t font, uint8_t letter); // Construct data for a letter at (x,y)
 
-void drawPoint(); // Draw a point
-void drawLetter(); // Draw a letter
-void drawLine();
-void drawExample();
-uint32_t* drawString(uint32_t* address, uint16_t x, uint16_t y, uint8_t spacing, char* string);
-
-//8FFFFFC1
 
 #endif /* FT812Q_FT812Q_H_ */

@@ -8,6 +8,8 @@
 #ifndef FT812Q_FT812Q_CONSTANTS_H_
 #define FT812Q_FT812Q_CONSTANTS_H_
 
+#include <inttypes.h>
+
 /* HOST COMMANDS */
 #define DISPLAY_SET_ACTIVE 				0x000000
 #define DISPLAY_GET_ACTIVE				0x302000
@@ -39,5 +41,49 @@
 
 /* DISPLAY LIST WRITE */
 #define RAM_DL				0x300000
+
+/* DATA */
+/* POWER MODES */
+extern uint8_t POWERDOWN[];
+extern uint8_t SLEEP[];
+extern uint8_t STANDBY[];
+extern uint8_t ACTIVE[];
+
+/* SETTINGS */
+extern uint8_t HCYCLE[];
+extern uint8_t HOFFSET[];
+extern uint8_t HSYNC0[];
+extern uint8_t HSYNC1[];
+extern uint8_t VCYCLE[];
+extern uint8_t V0FFSET[];
+extern uint8_t VSYNC0[];
+extern uint8_t VSYNC1[];
+extern uint8_t SWIZZLE[];
+extern uint8_t PCLK_POL[];
+extern uint8_t CSPREAD[];
+extern uint8_t HSIZE[];
+extern uint8_t VSIZE[];
+extern uint8_t DITHER[];
+extern uint8_t GPIO_DIR[];
+extern uint8_t GPIO[];
+extern uint8_t PCLK[];
+
+/* DRAWING */
+extern uint8_t DISPLAY[];
+extern uint8_t DLSWAP[];
+extern uint8_t END[];
+
+/* DRAWING MODES */
+extern uint8_t BITMAPS[];
+extern uint8_t POINTS[];
+extern uint8_t LINES[];
+extern uint8_t LINE_STRIP[];
+extern uint8_t RECTS[];
+
+// get data (for reading)
+extern uint8_t getData1[];
+extern uint8_t getData2[];
+extern uint8_t getData3[];
+extern uint8_t getData4[];
 
 #endif /* FT812Q_FT812Q_CONSTANTS_H_ */
