@@ -37,7 +37,7 @@
 #define REG_PCLK			0x302070
 #define REG_DITHER			0x302060
 
-/* MEMORY MAP*/
+/* DISPLAY LIST WRITE */
 #define RAM_DL				0x300000
 
 #endif /* FT812Q_FT812Q_CONSTANTS_H_ */

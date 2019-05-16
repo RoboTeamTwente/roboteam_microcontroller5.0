@@ -17,19 +17,26 @@
 extern QSPI_HandleTypeDef hqspi;
 
 /* BASIC */
-HAL_StatusTypeDef 	writeDisplay			(uint32_t address, uint32_t size, uint8_t* data);
-HAL_StatusTypeDef 	readDisplay				(uint32_t address, uint32_t size, uint8_t* data);
-HAL_StatusTypeDef 	display_Init			();
+void 	writeDisplay			(uint32_t address, uint32_t size, uint8_t* data);
+void 	readDisplay				(uint32_t address, uint32_t size, uint8_t* data);
+void 	display_Init			();
 
 /* FUNCTIONS FOR DRAWING */
 uint8_t* 	CLEAR				(uint8_t c, uint8_t s, uint8_t t); // Clears screen
-uint8_t* 	CLEAR_COLOR_RGB		(uint8_t red, uint8_t green, uint8_t blue); // Clears colour of screen
-uint8_t* 	COLOR_RGB			(uint8_t red, uint8_t green, uint8_t blue); // Sets drawing colour
-uint8_t* 	POINT_SIZE			(uint16_t size);
+uint8_t* 	CLEAR_COLOR_RGB		(uint8_t red, uint8_t green, uint8_t blue); // Set background color
+uint8_t* 	COLOR_RGB			(uint8_t red, uint8_t green, uint8_t blue); // Sets drawing color
+uint8_t* 	POINT_SIZE			(uint16_t size); // Set the point size
+uint8_t* 	LINE_WIDTH			(uint16_t width); // Set the line width
+uint8_t* 	VERTEX_FORMAT		(uint8_t size);
 
-uint8_t* 	drawPoint			(uint16_t x, uint16_t y);
+uint8_t* 	POINT_DATA			(uint16_t x, uint16_t y); // Construct data for a point at (x,y)
+uint8_t* 	LETTER_DATA			(uint16_t x, uint16_t y, uint8_t font, uint8_t letter); // Construct data for a letter at (x,y)
 
-void drawDot();
+void drawPoint(); // Draw a point
+void drawLetter(); // Draw a letter
+void drawLine();
+void drawExample();
+uint32_t* drawString(uint32_t* address, uint16_t x, uint16_t y, uint8_t spacing, char* string);
 
 //8FFFFFC1
 

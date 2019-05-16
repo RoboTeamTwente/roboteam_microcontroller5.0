@@ -457,7 +457,10 @@ int main(void)
   buzzer_Init();
   display_Init();
 
-  drawDot();
+//  drawPoint();
+//  drawLetter();
+//  drawLine();
+  drawExample();
 
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
