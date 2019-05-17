@@ -444,6 +444,7 @@ int main(void)
 //  drawLetter();
 //  drawLine();
 //  drawExample();
+  drawBasestation();
 
 
   SX = Wireless_Init(20, COMM_SPI);
@@ -451,7 +452,7 @@ int main(void)
   uint16_t ID = get_Id();
   Putty_printf("ID: %u\n\r",ID);
 
-  drawMainScreen(ID);
+//  drawMainScreen(ID);
 
   // start the pingpong operation
   SX->SX_settings->syncWords[0] = robot_syncWord[ID];

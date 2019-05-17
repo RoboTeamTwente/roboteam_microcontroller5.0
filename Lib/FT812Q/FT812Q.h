@@ -17,9 +17,9 @@
 extern QSPI_HandleTypeDef hqspi;
 
 /* BASIC */
-void 	writeDisplay			(uint32_t address, uint32_t size, uint8_t* data);
-void 	readDisplay				(uint32_t address, uint32_t size, uint8_t* data);
-void 	display_Init			();
+void 		writeDisplay		(uint32_t address, uint32_t size, uint8_t* data);
+uint8_t*	readDisplay			(uint32_t address, uint32_t size, uint8_t* data);
+void 		display_Init		();
 
 /* FUNCTIONS FOR DRAWING */
 uint8_t* 	CLEAR				(uint8_t c, uint8_t s, uint8_t t); // Clears screen

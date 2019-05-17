@@ -13,12 +13,11 @@
 #include <stdio.h>
 #include <string.h>
 
-void drawPoint(); // Draw a point
-void drawLetter(); // Draw a letter
-void drawLine();
-void drawExample();
+// Functions
 uint32_t* drawString(uint32_t* address, uint16_t x, uint16_t y, uint8_t spacing, char* string, uint8_t color[]);
 uint32_t* drawRect(uint32_t* address, uint16_t begin[], uint16_t end[], uint8_t color[]);
+uint32_t* drawLine(uint32_t* address, uint16_t xb, uint16_t yb, uint16_t xe, uint16_t ye, uint8_t color[], uint8_t width);
 void drawMainScreen(uint16_t ID);
+void drawBasestation();
 
 #endif /* FT812Q_FT812Q_DRAWING_H_ */

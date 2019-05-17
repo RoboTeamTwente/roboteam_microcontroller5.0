@@ -41,7 +41,7 @@ void writeDisplay(uint32_t address, uint32_t size, uint8_t* data){
 	HAL_QSPI_Transmit(&hqspi, data, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 }
 
-void readDisplay(uint32_t address, uint32_t size, uint8_t* data){
+uint8_t* readDisplay(uint32_t address, uint32_t size, uint8_t* data){
 
 	// Create read command
 	QSPI_CommandTypeDef READ_COMMAND = {
@@ -66,9 +66,11 @@ void readDisplay(uint32_t address, uint32_t size, uint8_t* data){
 	HAL_QSPI_Receive(&hqspi, data, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 
 	// Print data
-	for (int i = 0; i < size; i++) {
-		Putty_printf("Data[%d]: %X \n\r", i, data[i]);
-	}
+//	for (int i = 0; i < size; i++) {
+//		Putty_printf("Data[%d]: %X \n\r", i, data[i]);
+//	}
+
+	return data;
 }
 
 void display_Init(){

@@ -7,6 +7,9 @@
 
 #include "FT812Q_Constants.h"
 
+#include <stdio.h>
+#include <string.h>
+
 /* DATA */
 /* POWER MODES */
 uint8_t POWERDOWN[] 	= {0x50, 0x0, 0x0};
@@ -14,7 +17,7 @@ uint8_t SLEEP[] 		= {0x41, 0x0, 0x0};
 uint8_t STANDBY[]	 	= {0x41, 0x0, 0x0};
 uint8_t ACTIVE[] 		= {0x0, 0x0, 0x0};
 
-/* SETTINGS */
+/* DISPLAY SETTINGS */
 uint8_t HCYCLE[] 		= {0x24, 0x2};
 uint8_t HOFFSET[]		= {0x2B, 0x0};
 uint8_t HSYNC0[] 		= {0x0, 0x0};
@@ -32,10 +35,21 @@ uint8_t DITHER[] 		= {0x1};
 uint8_t GPIO_DIR[] 		= {0x80};
 uint8_t GPIO[] 			= {0x80};
 uint8_t PCLK[] 			= {0x5};
+//uint8_t TOUCH_CONFIG[]	=
+uint8_t EXTENDED_MODE[]	= {0x0};
+
+/* TOUCH SETTINGS */
+uint8_t TRANSFORM_A[] = {0x1E, 0x78, 0x0, 0x0};
+uint8_t TRANSFORM_E[] = {0x11, 0x44, 0x0, 0x80};
+uint8_t TRANSFORM_F[] = {0x0, 0x10, 0x1, 0x0};
+
+
+//uint32_t temp = 0x04 << 24 | red << 16 | green << 8 | blue;
+//memcpy(data, (uint8_t*)&temp, 4);
 
 /* DRAWING */
 uint8_t DISPLAY[] 		= {0x0, 0x0, 0x0, 0x0};
-uint8_t DLSWAP[] 		= {0x02};
+uint8_t DLSWAP[] 		= {0x2};
 uint8_t END[] 			= {0x0, 0x0, 0x0, 0x21};
 
 /* DRAWING MODES */
@@ -44,6 +58,11 @@ uint8_t POINTS[] 		= {0x2, 0x0, 0x0, 0x1F};
 uint8_t LINES[] 		= {0x3, 0x0, 0x0, 0x1F};
 uint8_t LINE_STRIP[] 	= {0x4, 0x0, 0x0, 0x1F};
 uint8_t RECTS[] 		= {0x9, 0x0, 0x0, 0x1F};
+
+/* COLORS */
+uint8_t RTTRED[]		= {0xCC, 0x0, 0x0};
+uint8_t WHITE[]			= {0xFF, 0xFF, 0xFF};
+uint8_t BLACK[]			= {0x0, 0x0, 0x0};
 
 // get data (for reading)
 uint8_t getData1[] 	= {0x0};
