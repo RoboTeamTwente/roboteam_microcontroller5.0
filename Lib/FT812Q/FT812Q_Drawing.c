@@ -88,21 +88,34 @@ void drawBasestation(){
 		address = drawLine((uint32_t*)address, 0 + i*spacingX, 30, 0 + i*spacingX, 270, RTTRED, 100);
 	}
 
-	uint16_t start_y = 31; uint16_t x;
-	uint16_t start_x = 3; uint16_t y = start_y;
+	/* TEST THIS */
 
-	int k = 0; int p = 0;
-	for (int i = 0; i < 16; i++){
-		if ((i !=0) && (i % 4 == 0)){
-			p++;
-			y = start_y + p*spacingY;
-			k = 0;
+	uint16_t start_y = 31; uint16_t y = start_y;
+	uint16_t start_x = 3; uint16_t x = start_x;
+
+	int robotID = 0; char id[4];
+	for (uint8_t p = 0; p < 5; p++){
+		for (uint8_t q = 0; q < 5; q++){
+			itoa(robotID, id, 10);
+			address = drawString((uint32_t*)address, x, y, 23, id, RTTRED);
+			x = start_x + q*spacingX;
+			robotID++;
 		}
-		x = start_x + k*spacingX;
-		char id[4]; itoa(i, id, 10);
-		address = drawString((uint32_t*)address, x, y, 23, id, RTTRED);
-		k++;
+		y = start_y + p*spacingY;
 	}
+
+//	int k = 0; int p = 0;
+//	for (int i = 0; i < 16; i++){
+//		if ((i !=0) && (i % 4 == 0)){
+//			p++;
+//			y = start_y + p*spacingY;
+//			k = 0;
+//		}
+//		x = start_x + k*spacingX;
+//		char id[4]; itoa(i, id, 10);
+//		address = drawString((uint32_t*)address, x, y, 23, id, RTTRED);
+//		k++;
+//	}
 
 	// Draw
 	writeDisplay((uint32_t)address++, 	0x4, 	DISPLAY);
