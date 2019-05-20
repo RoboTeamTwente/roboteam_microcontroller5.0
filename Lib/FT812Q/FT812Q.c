@@ -9,6 +9,7 @@
 #include "string.h"
 
 uint8_t data[4]; // used by functions
+uint16_t touchPoint[2];
 
 /* FUNCTIONS */
 void writeDisplay(uint32_t address, uint32_t size, uint8_t* data){
@@ -66,11 +67,21 @@ uint8_t* readDisplay(uint32_t address, uint32_t size, uint8_t* data){
 	HAL_QSPI_Receive(&hqspi, data, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 
 	// Print data
-//	for (int i = 0; i < size; i++) {
-//		Putty_printf("Data[%d]: %X \n\r", i, data[i]);
-//	}
+	for (int i = 0; i < size; i++) {
+		Putty_printf("Data[%d]: %X \n\r", i, data[i]);
+	}
 
 	return data;
+}
+
+uint16_t* readTouch(){
+	uint8_t* data = readDisplay(REG_TOUCH_SCREEN_XY, 0x4, getData4);
+	int16_t touch_x = *(uint16_t*)(data+2);
+	int16_t touch_y = *(uint16_t*)(data);
+	touch_x = touch_x * (float)(480/(float)1023); // transform to x = 0:480
+	touch_y = touch_y * -(float)(272/(float)1023) + 272; // transform to y = 0:272
+	touchPoint[0] = touch_x; touchPoint[1] = touch_y;
+	return touchPoint;
 }
 
 void display_Init(){
@@ -96,7 +107,7 @@ void display_Init(){
 	writeDisplay	(REG_VSIZE, 	0x2, 	VSIZE); 	// 272
 
 	/* Write first display list */
-	writeDisplay	(RAM_DL + 0x0, 	0x4, 	CLEAR_COLOR_RGB(0, 0, 0)); // RoboTeam Red
+	writeDisplay	(RAM_DL + 0x0, 	0x4, 	CLEAR_COLOR_RGB(0, 0, 0));
 	writeDisplay	(RAM_DL + 0x4, 	0x4, 	CLEAR(1, 1, 1));
 	writeDisplay	(RAM_DL + 0x8, 	0x4, 	DISPLAY);
 

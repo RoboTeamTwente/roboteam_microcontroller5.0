@@ -41,20 +41,15 @@
 #define REG_TAG_X						0x302074
 #define REG_TOUCH_RAW_XY				0x30211C
 #define REG_TOUCH_CONFIG 				0x302168
-#define REG_TOUCH_TAG					0x30212C
-#define REG_CTOUCH_EXTENDED				0x302108
+#define REG_TOUCH_MODE					0x302104
 #define REG_TOUCH_SCREEN_XY				0x302124
-#define REG_TOUCH_TAG1_XY				0x302130
-#define REG_TOUCH_TRANSFORM_A 			0x302150
-#define REG_TOUCH_TRANSFORM_B			0x302154
-#define REG_TOUCH_TRANSFORM_C			0x302158
-#define REG_TOUCH_TRANSFORM_D			0x30215C
-#define REG_TOUCH_TRANSFORM_E			0x302160
-#define REG_TOUCH_TRANSFORM_F			0x302164
 
 /* DISPLAY LIST WRITE */
-#define RAM_DL				0x300000
-#define RAM_CMD				0x308000
+#define RAM_DL							0x300000
+#define RAM_CMD							0x308000
+
+/* FONT */
+#define ROM_FONTROOT					0x2FFFFC
 
 /* DATA */
 /* POWER MODES */
@@ -102,6 +97,10 @@ extern uint8_t RECTS[];
 
 /* COLORS */
 extern uint8_t RTTRED[];
+extern uint8_t WHITE[];
+extern uint8_t BLACK[];
+extern uint8_t GREEN[];
+extern uint8_t RED[];
 
 // get data (for reading)
 extern uint8_t getData1[];

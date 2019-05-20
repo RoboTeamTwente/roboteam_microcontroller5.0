@@ -19,6 +19,7 @@ extern QSPI_HandleTypeDef hqspi;
 /* BASIC */
 void 		writeDisplay		(uint32_t address, uint32_t size, uint8_t* data);
 uint8_t*	readDisplay			(uint32_t address, uint32_t size, uint8_t* data);
+uint16_t* 	readTouch			();
 void 		display_Init		();
 
 /* FUNCTIONS FOR DRAWING */
