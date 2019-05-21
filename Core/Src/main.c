@@ -59,9 +59,11 @@
 #include "yawCalibration.h"
 #include "../Lib/FT812Q/FT812Q_Constants.h"
 #include "../Lib/FT812Q/FT812Q.h"
+#include "../Lib/FT812Q/FT812Q_Drawing.h"
 
 #include "time.h"
 #include <unistd.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -438,21 +440,15 @@ int main(void)
   shoot_Init();
   dribbler_Init();
   buzzer_Init();
-  display_Init();
 
-//  drawPoint();
-//  drawLetter();
-//  drawLine();
-//  drawExample();
-  drawBasestation();
-
+//  display_Init();
+//  drawBasestation(1);
+  uint8_t robotID;
 
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
   uint16_t ID = get_Id();
   Putty_printf("ID: %u\n\r",ID);
-
-//  drawMainScreen(ID);
 
   // start the pingpong operation
   SX->SX_settings->syncWords[0] = robot_syncWord[ID];
@@ -511,6 +507,31 @@ int main(void)
 		  //printBaseStationData();
 //		  printReceivedData(&receivedData);
 //		  printRobotStateData(&stateInfo);
+
+		  // Screen
+		  switch(state){
+		  case INIT:
+			  display_Init();
+			  state = MAIN;
+			  break;
+		  case MAIN:
+			  drawBasestation(1);
+			  uint16_t* touchPoint = readTouch();
+			  if ((touchPoint[0] < 480 && touchPoint[0] > 0) && (touchPoint[1] < 272 && touchPoint[1] > 31)){
+				  uint16_t spacingX = robots[0].endPoint[0] - robots[0].beginPoint[0];
+				  uint16_t spacingY = robots[0].endPoint[1] - robots[0].beginPoint[1];
+				  int column = touchPoint[0]/spacingX;
+				  int row = touchPoint[1]/spacingY;
+				  robotID = 4*row + column;
+				  state = ROBOT;
+				  break;
+			  }
+			  break;
+		  case ROBOT:
+			  Putty_printf("state: %d", state);
+			  drawRobotInfo(robotID);
+			  break;
+		  }
 
 	  }
     /* USER CODE END WHILE */

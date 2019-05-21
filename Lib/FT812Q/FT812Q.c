@@ -11,7 +11,54 @@
 uint8_t data[4]; // used by functions
 uint16_t touchPoint[2];
 
+// Create buffer
+uint8_t buffer[DISP_BUF_LENGTH] __attribute__((aligned(4)));
+uint8_t* DispBuf = buffer;
+
 /* FUNCTIONS */
+void display_Init(){
+
+	writeDisplay(DISPLAY_SET_POWERDOWN, 0x3, POWERDOWN); // Reset
+	writeDisplay(DISPLAY_SET_ACTIVE, 	0x3, ACTIVE); // Set to ACTIVE
+	HAL_Delay(300); // Needs up to 300ms to start up
+
+	/* Configure display registers */ // From NHD-4.3-480272FT-CTXL-T Datasheet
+	writeDisplay	(REG_HCYCLE, 		0x2, 	HCYCLE); 	// 548
+	writeDisplay	(REG_HOFFSET, 		0x2, 	HOFFSET); 	// 43
+	writeDisplay	(REG_HSYNC0, 		0x2, 	HSYNC0); 	// 0
+	writeDisplay	(REG_HSYNC1, 		0x2, 	HSYNC1); 	// 41
+	writeDisplay	(REG_VCYCLE, 		0x2, 	VCYCLE); 	// 292
+	writeDisplay	(REG_VOFFSET, 		0x2, 	V0FFSET); 	// 12
+	writeDisplay	(REG_VSYNC0, 		0x2, 	VSYNC0); 	// 0
+	writeDisplay	(REG_VSYNC1, 		0x2, 	VSYNC1); 	// 10
+	writeDisplay	(REG_SWIZZLE, 		0x1, 	SWIZZLE); 	// 0
+	writeDisplay	(REG_PCLK_POL, 		0x1, 	PCLK_POL); 	// 1
+	writeDisplay	(REG_CSPREAD, 		0x1, 	CSPREAD); 	// 1
+	writeDisplay	(REG_DITHER, 		0x1, 	DITHER); 	// 1
+	writeDisplay	(REG_HSIZE, 		0x2, 	HSIZE); 	// 480
+	writeDisplay	(REG_VSIZE, 		0x2, 	VSIZE); 	// 272
+
+	/* Write first display list */
+	writeDisplay	(RAM_DL + 0x0, 		0x4, 	CLEAR_COLOR_RGB(0, 0, 0));
+	writeDisplay	(RAM_DL + 0x4, 		0x4, 	CLEAR(1, 1, 1));
+	writeDisplay	(RAM_DL + 0x8, 		0x4, 	DISPLAY);
+
+	/* Display */
+	writeDisplay	(REG_DLSWAP, 		0x1, 	DLSWAP); // Display list swap
+	writeDisplay	(REG_GPIO_DIR, 		0x1, 	GPIO_DIR);
+	writeDisplay	(REG_GPIO, 			0x1, 	GPIO); // Enable display bit
+	writeDisplay	(REG_PCLK, 			0x1, 	PCLK); // After this display is visible on the LCD
+}
+
+void display_DeInit(){
+	writeDisplay(DISPLAY_SET_POWERDOWN, 0x3, POWERDOWN);
+}
+
+uint32_t writeDispBuf(uint32_t base, uint32_t size, uint8_t* data){
+	memcpy((DispBuf + base), data, size);
+	return base + size;
+}
+
 void writeDisplay(uint32_t address, uint32_t size, uint8_t* data){
 
 	// For writing, the address must start with '01' and then the address
@@ -67,13 +114,14 @@ uint8_t* readDisplay(uint32_t address, uint32_t size, uint8_t* data){
 	HAL_QSPI_Receive(&hqspi, data, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 
 	// Print data
-	for (int i = 0; i < size; i++) {
-		Putty_printf("Data[%d]: %X \n\r", i, data[i]);
-	}
+//	for (int i = 0; i < size; i++) {
+//		Putty_printf("Data[%d]: %X \n\r", i, data[i]);
+//	}
 
 	return data;
 }
 
+/* TOUCH */
 uint16_t* readTouch(){
 	uint8_t* data = readDisplay(REG_TOUCH_SCREEN_XY, 0x4, getData4);
 	int16_t touch_x = *(uint16_t*)(data+2);
@@ -84,37 +132,9 @@ uint16_t* readTouch(){
 	return touchPoint;
 }
 
-void display_Init(){
-
-	writeDisplay(DISPLAY_SET_POWERDOWN, 0x3, POWERDOWN); // Reset
-	writeDisplay(DISPLAY_SET_ACTIVE, 0x3, ACTIVE); // Set to ACTIVE
-	HAL_Delay(300); // Needs up to 300ms to start up
-
-	/* Configure display registers */ // From NHD-4.3-480272FT-CTXL-T Datasheet
-	writeDisplay	(REG_HCYCLE, 	0x2, 	HCYCLE); 	// 548
-	writeDisplay	(REG_HOFFSET, 	0x2, 	HOFFSET); 	// 43
-	writeDisplay	(REG_HSYNC0, 	0x2, 	HSYNC0); 	// 0
-	writeDisplay	(REG_HSYNC1, 	0x2, 	HSYNC1); 	// 41
-	writeDisplay	(REG_VCYCLE, 	0x2, 	VCYCLE); 	// 292
-	writeDisplay	(REG_VOFFSET, 	0x2, 	V0FFSET); 	// 12
-	writeDisplay	(REG_VSYNC0, 	0x2, 	VSYNC0); 	// 0
-	writeDisplay	(REG_VSYNC1, 	0x2, 	VSYNC1); 	// 10
-	writeDisplay	(REG_SWIZZLE, 	0x1, 	SWIZZLE); 	// 0
-	writeDisplay	(REG_PCLK_POL, 	0x1, 	PCLK_POL); 	// 1
-	writeDisplay	(REG_CSPREAD, 	0x1, 	CSPREAD); 	// 1
-	writeDisplay	(REG_DITHER, 	0x1, 	DITHER); 	// 1
-	writeDisplay	(REG_HSIZE, 	0x2, 	HSIZE); 	// 480
-	writeDisplay	(REG_VSIZE, 	0x2, 	VSIZE); 	// 272
-
-	/* Write first display list */
-	writeDisplay	(RAM_DL + 0x0, 	0x4, 	CLEAR_COLOR_RGB(0, 0, 0));
-	writeDisplay	(RAM_DL + 0x4, 	0x4, 	CLEAR(1, 1, 1));
-	writeDisplay	(RAM_DL + 0x8, 	0x4, 	DISPLAY);
-
-	writeDisplay	(REG_DLSWAP, 	0x1, 	DLSWAP); // Display list swap
-	writeDisplay	(REG_GPIO_DIR, 	0x1, 	GPIO_DIR);
-	writeDisplay	(REG_GPIO, 		0x1, 	GPIO); // Enable display bit
-	writeDisplay	(REG_PCLK, 		0x1, 	PCLK); // After this display is visible on the LCD
+uint8_t	isInArea(uint16_t* point){
+	uint8_t result;
+	return result;
 }
 
 /* SETTINGS */

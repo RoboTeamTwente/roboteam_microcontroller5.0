@@ -17,10 +17,15 @@
 extern QSPI_HandleTypeDef hqspi;
 
 /* BASIC */
+void 		display_Init		();
+void		display_Deinit		();
+uint32_t 	writeDispBuf		(uint32_t base, uint32_t size, uint8_t* data);
 void 		writeDisplay		(uint32_t address, uint32_t size, uint8_t* data);
 uint8_t*	readDisplay			(uint32_t address, uint32_t size, uint8_t* data);
+
+/* TOUCH */
 uint16_t* 	readTouch			();
-void 		display_Init		();
+uint8_t		isInArea			(uint16_t* point);
 
 /* FUNCTIONS FOR DRAWING */
 uint8_t* 	CLEAR				(uint8_t c, uint8_t s, uint8_t t); // Clears screen
@@ -33,5 +38,16 @@ uint8_t* 	VERTEX_FORMAT		(uint8_t size);
 uint8_t* 	POINT_DATA			(uint16_t x, uint16_t y); // Construct data for a point at (x,y)
 uint8_t* 	LETTER_DATA			(uint16_t x, uint16_t y, uint8_t font, uint8_t letter); // Construct data for a letter at (x,y)
 
+/* BUFFER */
+extern uint8_t* 	DispBuf;			// pointer to display buffer
+#define 			DISP_BUF_LENGTH 	2048
+
+/* STATE MACHINE */
+enum states {
+    INIT,
+    MAIN,
+    ROBOT,
+} state;
+extern uint8_t robotID;
 
 #endif /* FT812Q_FT812Q_H_ */

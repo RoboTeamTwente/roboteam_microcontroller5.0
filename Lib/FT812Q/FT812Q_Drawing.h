@@ -12,16 +12,19 @@
 #include "FT812Q_Constants.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 /* FUNCTIONS */
-void drawMainScreen(uint16_t ID);
-void drawBasestation();
-uint32_t* drawString(uint32_t* address, uint16_t x, uint16_t y, uint8_t spacing, char* string, uint8_t color[]);
-uint32_t* drawRect(uint32_t* address, uint16_t begin[], uint16_t end[], uint8_t color[], uint8_t width, uint8_t option); // 0 = filled, 1 = lines
-uint32_t* drawLine(uint32_t* address, uint16_t xb, uint16_t yb, uint16_t xe, uint16_t ye, uint8_t color[], uint16_t width);
-uint32_t* drawDot(uint32_t* address, uint16_t x, uint16_t y, uint8_t size, uint8_t color[]);
-uint32_t* drawUSBicon(uint32_t* address, uint16_t x, uint16_t y, bool USBstatus);
+void drawBasestation(bool USBstatus);
+uint32_t drawString(uint32_t addr, uint16_t x, uint16_t y, uint8_t spacing, char* string, uint8_t color[]);
+uint32_t drawRect(uint32_t addr, uint16_t begin[], uint16_t end[], uint8_t color[], uint8_t width, uint8_t option); // 0 = filled, 1 = lines
+uint32_t drawLine(uint32_t addr, uint16_t xb, uint16_t yb, uint16_t xe, uint16_t ye, uint8_t color[], uint16_t width);
+uint32_t drawDot(uint32_t addr, uint16_t x, uint16_t y, uint8_t size, uint8_t color[]);
+uint32_t drawUSBicon(uint32_t addr, uint16_t x, uint16_t y, bool USBstatus);
+uint32_t drawReturn(uint32_t addr, uint16_t x, uint16_t y, uint8_t color[]);
+uint32_t drawRobotInfo(uint8_t id);
 
+void test();
 
 /* ROBOT DATA */
 typedef struct drawingData {
