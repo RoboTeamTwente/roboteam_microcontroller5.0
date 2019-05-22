@@ -134,6 +134,37 @@ uint16_t* readTouch(){
 
 uint8_t	isInArea(uint16_t* point){
 	uint8_t result;
+
+	switch(state){
+	case READ_TOUCH_ID:
+		if ((touchPoint[0] < XRES && touchPoint[0] > 0) && (touchPoint[1] < YRES && touchPoint[1] > 50)){
+			uint16_t spacingX = robots[0].endPoint[0] - robots[0].beginPoint[0];
+			uint16_t spacingY = robots[0].endPoint[1] - robots[0].beginPoint[1];
+			int column = touchPoint[0]/spacingX;
+			int row = (touchPoint[1] - 31)/spacingY;
+			uint8_t id = 4*row + column;
+			if (robots[id].robotStatus == true){
+				result = (row < 0) ? NO_TOUCH : (4*row + column); // result = robot ID
+				break;
+			} else {
+				result = NO_TOUCH;
+				break;
+			}
+		} else {
+			result = NO_TOUCH;
+			break;
+		}
+	case READ_TOUCH_RETURN:
+		if ((touchPoint[0] < 60 && touchPoint[0] > 0) && (touchPoint[1] < 60 && touchPoint[1] > 0)) {
+			result = RETURN_VALUE;
+			break;
+		} else {
+			result = NO_TOUCH;
+			break;
+		}
+	default:
+		result = NO_TOUCH;
+	}
 	return result;
 }
 

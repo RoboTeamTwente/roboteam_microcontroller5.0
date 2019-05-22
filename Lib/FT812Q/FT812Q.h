@@ -12,6 +12,7 @@
 #include "stm32f7xx_hal_def.h"
 #include "stm32f7xx_hal_qspi.h"
 #include "FT812Q_Constants.h"
+#include "FT812Q_Drawing.h"
 #include "PuTTY.h"
 
 extern QSPI_HandleTypeDef hqspi;
@@ -40,14 +41,24 @@ uint8_t* 	LETTER_DATA			(uint16_t x, uint16_t y, uint8_t font, uint8_t letter); 
 
 /* BUFFER */
 extern uint8_t* 	DispBuf;			// pointer to display buffer
-#define 			DISP_BUF_LENGTH 	2048
+#define 			DISP_BUF_LENGTH 	0x1FFF
 
 /* STATE MACHINE */
 enum states {
     INIT,
     MAIN,
+	READ_TOUCH_ID,
+	READ_TOUCH_RETURN,
     ROBOT,
 } state;
-extern uint8_t robotID;
+
+#define ROBOT_ID_MAX	15
+#define RETURN_VALUE	100
+#define	NO_TOUCH		200
+
+typedef struct testStruct {
+	uint8_t robotID;
+}testStruct;
+testStruct test2[1];
 
 #endif /* FT812Q_FT812Q_H_ */

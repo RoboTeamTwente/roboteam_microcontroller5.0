@@ -11,6 +11,10 @@
 #include <string.h>
 
 /* DATA */
+/* DISPLAY RESOLUTION */
+uint16_t XRES = 480;
+uint16_t YRES = 272;
+
 /* POWER MODES */
 uint8_t POWERDOWN[] 	= {0x50, 0x0, 0x0};
 uint8_t SLEEP[] 		= {0x41, 0x0, 0x0};
@@ -35,17 +39,7 @@ uint8_t DITHER[] 		= {0x1};
 uint8_t GPIO_DIR[] 		= {0x80};
 uint8_t GPIO[] 			= {0x80};
 uint8_t PCLK[] 			= {0x5};
-//uint8_t TOUCH_CONFIG[]	=
 uint8_t EXTENDED_MODE[]	= {0x0};
-
-/* TOUCH SETTINGS */
-uint8_t TRANSFORM_A[] = {0x19, 0xC6, 0x0, 0x0}; // 480/1023
-uint8_t TRANSFORM_E[] = {0xCB, 0xAE, 0x0, 0x80}; // -272/1023
-uint8_t TRANSFORM_F[] = {0x0, 0x0, 0x10, 0x01}; //
-
-
-//uint32_t temp = 0x04 << 24 | red << 16 | green << 8 | blue;
-//memcpy(data, (uint8_t*)&temp, 4);
 
 /* DRAWING */
 uint8_t DISPLAY[] 		= {0x0, 0x0, 0x0, 0x0};
@@ -65,6 +59,9 @@ uint8_t WHITE[]			= {0xFF, 0xFF, 0xFF};
 uint8_t BLACK[]			= {0x0, 0x0, 0x0};
 uint8_t GREEN[]			= {0x0C, 0xFF, 0x0};
 uint8_t RED[]			= {0xFF, 0x0, 0x0};
+uint8_t ORANGE[]		= {0xFF, 0x83, 0x0};
+uint8_t DARKRED[]		= {0x28, 0x0, 0x0};
+uint8_t GREY[]			= {0x30, 0x31, 0x33};
 
 // get data (for reading)
 uint8_t getData1[] 	= {0x0};

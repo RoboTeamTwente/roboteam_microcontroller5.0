@@ -52,6 +52,10 @@
 #define ROM_FONTROOT					0x2FFFFC
 
 /* DATA */
+/* DISPLAY RESOLUTION */
+extern uint16_t XRES;
+extern uint16_t YRES;
+
 /* POWER MODES */
 extern uint8_t POWERDOWN[];
 extern uint8_t SLEEP[];
@@ -78,11 +82,6 @@ extern uint8_t GPIO[];
 extern uint8_t PCLK[];
 extern uint8_t EXTENDED_MODE[];
 
-/* TOUCH SETTINGS */
-extern uint8_t TRANSFORM_A[];
-extern uint8_t TRANSFORM_E[];
-extern uint8_t TRANSFORM_F[];
-
 /* DRAWING */
 extern uint8_t DISPLAY[];
 extern uint8_t DLSWAP[];
@@ -101,6 +100,9 @@ extern uint8_t WHITE[];
 extern uint8_t BLACK[];
 extern uint8_t GREEN[];
 extern uint8_t RED[];
+extern uint8_t ORANGE[];
+extern uint8_t DARKRED[];
+extern uint8_t GREY[];
 
 // get data (for reading)
 extern uint8_t getData1[];

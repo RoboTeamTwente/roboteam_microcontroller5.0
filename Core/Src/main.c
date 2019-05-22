@@ -57,8 +57,8 @@
 #include "buzzer.h"
 #include "MTi.h"
 #include "yawCalibration.h"
-#include "../Lib/FT812Q/FT812Q_Constants.h"
 #include "../Lib/FT812Q/FT812Q.h"
+#include "../Lib/FT812Q/FT812Q_Constants.h"
 #include "../Lib/FT812Q/FT812Q_Drawing.h"
 
 #include "time.h"
@@ -443,7 +443,8 @@ int main(void)
 
 //  display_Init();
 //  drawBasestation(1);
-  uint8_t robotID;
+  uint16_t* touchPoint;
+  uint8_t result;
 
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
@@ -508,32 +509,46 @@ int main(void)
 //		  printReceivedData(&receivedData);
 //		  printRobotStateData(&stateInfo);
 
-		  // Screen
-		  switch(state){
-		  case INIT:
-			  display_Init();
-			  state = MAIN;
+	  }
+
+	  // Screen
+	  switch(state){
+	  case INIT:
+		  display_Init();
+		  state = MAIN;
+		  break;
+	  case MAIN:
+		  drawBasestation(1);
+		  state = READ_TOUCH_ID;
+		  break;
+	  case READ_TOUCH_ID:
+		  touchPoint = readTouch();
+		  result = isInArea(touchPoint);
+		  if (result < ROBOT_ID_MAX + 1){
+			  test2->robotID = result; // TODO: not call test
+			  state = ROBOT;
 			  break;
-		  case MAIN:
-			  drawBasestation(1);
-			  uint16_t* touchPoint = readTouch();
-			  if ((touchPoint[0] < 480 && touchPoint[0] > 0) && (touchPoint[1] < 272 && touchPoint[1] > 31)){
-				  uint16_t spacingX = robots[0].endPoint[0] - robots[0].beginPoint[0];
-				  uint16_t spacingY = robots[0].endPoint[1] - robots[0].beginPoint[1];
-				  int column = touchPoint[0]/spacingX;
-				  int row = touchPoint[1]/spacingY;
-				  robotID = 4*row + column;
-				  state = ROBOT;
-				  break;
-			  }
-			  break;
-		  case ROBOT:
-			  Putty_printf("state: %d", state);
-			  drawRobotInfo(robotID);
+		  } else {
+			  state = READ_TOUCH_ID;
 			  break;
 		  }
-
+	  case ROBOT:
+		  drawRobotInfo(test2->robotID, 1);
+		  state = READ_TOUCH_RETURN;
+		  break;
+	  case READ_TOUCH_RETURN:
+		  touchPoint = readTouch();
+		  result = isInArea(touchPoint);
+		  if (result == RETURN_VALUE){
+			  state = MAIN;
+			  break;
+		  } else {
+			  state = READ_TOUCH_RETURN;
+			  break;
+		  }
 	  }
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

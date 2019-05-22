@@ -20,20 +20,59 @@ void drawBasestation(bool USBstatus){
 
 	/* DISPLAY LIST */
 	nxt = drawString(nxt, 1, 1, 23, "Robot Status", RTTRED);
+	uint16_t beginRect[] = {1, 31}; uint16_t endRect[] = {XRES, YRES};
+	nxt = drawRect(nxt, beginRect, endRect, RTTRED, 2, 0);
 
 	// Draw squares + robot ID's
 	uint8_t spacingY = 60;
 	uint8_t spacingX = 120;
 	uint8_t i = 0;
+	bool fakeStatus[16] = {false, true, false, false, false, false, true, false, false, true, false, false, false, false, false, false};
+	uint8_t fakeTX[16] = {60, 40, 60, 60, 30, 10, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60};
+	uint8_t fakeRX[16] = {60, 60, 45, 60, 45, 60, 60, 60, 60, 45, 60, 60, 45, 60, 60, 60};
+
 	char id[1];
 	for (uint8_t q = 0; q < 4; q++){
 		for (uint8_t p = 0; p < 4; p++){
-			uint16_t begin[] = {1 + spacingX*p, 31 + spacingY*q};
-			uint16_t end[] = {1 + spacingX*(p + 1), 31 + spacingY*(q + 1)};
-			if (end[0] >= 480){end[0] = 479;} // this is not a hack
-			nxt = drawRect(nxt, begin, end, RTTRED, 100, 1);
+			uint16_t begin[] = {1 + spacingX*p + 2, 31 + spacingY*q + 2};
+			uint16_t end[] = {1 + spacingX*(p + 1) - 1, 31 + spacingY*(q + 1) - 2};
+			if (end[0] >= 480){end[0] = 477;} // this is not a hack
+			nxt = drawRect(nxt, begin, end, DARKRED, 2, 0);
 			itoa(i, id, 10);
 			nxt = drawString(nxt, begin[0] + 5, begin[1] + 2, 23, id, WHITE);
+
+			if (fakeStatus[i] == true){
+				robots[i].robotStatus = true;
+				nxt = drawString(nxt, begin[0] + 40, begin[1] + 3, 22, "Online", GREEN);
+			} else {
+				robots[i].robotStatus = false;
+				nxt = drawString(nxt, begin[0] + 40, begin[1] + 3, 22, "Offline", WHITE);
+			}
+
+			uint16_t RXBegin[] = {begin[0] + 5, begin[1] + 30};
+			uint16_t RXEnd[] = {begin[0] + 54, end[1] - 10};
+			Putty_printf("difference RX: %d \n\r", RXEnd[0] - RXBegin[0]);
+			if ((fakeRX[i] == 60) && (robots[i].robotStatus == true)){
+				nxt = drawRect(nxt, RXBegin, RXEnd, GREEN, 2, 0);
+			} else if ((fakeRX[i] != 60) && (robots[i].robotStatus == true)){
+				nxt = drawRect(nxt, RXBegin, RXEnd, ORANGE, 2, 0);
+			} else {
+				nxt = drawRect(nxt, RXBegin, RXEnd, GREY, 2, 0);
+			}
+			nxt = drawString(nxt, begin[0] + 24, begin[1] + 31, 20, "RX", WHITE);
+
+			uint16_t TXBegin[] = {RXEnd[0] + 6, RXBegin[1]};
+			uint16_t TXEnd[] = {end[0] - 6, end[1] - 10};
+			Putty_printf("difference TX: %d \n\r", TXEnd[0] - TXBegin[0]);
+			if ((fakeTX[i] == 60) && (robots[i].robotStatus == true)){
+				nxt = drawRect(nxt, TXBegin, TXEnd, GREEN, 2, 0);
+			} else if ((fakeRX[i] != 60) && (robots[i].robotStatus == true)){
+				nxt = drawRect(nxt, TXBegin, TXEnd, ORANGE, 2, 0);
+			} else {
+				nxt = drawRect(nxt, TXBegin, TXEnd, GREY, 2, 0);
+			}
+			nxt = drawString(nxt, begin[0] + 80, begin[1] + 31, 20, "TX", WHITE);
+
 			memcpy(robots[i].beginPoint, begin, 4);
 			memcpy(robots[i].endPoint, end, 4);
 			i++;
@@ -49,7 +88,7 @@ void drawBasestation(bool USBstatus){
 	writeDisplay(REG_DLSWAP, 	0x1, 	DLSWAP); // Display list swap
 }
 
-uint32_t drawRobotInfo(uint8_t id){
+uint32_t drawRobotInfo(uint8_t id, bool USBstatus){
 
 	// Initial settings
 	nxt = writeDispBuf(0,		0x4, 	CLEAR_COLOR_RGB(40, 0, 0));
@@ -58,12 +97,23 @@ uint32_t drawRobotInfo(uint8_t id){
 
 	/* DISPLAY LIST */
 	nxt = drawString(nxt, 40, 0, 29, "Robot:", RTTRED);
-	char robotID[1]; itoa(id, robotID, 10);
+	char id_value[1]; itoa(id, id_value, 10);
 
-	// TODO: check spacing
-	nxt = drawString(nxt, 120, 1, 29, robotID, WHITE);
-	nxt = drawString(nxt, 100, 100, 23, "yada yada", RTTRED);
+	nxt = drawString(nxt, 120, 1, 29, id_value, WHITE);
 	nxt = drawReturn(nxt, 0, 0, RTTRED);
+	nxt = drawUSBicon(nxt, 430, 13, USBstatus); // USB connection
+
+	nxt = drawString	(nxt, 	15, 	50, 	18, 		"X_VEL", WHITE);
+	nxt = drawString	(nxt, 	15, 	80, 	18, 		"Y_VEL", WHITE);
+	nxt = drawString	(nxt, 	15, 	110, 	18, 		"ANGLE", WHITE);
+
+	nxt = drawKicker	(nxt, 	300, 	50, 	1); // draw kicker status
+	nxt = drawDribbler	(nxt, 	360, 	50, 	1); // draw dribbler status
+	nxt = drawChipper	(nxt, 	420,	50,		1); // draw chipper status
+
+	nxt = drawStatusBar	(nxt, 	120, 	50, 	MAX_X_VEL, 	2.1);
+	nxt = drawStatusBar	(nxt, 	120, 	80, 	MAX_Y_VEL, 	4.2);
+	nxt = drawStatusBar	(nxt, 	120, 	110, 	MAX_ANGLE, 	2.7);
 
 	/* DRAW */
 	nxt = writeDispBuf(nxt, 	0x4, 	DISPLAY);
@@ -159,5 +209,99 @@ uint32_t drawReturn(uint32_t addr, uint16_t x, uint16_t y, uint8_t color[]){
 	addr = drawLine(addr, x + 5, y + 15, x + 25, y + 15, color, 2);
 	addr = drawLine(addr, x + 5, y + 15, x + 15, y + 10, color, 2);
 	addr = drawLine(addr, x + 5, y + 15, x + 15, y + 20, color, 2);
+	return addr;
+}
+
+uint32_t drawKicker(uint32_t addr, uint16_t x, uint16_t y, bool kickStatus){
+	uint8_t color[3];
+	if (kickStatus == 1){
+		memcpy(color, GREEN, 3);
+	} else
+		memcpy(color, RED, 3);
+
+	uint8_t barWidth = 10;
+	uint8_t barLength = 31;
+	uint16_t begin[] = {x, y};
+	uint16_t end[] = {x + barLength, y + barWidth};
+	addr = drawRect(addr, begin, end, color, 2, 0); // draw kicker bar
+	begin[0] = begin[0] + barWidth; begin[1] = end[1];
+	end[0] = end[0] - barWidth; end[1] = begin[1] + barLength;
+	addr = drawRect(addr, begin, end, color, 2, 0); // draw bar that does the kicking
+	return addr;
+}
+
+uint32_t drawChipper(uint32_t addr, uint16_t x, uint16_t y, bool chipStatus){
+	uint8_t color[3];
+	if (chipStatus == 1){
+		memcpy(color, GREEN, 3);
+	} else
+		memcpy(color, RED, 3);
+
+	uint8_t barWidth = 10;
+	uint8_t barLength = 40;
+	uint8_t armWidth = 3;
+	uint8_t armLength = 22;
+
+	// Draw arms
+	uint16_t beginArm[] = {x, y};
+	uint16_t endArm[] = {x + armWidth, y + armLength};
+	addr = drawRect(addr, beginArm, endArm, WHITE, 2, 0);
+	beginArm[0] = x + barLength - armWidth; endArm[0] = endArm[0] + barLength - armWidth;
+	addr = drawRect(addr, beginArm, endArm, WHITE, 2, 0);
+
+	// Draw plate
+	uint16_t begin[] = {x, y + 22};
+	uint16_t end[] = {x + barLength, begin[1] + barWidth};
+	addr = drawRect(addr, begin, end, color, 2, 0);
+	return addr;
+}
+
+uint32_t drawDribbler(uint32_t addr, uint16_t x, uint16_t y, bool dribblerStatus){
+	uint8_t color[3];
+	if (dribblerStatus == 1){
+		memcpy(color, GREEN, 3);
+	} else
+		memcpy(color, RED, 3);
+
+	uint8_t barLength = 40;
+	uint8_t barWidth = 10;
+	uint16_t begin[] = {x, y};
+	uint16_t end[] = {x + barLength, y + barWidth};
+
+	addr = drawRect(addr, begin, end, color, 2, 0);
+	addr = drawDot(addr, (end[0] - x)/2 + x, end[1] + 15, 192, ORANGE);
+	return addr;
+}
+
+uint32_t drawStatusBar(uint32_t addr, uint16_t x, uint16_t y, uint8_t max, float value){
+	uint8_t barLength = 100;
+	uint8_t barWidth = 10;
+	uint16_t begin[] = {x, y + 1};
+	uint16_t end[] = {x + barLength, y + barWidth + 1};
+	addr = drawRect(addr, begin, end, WHITE, 2, 1);
+
+	if (max == MAX_X_VEL || max == MAX_Y_VEL){
+		char max_value[1]; itoa((int)max, max_value, 10); // convert max to string to draw
+		addr = drawString(addr, x - 15, y, 18, "0", WHITE);
+		addr = drawString(addr, end[0] + 8, y, 18, max_value, WHITE);
+		end[0] = ((value/(float)max)*barLength) + x;
+		addr = drawRect(addr, begin, end, WHITE, 2, 0);
+	} else if (max == MAX_ANGLE){
+		addr = drawString(addr, x - 48, y, 18, "-3.14", WHITE);
+		addr = drawString(addr, end[0] + 9, y, 18, "3.14", WHITE);
+		if (value < 0){
+			Putty_printf("value: %f \n\r", value);
+			int abs_value = (int)(fabsf(value));
+			// TODO: fix
+		} else {
+//			end[0] = (fabsf(value)/(float)max) + x + (barLength/2);
+		}
+		addr = drawRect(addr, begin, end, WHITE, 2, 0);
+	} else if (max == MAX_BAT){
+
+	}
+
+	char value_value[4]; sprintf(value_value, "%.1f", value);
+	addr = drawString(addr, x + 2, y + 3, 16, value_value, RTTRED);
 	return addr;
 }
