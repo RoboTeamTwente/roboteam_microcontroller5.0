@@ -40,6 +40,8 @@ uint8_t GPIO_DIR[] 		= {0x80};
 uint8_t GPIO[] 			= {0x80};
 uint8_t PCLK[] 			= {0x5};
 uint8_t EXTENDED_MODE[]	= {0x0};
+uint8_t INV_ROT[]		= {0x1};
+uint8_t NORM_ROT[]		= {0x0};
 
 /* DRAWING */
 uint8_t DISPLAY[] 		= {0x0, 0x0, 0x0, 0x0};

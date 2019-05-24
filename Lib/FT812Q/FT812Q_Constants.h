@@ -43,6 +43,7 @@
 #define REG_TOUCH_CONFIG 				0x302168
 #define REG_TOUCH_MODE					0x302104
 #define REG_TOUCH_SCREEN_XY				0x302124
+#define REG_ROTATE						0X302058				
 
 /* DISPLAY LIST WRITE */
 #define RAM_DL							0x300000
@@ -81,6 +82,8 @@ extern uint8_t GPIO_DIR[];
 extern uint8_t GPIO[];
 extern uint8_t PCLK[];
 extern uint8_t EXTENDED_MODE[];
+extern uint8_t INV_ROT[];
+extern uint8_t NORM_ROT[];
 
 /* DRAWING */
 extern uint8_t DISPLAY[];

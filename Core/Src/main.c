@@ -445,6 +445,11 @@ int main(void)
 //  drawBasestation(1);
   uint16_t* touchPoint;
   uint8_t result;
+  bool option = false;
+  state = INIT;
+  uint8_t kickPower = 50;
+  uint8_t chipPower = 50;
+  int dribbleSpeed = 50;
 
   SX = Wireless_Init(20, COMM_SPI);
   MTi = MTi_Init(6,XFP_VRU_general);
@@ -512,41 +517,144 @@ int main(void)
 	  }
 
 	  // Screen
-	  switch(state){
-	  case INIT:
-		  display_Init();
-		  state = MAIN;
-		  break;
-	  case MAIN:
-		  drawBasestation(1);
-		  state = READ_TOUCH_ID;
-		  break;
-	  case READ_TOUCH_ID:
-		  touchPoint = readTouch();
-		  result = isInArea(touchPoint);
-		  if (result < ROBOT_ID_MAX + 1){
-			  test2->robotID = result; // TODO: not call test
-			  state = ROBOT;
+	  // if (option == true){ // basestation
+		 //  switch(state){
+		 //  case INIT:
+			//   display_Init();
+			//   state = MAIN;
+			//   break;
+		 //  case MAIN:
+			//   drawBasestation(1);
+			//   state = READ_TOUCH_ID;
+			//   break;
+		 //  case READ_TOUCH_ID:
+			//   touchPoint = readTouch();
+			//   result = isInArea(touchPoint);
+			//   if (result < ROBOT_ID_MAX + 1){
+			// 	  test2->robotID = result; // TODO: not call test
+			// 	  state = ROBOT;
+			// 	  break;
+			//   } else if (result == MENU_VALUE){
+			//   	  state = MENU;
+			//   	  break;
+			//   }else {
+			// 	  state = READ_TOUCH_ID;
+			// 	  break;
+			//   }
+		 //  case ROBOT:
+			//   drawRobotInfo(test2->robotID, 1);
+			//   state = READ_TOUCH_RETURN;
+			//   break;
+		 //  case READ_TOUCH_RETURN:
+			//   touchPoint = readTouch();
+			//   result = isInArea(touchPoint);
+			//   if (result == RETURN_VALUE){
+			// 	  state = MAIN;
+			// 	  break;
+			//   } else {
+			// 	  state = READ_TOUCH_RETURN;
+			// 	  break;
+			//   }
+		 //  case MENU:
+		 //  		drawMenu(0);
+		 //  		state = READ_TOUCH_MENU; 
+		 //  		break;
+		 //  case READ_TOUCH_MENU:
+		 //  	touchPoint = readTouch();
+		 //  	result = isInArea(touchPoint);
+		 //  	if (result == POWERDOWN_VALUE){
+		 //  		drawMenu(1);
+		 //  		break;
+		 //  	} else if (result == RETURN_VALUE){
+		 //  		state = MAIN;
+		 //  		break;
+		 //  	} else {
+		 //  		state = READ_TOUCH_MENU;
+		 //  		break;
+		 //  	}
+		 //  }
+		// } else if (option == false){
+			switch(state){
+		  case INIT:
+			  display_Init();
+			  state = MAIN_MENU;
 			  break;
-		  } else {
-			  state = READ_TOUCH_ID;
-			  break;
-		  }
-	  case ROBOT:
-		  drawRobotInfo(test2->robotID, 1);
-		  state = READ_TOUCH_RETURN;
-		  break;
-	  case READ_TOUCH_RETURN:
-		  touchPoint = readTouch();
-		  result = isInArea(touchPoint);
-		  if (result == RETURN_VALUE){
-			  state = MAIN;
-			  break;
-		  } else {
-			  state = READ_TOUCH_RETURN;
-			  break;
-		  }
-	  }
+		  case MAIN_MENU:
+		  	  drawMainMenu();
+		  	  state = READ_TOUCH_MAIN_MENU;
+		  	  break;
+		  case READ_TOUCH_MAIN_MENU:
+		  	  touchPoint = readTouch();
+		  	  result = isInArea(touchPoint);
+		  	  if (result == CONTROL_VALUE){
+		  	  	state = CONTROL_MENU;
+		  	  	break;
+		  	  } else {
+		  	  	state = READ_TOUCH_MAIN_MENU;
+		  	  	break;
+		  	  }
+		  case CONTROL_MENU:
+		  	  drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  state = READ_TOUCH_CONTROL;
+		  	  break;
+		  case READ_TOUCH_CONTROL:
+		   	  touchPoint = readTouch();
+		  	  result = isInArea(touchPoint);
+		  	  HAL_Delay(50);
+		  	  if (result == KICK_PLUS){
+		  	  	kickPower++;
+		  	  	if (kickPower >= MAX_KICK){kickPower = MAX_KICK;}
+		  	  	drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else if (result == KICK_MINUS){
+		  	  	kickPower--;
+		  	  	if (kickPower <= 1){kickPower = 1;}
+		  	  	drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else if (result == CHIP_PLUS){
+		  	  	chipPower++;
+		  	  	if (chipPower >= MAX_CHIP){chipPower = MAX_CHIP;}
+		  	  	drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;	
+		  	  } else if (result == CHIP_MINUS){
+		  	  	chipPower--;
+		  	  	if (chipPower <= 1){chipPower = 1;}
+		  	  	drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else if (result == KICK_VALUE){
+		  	  	shoot_Shoot(shoot_Kick);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else if (result == CHIP_VALUE){
+		  	  	shoot_Shoot(shoot_Chip);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else if (result == DRIBBLE_PLUS){
+		  	  	dribbleSpeed++;
+		  	  	if (dribbleSpeed >= MAX_DRIBBLE){dribbleSpeed = MAX_DRIBBLE;}
+		  	  	drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;	
+		  	  } else if (result == DRIBBLE_MINUS){
+		  	  	dribbleSpeed--;
+		  	  	if (dribbleSpeed <= 1){dribbleSpeed = 1;}
+		  	  	drawControlMenu(kickPower, chipPower, dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else if (result == DRIBBLE_VALUE){
+		  	  	dribbler_SetSpeed(dribbleSpeed);
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  } else {
+		  	  	state = READ_TOUCH_CONTROL;
+		  	  	break;
+		  	  }
+		  	}
+	// }
 
 
     /* USER CODE END WHILE */

@@ -45,15 +45,34 @@ extern uint8_t* 	DispBuf;			// pointer to display buffer
 
 /* STATE MACHINE */
 enum states {
-    INIT,
-    MAIN,
-	READ_TOUCH_ID,
-	READ_TOUCH_RETURN,
-    ROBOT,
+	CONTROL, // robot
+	CONTROL_MENU, // robot
+    INIT, 
+    MAIN, // basestation
+    MAIN_MENU, // robot
+    MENU, // basestation
+    READ_TOUCH_CONTROL, // robot
+	READ_TOUCH_ID, // basestation
+	READ_TOUCH_RETURN, // basestation
+	READ_TOUCH_MAIN_MENU, // robot
+	READ_TOUCH_MENU, // basestation
+    ROBOT, // basestation
 } state;
 
 #define ROBOT_ID_MAX	15
-#define RETURN_VALUE	100
+#define CHIP_PLUS		100
+#define CHIP_MINUS		101
+#define CHIP_VALUE		102
+#define CONTROL_VALUE   103
+#define DRIBBLE_PLUS	104
+#define DRIBBLE_MINUS	105
+#define DRIBBLE_VALUE	106
+#define KICK_PLUS		107
+#define KICK_MINUS		108
+#define KICK_VALUE		109
+#define MENU_VALUE		110
+#define POWERDOWN_VALUE 111
+#define RETURN_VALUE	112
 #define	NO_TOUCH		200
 
 typedef struct testStruct {

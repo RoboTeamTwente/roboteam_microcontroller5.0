@@ -52,6 +52,7 @@ void display_Init(){
 
 void display_DeInit(){
 	writeDisplay(DISPLAY_SET_POWERDOWN, 0x3, POWERDOWN);
+	HAL_Delay(300);
 }
 
 uint32_t writeDispBuf(uint32_t base, uint32_t size, uint8_t* data){
@@ -150,6 +151,20 @@ uint8_t	isInArea(uint16_t* point){
 				result = NO_TOUCH;
 				break;
 			}
+		} else if ((touchPoint[0] < 480 && touchPoint[0] > 420) && (touchPoint[1] < 60 && touchPoint[1] > 0)){
+			result = MENU_VALUE;
+			break;
+		} else {
+			result = NO_TOUCH;
+			break;
+		}
+	case READ_TOUCH_MENU:
+		if ((touchPoint[0] < 340 && touchPoint[0] > 140) && (touchPoint[1] < 172 && touchPoint[1] > 100)){
+			result = POWERDOWN_VALUE;
+			break;
+		} else if ((touchPoint[0] < 60 && touchPoint[0] > 0) && (touchPoint[1] < 60 && touchPoint[1] > 0)){
+			result = RETURN_VALUE;
+			break;
 		} else {
 			result = NO_TOUCH;
 			break;
@@ -157,6 +172,50 @@ uint8_t	isInArea(uint16_t* point){
 	case READ_TOUCH_RETURN:
 		if ((touchPoint[0] < 60 && touchPoint[0] > 0) && (touchPoint[1] < 60 && touchPoint[1] > 0)) {
 			result = RETURN_VALUE;
+			break;
+		} else {
+			result = NO_TOUCH;
+			break;
+		}
+	case READ_TOUCH_MAIN_MENU:
+		touchPoint[0] = XRES - touchPoint[0];
+		touchPoint[1] = YRES - touchPoint[1];
+		if ((touchPoint[0] < 480 && touchPoint[0] > 240) && (touchPoint[1] < 272 && touchPoint[1] > 0)){
+			result = CONTROL_VALUE;
+			break;
+		} else {
+			result = NO_TOUCH;
+			break;
+		}
+	case READ_TOUCH_CONTROL:
+		touchPoint[0] = XRES - touchPoint[0];
+		touchPoint[1] = YRES - touchPoint[1];
+		if ((touchPoint[0] < 90 && touchPoint[0] > 6) && (touchPoint[1] < 122 && touchPoint[1] > 82)){
+			result = KICK_PLUS;
+			break;
+		} else if ((touchPoint[0] < 190 && touchPoint[0] > 106) && (touchPoint[1] < 122 && touchPoint[1] > 82)){
+			result = KICK_MINUS;
+			break;
+		} else if ((touchPoint[0] < 90 && touchPoint[0] > 6) && (touchPoint[1] < 252 && touchPoint[1] > 90)){
+			result = CHIP_PLUS;
+			break;
+		} else if ((touchPoint[0] < 190 && touchPoint[0] > 106) && (touchPoint[1] < 252 && touchPoint[1] > 212)){
+			result = CHIP_MINUS;
+			break;
+		} else if ((touchPoint[0] < 190 && touchPoint[0] > 6) && (touchPoint[1] < 50 && touchPoint[1] > 10)){
+			result = KICK_VALUE;
+			break;
+		} else if ((touchPoint[0] < 190 && touchPoint[0] > 6) && (touchPoint[1] < 180 && touchPoint[1] > 140)){
+			result = CHIP_VALUE;
+			break;
+		} else if ((touchPoint[0] < 394 && touchPoint[0] > 106) && (touchPoint[1] < 50 && touchPoint[1] > 10)){
+			result = DRIBBLE_VALUE;
+			break;
+		} else if ((touchPoint[0] < 294 && touchPoint[0] > 210) && (touchPoint[1] < 122 && touchPoint[1] > 82)){
+			result = DRIBBLE_PLUS;
+			break;
+		} else if ((touchPoint[0] < 394 && touchPoint[0] > 310) && (touchPoint[1] < 122 && touchPoint[1] > 82)){
+			result = DRIBBLE_MINUS;
 			break;
 		} else {
 			result = NO_TOUCH;
