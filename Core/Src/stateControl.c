@@ -42,6 +42,8 @@ int stateControl_DeInit(){
 
 void stateControl_Update(){
 	if (status == on){
+
+		state[body_w] = 0.0;
 		float translationalRef[4] = {0.0f};
 		translationVelControl(state, stateRef, translationalRef);
 
