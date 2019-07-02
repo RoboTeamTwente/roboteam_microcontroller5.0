@@ -229,7 +229,62 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	else if(htim->Instance == htim7.Instance) {
 		if (xsens_CalibrationDone) {	// don't do control until xsens calibration is done
-			if (!test_isTestRunning()) {
+			// SQUARE WITH 90 DEGREES TURNS AT SIDES
+			float velocityRef[3];
+			velocityRef[0] = 0.0;
+			velocityRef[1] = 0.0;
+			velocityRef[2] = 0.0*M_PI;
+
+			static bool firstTime = true;
+			static int velTimer = 0;
+			static int count = 0;
+			float v = 0.5;
+			int reps = 1;
+			int t = 1500;
+
+			if (HAL_GetTick() < 10000) {
+				velTimer = HAL_GetTick();
+			} else if (HAL_GetTick() - velTimer < t) {
+				velocityRef[body_x] = v;
+				velocityRef[body_y] = 0.0;
+				velocityRef[body_w] = 0.0;
+			} else if (HAL_GetTick() - velTimer < 2*t) {
+				velocityRef[body_x] = v;
+				velocityRef[body_y] = 0.0;
+				velocityRef[body_w] = 0.5*M_PI;
+			} else if (HAL_GetTick() - velTimer < 3*t) {
+				velocityRef[body_x] = 0.0;
+				velocityRef[body_y] = v;
+				velocityRef[body_w] = 0.0;
+			} else if (HAL_GetTick() - velTimer < 4*t) {
+				velocityRef[body_x] = 0.0;
+				velocityRef[body_y] = v;
+				velocityRef[body_w] = 0.5*M_PI;
+			} else if (HAL_GetTick() - velTimer < 5*t) {
+				velocityRef[body_x] = -v;
+				velocityRef[body_y] = 0.0;
+				velocityRef[body_w] = 0.0;
+			} else if (HAL_GetTick() - velTimer < 6*t) {
+				velocityRef[body_x] = -v;
+				velocityRef[body_y] = 0.0;
+				velocityRef[body_w] = 0.5*M_PI;
+			} else if (HAL_GetTick() - velTimer < 7*t) {
+				velocityRef[body_x] = 0.0;
+				velocityRef[body_y] = -v;
+				velocityRef[body_w] = 0.0;
+			} else if (HAL_GetTick() - velTimer < 8*t) {
+				velocityRef[body_x] = 0.0;
+				velocityRef[body_y] = -v;
+				velocityRef[body_w] = 0.5*M_PI;
+			} else if (count < reps-1) {
+				velTimer = HAL_GetTick();
+				count++;
+			}
+
+			stateControl_SetRef(velocityRef);
+
+
+//			if (!test_isTestRunning()) {
 				// State estimation
 				stateInfo.visionAvailable = receivedData.visionAvailable;
 				stateInfo.visionYaw = receivedData.visionYaw;
@@ -247,26 +302,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				stateControl_SetState(stateEstimation_GetState());
 				stateControl_Update();
 
-				if (halt || !yaw_hasCalibratedOnce()) {
-					float emptyRef[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-					wheels_SetRef(emptyRef);
-				}
-				else {
-					// Wheel control
-					wheels_SetRef(stateControl_GetWheelRef());
-				}
+//				if (halt || !yaw_hasCalibratedOnce()) {
+//					float emptyRef[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+//					wheels_SetRef(emptyRef);
+//				}
+//				else {
+//					// Wheel control
+//					wheels_SetRef(stateControl_GetWheelRef());
+//				}
+				wheels_SetRef(stateControl_GetWheelRef());
 			}
-			static int wirelessCounter = 0;
-			if (!checkWirelessConnection() && wirelessCounter > 1.25/TIME_DIFF && !test_isTestRunning()){
-				yaw_ResetCalibration();
-			} else if (!checkWirelessConnection()){
-				wheels_Update();
-				wirelessCounter += 1;
-			} else {
-				wirelessCounter = 0;
-				wheels_Update();
-			}
-		}
+//			static int wirelessCounter = 0;
+//			if (!checkWirelessConnection() && wirelessCounter > 1.25/TIME_DIFF && !test_isTestRunning()){
+//				yaw_ResetCalibration();
+//			} else if (!checkWirelessConnection()){
+//				wheels_Update();
+//				wirelessCounter += 1;
+//			} else {
+//				wirelessCounter = 0;
+//				wheels_Update();
+//			}
+			wheels_Update();
+//		}
 	}
 	else if (htim->Instance == htim10.Instance) {
 		buzzer_Callback();
@@ -296,15 +353,15 @@ void printReceivedData(ReceivedData* receivedData) {
 void printRobotStateData() {
 	Putty_printf("\n\r");
 	Putty_printf("-------Robot state data--------\n\r");
-	Putty_printf("halt? %u\n\r", halt);
-	Putty_printf("velocity (Kalman):\n\r");
-	Putty_printf("  x: %f m/s\n\r", stateEstimation_GetState()[body_x]);
-	Putty_printf("  y: %f m/s\n\r", stateEstimation_GetState()[body_y]);
-	Putty_printf("acceleration (xsens):\n\r");
-	Putty_printf("  x: %f m/s^2\n\r", MTi->acc[body_x]);
-	Putty_printf("  y: %f m/s^2\n\r", MTi->acc[body_y]);
-	Putty_printf("yaw (calibrated): %f rad\n\r", stateEstimation_GetState()[body_w]);
-	Putty_printf("Xsens rate of turn: %f rad/s\n\r", MTi->gyr[2]);
+//	Putty_printf("halt? %u\n\r", halt);
+//	Putty_printf("velocity (Kalman):\n\r");
+//	Putty_printf("  x: %f m/s\n\r", stateEstimation_GetState()[body_x]);
+//	Putty_printf("  y: %f m/s\n\r", stateEstimation_GetState()[body_y]);
+//	Putty_printf("acceleration (xsens):\n\r");
+//	Putty_printf("  x: %f m/s^2\n\r", MTi->acc[body_x]);
+//	Putty_printf("  y: %f m/s^2\n\r", MTi->acc[body_y]);
+//	Putty_printf("yaw (calibrated): %f rad\n\r", stateEstimation_GetState()[body_w]);
+//	Putty_printf("Xsens rate of turn: %f rad/s\n\r", MTi->gyr[2]);
 	Putty_printf("wheel refs:\n\r");
 	Putty_printf("  RF: %f rad/s\n\r", stateControl_GetWheelRef()[wheels_RF]);
 	Putty_printf("  RB: %f rad/s\n\r", stateControl_GetWheelRef()[wheels_RB]);
@@ -320,16 +377,16 @@ void printRobotStateData() {
 	Putty_printf("  RB: %d \n\r", wheels_GetPWM()[wheels_RB]);
 	Putty_printf("  LB: %d \n\r", wheels_GetPWM()[wheels_LB]);
 	Putty_printf("  LF: %d \n\r", wheels_GetPWM()[wheels_LF]);
-	Putty_printf("wheel locked:\n\r");
-	Putty_printf("  RF: %s \n\r", read_Pin(RF_LOCK_pin) ? "yes" : "no");
-	Putty_printf("  RB: %s \n\r", read_Pin(RB_LOCK_pin) ? "yes" : "no");
-	Putty_printf("  LB: %s \n\r", read_Pin(LB_LOCK_pin) ? "yes" : "no");
-	Putty_printf("  LF: %s \n\r", read_Pin(LF_LOCK_pin) ? "yes" : "no");
-	Putty_printf("Geneva: \n\r");
-	Putty_printf("  encoder: %d \n\r", geneva_GetEncoder());
-	Putty_printf("  pwm: %d\n\r", geneva_GetPWM());
-	Putty_printf("  ref: %f\n\r", geneva_GetRef());
-	Putty_printf("  I: %f\n\r", geneva_GetI());
+//	Putty_printf("wheel locked:\n\r");
+//	Putty_printf("  RF: %s \n\r", read_Pin(RF_LOCK_pin) ? "yes" : "no");
+//	Putty_printf("  RB: %s \n\r", read_Pin(RB_LOCK_pin) ? "yes" : "no");
+//	Putty_printf("  LB: %s \n\r", read_Pin(LB_LOCK_pin) ? "yes" : "no");
+//	Putty_printf("  LF: %s \n\r", read_Pin(LF_LOCK_pin) ? "yes" : "no");
+//	Putty_printf("Geneva: \n\r");
+//	Putty_printf("  encoder: %d \n\r", geneva_GetEncoder());
+//	Putty_printf("  pwm: %d\n\r", geneva_GetPWM());
+//	Putty_printf("  ref: %f\n\r", geneva_GetRef());
+//	Putty_printf("  I: %f\n\r", geneva_GetI());
 }
 
 void printBaseStation() {
@@ -469,8 +526,14 @@ int main(void)
 		  clearReceivedData(&receivedData);
 	  }
 
+//	  static bool first = true;
+//	  if (HAL_GetTick() > 10000 && first) {
+//		  test_RunTest(square);
+//		  first = false;
+//	  }
+
 	  test_Update(&receivedData);
-	  executeCommands(&receivedData);
+//	  executeCommands(&receivedData);
 
 	  /*
 	   * Print stuff on PuTTY for debugging

@@ -265,6 +265,7 @@ status executeSquareDrive(ReceivedData* receivedData) {
 	velocityRef[1] = 0.0;
 	velocityRef[2] = 0.0*M_PI;
 
+	static bool firstTime = true;
 	static int velTimer = 0;
 	static int count = 0;
 	float v = 0.5;
@@ -305,20 +306,24 @@ status executeSquareDrive(ReceivedData* receivedData) {
 	} else if (count < reps-1) {
 		velTimer = HAL_GetTick();
 		count++;
-	} else if (HAL_GetTick() - velTimer > 10*t) {
+	} else if (firstTime) {
 		velTimer = HAL_GetTick();
-		Putty_printf("---------- Start test! ----------\n\r");
+		Putty_printf("\tstarting square drive...\n\r");
+		firstTime = false;
 	} else {
 		velocityRef[body_x] = 0.0;
 		velocityRef[body_y] = 0.0;
 		velocityRef[body_w] = 0.0;
 		Putty_printf("---------- End of test ----------\n\r");
+		firstTime = true;
 		return test_done;
 	}
 
-	receivedData->stateRef[body_x] = velocityRef[body_x];
-	receivedData->stateRef[body_y] = velocityRef[body_y];
-	receivedData->stateRef[body_w] = velocityRef[body_w];
+//	receivedData->stateRef[body_x] = velocityRef[body_x];
+//	receivedData->stateRef[body_y] = velocityRef[body_y];
+//	receivedData->stateRef[body_w] = velocityRef[body_w];
+
+	stateControl_SetRef(velocityRef);
 
 	return test_running;
 }
