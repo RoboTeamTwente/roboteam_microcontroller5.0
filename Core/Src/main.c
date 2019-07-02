@@ -293,7 +293,7 @@ void printReceivedData(ReceivedData* receivedData) {
 	Putty_printf("\n\r");
 }
 
-void printRobotStateData(StateInfo* stateInfo) {
+void printRobotStateData() {
 	Putty_printf("\n\r");
 	Putty_printf("-------Robot state data--------\n\r");
 	Putty_printf("halt? %u\n\r", halt);
@@ -301,20 +301,20 @@ void printRobotStateData(StateInfo* stateInfo) {
 	Putty_printf("  x: %f m/s\n\r", stateEstimation_GetState()[body_x]);
 	Putty_printf("  y: %f m/s\n\r", stateEstimation_GetState()[body_y]);
 	Putty_printf("acceleration (xsens):\n\r");
-	Putty_printf("  x: %f m/s^2\n\r", stateInfo->xsensAcc[body_x]);
-	Putty_printf("  y: %f m/s^2\n\r", stateInfo->xsensAcc[body_y]);
+	Putty_printf("  x: %f m/s^2\n\r", MTi->acc[body_x]);
+	Putty_printf("  y: %f m/s^2\n\r", MTi->acc[body_y]);
 	Putty_printf("yaw (calibrated): %f rad\n\r", stateEstimation_GetState()[body_w]);
-	Putty_printf("Xsens rate of turn: %f rad/s\n\r", stateInfo->rateOfTurn);
+	Putty_printf("Xsens rate of turn: %f rad/s\n\r", MTi->gyr[2]);
 	Putty_printf("wheel refs:\n\r");
 	Putty_printf("  RF: %f rad/s\n\r", stateControl_GetWheelRef()[wheels_RF]);
 	Putty_printf("  RB: %f rad/s\n\r", stateControl_GetWheelRef()[wheels_RB]);
 	Putty_printf("  LB: %f rad/s\n\r", stateControl_GetWheelRef()[wheels_LB]);
 	Putty_printf("  LF: %f rad/s\n\r", stateControl_GetWheelRef()[wheels_LF]);
 	Putty_printf("wheel speeds (encoders):\n\r");
-	Putty_printf("  RF: %f rad/s\n\r", stateInfo->wheelSpeeds[wheels_RF]);
-	Putty_printf("  RB: %f rad/s\n\r", stateInfo->wheelSpeeds[wheels_RB]);
-	Putty_printf("  LB: %f rad/s\n\r", stateInfo->wheelSpeeds[wheels_LB]);
-	Putty_printf("  LF: %f rad/s\n\r", stateInfo->wheelSpeeds[wheels_LF]);
+	Putty_printf("  RF: %f rad/s\n\r", wheels_GetState()[wheels_RF]);
+	Putty_printf("  RB: %f rad/s\n\r", wheels_GetState()[wheels_RB]);
+	Putty_printf("  LB: %f rad/s\n\r", wheels_GetState()[wheels_LB]);
+	Putty_printf("  LF: %f rad/s\n\r", wheels_GetState()[wheels_LF]);
 	Putty_printf("wheel pwm:\n\r");
 	Putty_printf("  RF: %d \n\r", wheels_GetPWM()[wheels_RF]);
 	Putty_printf("  RB: %d \n\r", wheels_GetPWM()[wheels_RB]);
@@ -329,6 +329,7 @@ void printRobotStateData(StateInfo* stateInfo) {
 	Putty_printf("  encoder: %d \n\r", geneva_GetEncoder());
 	Putty_printf("  pwm: %d\n\r", geneva_GetPWM());
 	Putty_printf("  ref: %f\n\r", geneva_GetRef());
+	Putty_printf("  I: %f\n\r", geneva_GetI());
 }
 
 void printBaseStation() {
@@ -410,7 +411,7 @@ int main(void)
   geneva_Init();
   shoot_Init();
   dribbler_Init();
-  ballSensorInit();
+  ballSensor_Init();
   buzzer_Init();
   
   SX = Wireless_Init(20, COMM_SPI);
@@ -434,25 +435,25 @@ int main(void)
 	  /*
 	   * Check for empty battery
 	   */
-//	  static int batCounter = 0;
-//	  if (read_Pin(Bat_pin) && batCounter > 1000){
-//		  Putty_printf("battery empty\n\r");
-//		  set_Pin(LED4_pin, 1);
-//		  Putty_DeInit();
-//		  wheels_DeInit();
-//		  stateControl_DeInit();
-//		  stateEstimation_DeInit();
-//		  geneva_DeInit();
-//		  shoot_DeInit();
-//		  dribbler_DeInit();
-//		  buzzer_DeInit();
-//		  MTi_DeInit(MTi);
-//		  Wireless_DeInit();
-//	  }else if (read_Pin(Bat_pin)) {
-//	  	  batCounter += 1;
-//	  } else {
-//		  batCounter = 0;
-//	  }
+	  static int batCounter = 0;
+	  if (read_Pin(Bat_pin) && batCounter > 1000){
+		  Putty_printf("battery empty\n\r");
+		  Putty_DeInit();
+		  wheels_DeInit();
+		  stateControl_DeInit();
+		  stateEstimation_DeInit();
+		  geneva_DeInit();
+		  shoot_DeInit();
+		  dribbler_DeInit();
+		  ballSensor_DeInit();
+		  buzzer_DeInit();
+		  MTi_DeInit(MTi);
+		  Wireless_DeInit();
+	  }else if (read_Pin(Bat_pin)) {
+	  	  batCounter += 1;
+	  } else {
+		  batCounter = 0;
+	  }
 
 	  IWDG_Refresh(iwdg);
 	  Putty_Callback();
@@ -462,7 +463,6 @@ int main(void)
 	   * Check for wireless data
 	   */
 	  xsens_CalibrationDone = (MTi->statusword & (0x18)) == 0; // if bits 3 and 4 of status word are zero, calibration is done
-	  set_Pin(LED1_pin, !xsens_CalibrationDone);
 	  halt = !(xsens_CalibrationDone && checkWirelessConnection());
 	  if (halt) {
 		  stateControl_ResetAngleI();
@@ -481,8 +481,30 @@ int main(void)
 		  toggle_Pin(LED0_pin);
 //		  printBaseStationData();
 //		  printReceivedData(&receivedData);
-//		  printRobotStateData(&stateInfo);
+//		  printRobotStateData();
 	  }
+
+	  /*
+	   * LEDs for debugging
+	   */
+
+	  // LED0 : toggled every second while alive
+	  // LED1 : on while xsens startup calibration is not finished
+	  // LED2 : on when one of the wheels is stuck
+	  // LED3 : on when halting
+	  // LED4 : on when ballsensor says ball is within kicking range
+	  // LED5 : on when battery is empty
+	  // LED6 : toggled when a packet is received
+
+	  // TODO: do using isAWheelLocked() in ballsensor_3.0 branch
+	  bool wheelIsLocked = (read_Pin(RF_LOCK_pin) || read_Pin(RB_LOCK_pin)|| read_Pin(LB_LOCK_pin) || read_Pin(LF_LOCK_pin));
+	  // LED0 done in PuTTY prints above
+	  set_Pin(LED1_pin, !xsens_CalibrationDone);
+	  set_Pin(LED2_pin, wheelIsLocked);
+	  set_Pin(LED3_pin, halt);
+	  set_Pin(LED4_pin, ballPosition.canKickBall);
+	  set_Pin(LED5_pin, (read_Pin(Bat_pin) && batCounter > 1000));
+	  // LED6 done in Wireless.c
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
