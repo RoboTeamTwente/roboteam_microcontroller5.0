@@ -472,6 +472,8 @@ int main(void)
 	  test_Update(&receivedData);
 	  executeCommands(&receivedData);
 
+	  dribbler_SetSpeed(ballPosition.canSeeBall ? 80 : 0);
+
 	  /*
 	   * Print stuff on PuTTY for debugging
 	   */
