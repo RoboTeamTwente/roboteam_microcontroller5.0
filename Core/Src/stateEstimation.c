@@ -47,8 +47,11 @@ float* stateEstimation_GetState() {
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void wheels2Body(float wheelSpeeds[4], float output[3]){
-	//Applying transpose(M_inv) matrix to go from wheel angular velocity to body velocity (assuming no slip)
-	output[body_x] = (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_RB] - wheelSpeeds[wheels_LB] - wheelSpeeds[wheels_LF])/sin60 * rad_wheel/4;
-	output[body_y] = (wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_RB] - wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_LF])/cos60 * rad_wheel/4;
-	output[body_w] = (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_RB] + wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_LF])/rad_robot * rad_wheel/4;
+	static const float wheels2BodyI = 1 / (2 * sinFront + 2 * sinBack);
+	static const float wheels2BodyJ = cosFront / (2 * pow(cosFront, 2) + 2 * pow(cosBack, 2));
+	static const float wheels2BodyK = sinBack / (2 * sinFront + 2 * sinBack);
+
+	output[body_x] = wheels2BodyI * (-wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_LF] + wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_RB]) * rad_wheel;
+	output[body_y] = (wheels2BodyJ * (wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_LF]) + (1 - wheels2BodyJ) * (-wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_RB])) * rad_wheel;
+	output[body_w] = (wheels2BodyK * (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_LF]) + (1 - wheels2BodyK) * (wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_RB])) / rad_robot * rad_wheel;
 }

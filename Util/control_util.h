@@ -33,6 +33,10 @@
 #define rad_wheel 0.028F 	// wheel radius (m)
 #define cos60 0.5F		// cosine of 60 degrees (wheel angle is at 60 degrees)
 #define sin60 0.866F	// sine of 60 degrees
+#define cosFront 0.5F		// cosine of 60 degrees
+#define sinFront 0.866F		// sine of 60 degrees
+#define cosBack 0.866F		// cosine of 30 degrees
+#define sinBack 0.5F		// sine of 30 degrees
 
 // Wheels
 #define PWM_CUTOFF 200.0F // arbitrary treshold to avoid motor shutdown

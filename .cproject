@@ -249,5 +249,14 @@
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.debug.1091355869;fr.ac6.managedbuild.config.gnu.cross.exe.debug.1091355869.;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1973798156;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.1400750316">
+			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.debug.1396391450;fr.ac6.managedbuild.config.gnu.cross.exe.debug.1396391450.;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.351958162;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.438826351">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.release.52899850;fr.ac6.managedbuild.config.gnu.cross.exe.release.52899850.;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1973798156;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.1400750316">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

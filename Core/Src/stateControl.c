@@ -76,14 +76,11 @@ void stateControl_ResetAngleI(){
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void body2Wheels(float wheelSpeed[4], float vel[3]){
-	//mixing matrix
-	float velx2wheel = (vel[body_x]*sin60/rad_wheel);
-	float vely2wheel = (vel[body_y]*cos60/rad_wheel);
-	//float rot2wheel =  (rad_robot*vel[body_w]/rad_wheel);
-	wheelSpeed[wheels_RF] = (velx2wheel + vely2wheel);
-	wheelSpeed[wheels_RB] = (velx2wheel - vely2wheel);
-	wheelSpeed[wheels_LB] = (-velx2wheel - vely2wheel);
-	wheelSpeed[wheels_LF] = (-velx2wheel + vely2wheel);
+		float rot2wheel = rad_robot * vel[body_w];
+		wheelSpeed[wheels_RF] = (vel[body_x] * -sinFront + vel[body_y] * cosFront + rot2wheel) / rad_wheel;
+		wheelSpeed[wheels_LF] = (vel[body_x] * -sinFront + vel[body_y] * -cosFront + rot2wheel) / rad_wheel;
+		wheelSpeed[wheels_LB] = (vel[body_x] * sinBack + vel[body_y] * -cosBack + rot2wheel) / rad_wheel;
+		wheelSpeed[wheels_RB] = (vel[body_x] * sinBack + vel[body_y] * cosBack + rot2wheel) / rad_wheel;
 }
 
 static void global2Local(float global[3], float local[3], float  yaw){
