@@ -26,13 +26,6 @@ void stateEstimation_Update(StateInfo* input) {
 	float vel[2] = {0.0f};
 	wheels2Body(input->wheelSpeeds, vel);
 
-	static int count = 0;
-	if (count > 10) {
-		Putty_printf("%f %f \n\r", vel[0], vel[1]);
-		count = 0;
-	}
-	count++;
-
 	kalman_CalculateK();
 	kalman_Update(input->xsensAcc, vel);
 
@@ -54,11 +47,10 @@ float* stateEstimation_GetState() {
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void wheels2Body(float wheelSpeeds[4], float output[3]){
-	static const float wheels2BodyI = 1 / (2 * sinFront + 2 * sinBack);
-	static const float wheels2BodyJ = cosFront / (2 * pow(cosFront, 2) + 2 * pow(cosBack, 2));
-	static const float wheels2BodyK = sinBack / (2 * sinFront + 2 * sinBack);
+	static const float denominatorA = rad_wheel / (2 * (pow(sinFront, 2) + pow(sinBack, 2)));
+	static const float denominatorB = rad_wheel / (2 * (cosFront + cosBack));
 
-	output[body_y] = wheels2BodyI * (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_LF] - wheelSpeeds[wheels_LB] - wheelSpeeds[wheels_RB]) * rad_wheel;
-	output[body_x] = (wheels2BodyJ * (wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_LF]) + (1 - wheels2BodyJ) * (-wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_RB])) * rad_wheel;
-	output[body_w] = (wheels2BodyK * (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_LF]) + (1 - wheels2BodyK) * (wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_RB])) / rad_robot * rad_wheel;
+	output[body_x] = (sinFront * wheelSpeeds[wheels_RF] - sinFront * wheelSpeeds[wheels_LF] - sinBack * wheelSpeeds[wheels_LB] + sinBack * wheelSpeeds[wheels_RB]) * denominatorA;
+	output[body_y] = (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_LF] - wheelSpeeds[wheels_LB] - wheelSpeeds[wheels_RB]) * denominatorB;
+	output[body_w] = (cosBack * wheelSpeeds[wheels_RF] + cosBack * wheelSpeeds[wheels_LF] + cosFront * wheelSpeeds[wheels_LB] + cosFront * wheelSpeeds[wheels_RB]) * denominatorB / rad_wheel;
 }
