@@ -50,7 +50,7 @@ static void wheels2Body(float wheelSpeeds[4], float output[3]){
 	static const float denominatorA = rad_wheel / (2 * (pow(sinFront, 2) + pow(sinBack, 2)));
 	static const float denominatorB = rad_wheel / (2 * (cosFront + cosBack));
 
-	output[body_x] = (sinFront * wheelSpeeds[wheels_RF] - sinFront * wheelSpeeds[wheels_LF] - sinBack * wheelSpeeds[wheels_LB] + sinBack * wheelSpeeds[wheels_RB]) * denominatorA;
-	output[body_y] = (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_LF] - wheelSpeeds[wheels_LB] - wheelSpeeds[wheels_RB]) * denominatorB;
-	output[body_w] = (cosBack * wheelSpeeds[wheels_RF] + cosBack * wheelSpeeds[wheels_LF] + cosFront * wheelSpeeds[wheels_LB] + cosFront * wheelSpeeds[wheels_RB]) * denominatorB / rad_wheel;
+	output[body_x] = (sinFront * wheelSpeeds[wheels_RF] + sinBack * wheelSpeeds[wheels_RB] - sinBack * wheelSpeeds[wheels_LB] - sinFront * wheelSpeeds[wheels_LF]) * denominatorA;
+	output[body_y] = (wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_RB] - wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_LF]) * denominatorB;
+	output[body_w] = (cosBack * wheelSpeeds[wheels_RF] + cosFront * wheelSpeeds[wheels_RB] + cosFront * wheelSpeeds[wheels_LB] + cosBack * wheelSpeeds[wheels_LF]) * denominatorB / rad_wheel;
 }
