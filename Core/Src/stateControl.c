@@ -77,10 +77,10 @@ void stateControl_ResetAngleI(){
 
 static void body2Wheels(float wheelSpeed[4], float vel[3]){
 	float rot2wheel = rad_robot * vel[body_w];
-	wheelSpeed[wheels_RF] = (vel[body_x] * sinFront + vel[body_y] * cosFront + rot2wheel) / rad_wheel;
-	wheelSpeed[wheels_RB] = (vel[body_x] * sinBack + vel[body_y] * -cosBack + rot2wheel) / rad_wheel;
-	wheelSpeed[wheels_LB] = (vel[body_x] * -sinBack + vel[body_y] * -cosBack + rot2wheel) / rad_wheel;
-	wheelSpeed[wheels_LF] = (vel[body_x] * -sinFront + vel[body_y] * cosFront + rot2wheel) / rad_wheel;
+	wheelSpeed[wheels_RF] = (vel[body_x] * cosFront + vel[body_y] * sinFront + rot2wheel) / rad_wheel;
+	wheelSpeed[wheels_RB] = (vel[body_x] * cosBack + vel[body_y] * -sinBack + rot2wheel) / rad_wheel;
+	wheelSpeed[wheels_LB] = (vel[body_x] * -cosBack + vel[body_y] * -sinBack + rot2wheel) / rad_wheel;
+	wheelSpeed[wheels_LF] = (vel[body_x] * -cosFront + vel[body_y] * sinFront + rot2wheel) / rad_wheel;
 }
 
 static void global2Local(float global[3], float local[3], float  yaw){
