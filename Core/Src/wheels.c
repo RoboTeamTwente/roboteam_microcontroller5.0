@@ -53,6 +53,8 @@ int wheels_Init(){
 	start_PWM(PWM_RB); //RB
 	start_PWM(PWM_LB); //LB
 	start_PWM(PWM_LF); //LF
+	wheels_Brake(false); // Unbrake
+
 	return 0;
 }
 
@@ -66,6 +68,7 @@ int wheels_DeInit(){
 	stop_PWM(PWM_RB); //RB
 	stop_PWM(PWM_LB); //LB
 	stop_PWM(PWM_LF); //LF
+	wheels_Brake(true); // Brake
 
 	//TODO: Fix this huge stopping hack
 	for (int i=0; i<4; i++) {
@@ -124,6 +127,13 @@ bool wheels_IsAWheelLocked() {
 	return isAWheelLocked;
 }
 
+void wheels_Brake(bool brake) {
+	// Set pin to LOW to brake
+	set_Pin(RB_Brake_pin, !brake);
+	set_Pin(LB_Brake_pin, !brake);
+	set_Pin(RF_Brake_pin, !brake);
+	set_Pin(LF_Brake_pin, !brake);
+}
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 

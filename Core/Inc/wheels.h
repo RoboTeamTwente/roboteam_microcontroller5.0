@@ -34,4 +34,7 @@ int* wheels_GetPWM();
 
 bool wheels_IsAWheelLocked();
 
+// Active or deactive braking
+void wheels_Brake(bool brake);
+
 #endif /* WHEELS_H_ */
