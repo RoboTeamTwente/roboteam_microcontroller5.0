@@ -53,11 +53,6 @@ int wheels_Init(){
 	start_PWM(PWM_RB); //RB
 	start_PWM(PWM_LB); //LB
 	start_PWM(PWM_LF); //LF
-
-	lockPins[wheels_RF] = RF_LOCK_pin;
-	lockPins[wheels_RB] = RB_LOCK_pin;
-	lockPins[wheels_LB] = LB_LOCK_pin;
-	lockPins[wheels_LF] = LF_LOCK_pin;
 	return 0;
 }
 
