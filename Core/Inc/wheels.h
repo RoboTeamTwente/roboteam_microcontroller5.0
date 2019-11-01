@@ -32,9 +32,9 @@ float* wheels_GetState();
 
 int* wheels_GetPWM();
 
-bool wheels_IsAWheelLocked();
+bool wheels_IsBraking();
 
-// Active or deactive braking
+// Activate or deactivate braking
 void wheels_Brake(bool brake);
 
 #endif /* WHEELS_H_ */

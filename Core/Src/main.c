@@ -317,6 +317,7 @@ void printRobotStateData() {
 	Putty_printf("\n\r");
 	Putty_printf("-------Robot state data--------\n\r");
 	Putty_printf("halt? %u\n\r", halt);
+	Putty_printf("Braking? %u\n\r", wheels_IsBraking());
 	Putty_printf("velocity (Kalman):\n\r");
 	Putty_printf("  x: %f m/s\n\r", stateEstimation_GetState()[body_x]);
 	Putty_printf("  y: %f m/s\n\r", stateEstimation_GetState()[body_y]);
@@ -511,7 +512,7 @@ int main(void)
 	  AckData.rho = sqrt(vx*vx + vy*vy) / CONVERT_RHO;
 	  AckData.angle = stateEstimation_GetState()[body_w] / CONVERT_YAW_REF;
 	  AckData.theta = atan2(vy, vx) / 0.0062; // range is [-512, 511] instead of [-1024, 1023]
-	  AckData.wheelLocked = wheels_IsAWheelLocked();
+	  AckData.wheelLocked = wheels_IsBraking(); // TOOD Locked feedback has to be changed to brake feedback, also in PC code
 	  AckData.signalStrength = SX->Packet_status->RSSISync/2;
 	  //memset(&AckData,0xAB,8);
 
@@ -549,7 +550,7 @@ int main(void)
 
 	  // LED0 : toggled every second while alive
 	  // LED1 : on while xsens startup calibration is not finished
-	  // LED2 : on when one of the wheels is stuck
+	  // LED2 : on when braking
 	  // LED3 : on when halting
 	  // LED4 : on when ballsensor says ball is within kicking range
 	  // LED5 : on when battery is empty
@@ -557,7 +558,7 @@ int main(void)
 
 	  // LED0 done in PuTTY prints above
 	  set_Pin(LED1_pin, !xsens_CalibrationDone);
-	  set_Pin(LED2_pin, wheels_IsAWheelLocked());
+	  set_Pin(LED2_pin, wheels_IsBraking());
 	  set_Pin(LED3_pin, halt);
 	  set_Pin(LED4_pin, ballPosition.canKickBall);
 	  set_Pin(LED5_pin, (read_Pin(Bat_pin) && batCounter > 1000));
