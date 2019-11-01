@@ -52,7 +52,7 @@ int wheels_Init(){
 	start_PWM(PWM_RB); //RB
 	start_PWM(PWM_LB); //LB
 	start_PWM(PWM_LF); //LF
-	wheels_Brake(false); // Unbrake
+	wheels_Brake(true); // Brake on startup
 
 	return 0;
 }

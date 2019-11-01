@@ -128,6 +128,7 @@ volatile uint8_t feedback[ROBOPKTLEN] = {0};
 StateInfo stateInfo = {0.0f, false, {0.0}, 0.0f, 0.0f, {0.0}};
 bool halt = true;
 bool xsens_CalibrationDone = false;
+bool xsens_CalibrationDoneFirst = true;
 
 IWDG_Handle* iwdg;
 
@@ -490,6 +491,14 @@ int main(void)
 	  if (halt) {
 		  stateControl_ResetAngleI();
 		  clearReceivedData(&receivedData);
+	  }
+
+	  /*
+	   * Unbrake wheels when Xsens calibration is done
+	   */
+	  if (xsens_CalibrationDoneFirst && xsens_CalibrationDone) {
+		  xsens_CalibrationDoneFirst = false;
+		  wheels_Brake(false);
 	  }
 
 	  test_Update(&receivedData);
