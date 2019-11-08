@@ -28,12 +28,9 @@ void stateEstimation_Update(StateInfo* input) {
 
 	kalman_CalculateK();
 
-	// Function that applies the moving average to the Xsens data before it goes into the Kalman Filter
 	float meanAcc[2] = {0.0f};
 	movingAverage(input->xsensAcc, meanAcc);
-
-	//kalman_Update(input->xsensAcc, vel); 	// var = 6.25 Use for testing the kalman filter without MA.
-	kalman_Update(meanAcc, vel);			// var = 0.25 Use for testing the kalman filter with MA.
+	kalman_Update(meanAcc, vel);			// ACC_VAR = 0.25 (kalmanVariables.h)
 
 	float kalman_State[4] = {0.0f};
 	kalman_GetState(kalman_State);
@@ -41,8 +38,8 @@ void stateEstimation_Update(StateInfo* input) {
 	yaw_Calibrate(input->xsensYaw, input->visionYaw, input->visionAvailable, input->rateOfTurn);
 	float calibratedYaw = yaw_GetCalibratedYaw();
 
-	state[body_x] = kalman_State[0]; // Velocity of x
-	state[body_y] = kalman_State[2]; // Velocity of y
+	state[body_x] = kalman_State[0]; // Velocity in x direction
+	state[body_y] = kalman_State[2]; // Velocity in y direction
 	state[body_w] = calibratedYaw;
 }
 

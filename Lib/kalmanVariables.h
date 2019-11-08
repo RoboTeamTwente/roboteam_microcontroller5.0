@@ -19,44 +19,51 @@
 #define TIMESTEP 0.01
 
 // certainties
-#define VEL_VAR 0.000025F // variance in the velocity measurements
-#define ACC_VAR 6.25F // variance in the acceleration measurements
-#define STATE_VAR 0.5F // variance in the predicted state
-#define RAND_VAR 0.5F // variance in the random force
+#define VEL_VAR 0.000025F 	// variance in the velocity measurements
+#define ACC_VAR 0.25F 		// variance in the acceleration measurements (not definitive)
+#define STATE_VAR 0.5F 		// variance in the predicted state
+#define RAND_VAR 0.5F 		// variance in the random force
 
 ///////////////////////////////////////////////////// VARIABLES
 
 //create arrays
+// State transition model
 float aF[STATE*STATE] = {
 		1, TIMESTEP, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, TIMESTEP,
 		0, 0, 0, 1};
+// Observation model
 float aH[OBSERVE*STATE] = {
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1};
+// Covariance of observation noise
 float aR[OBSERVE*OBSERVE] = {
 		VEL_VAR, 0, 0, 0,
 		0, ACC_VAR, 0, 0,
 		0, 0, VEL_VAR, 0,
 		0, 0, 0, ACC_VAR};
+// Identity matrix
 float aI[STATE*STATE] = {
 		1,0,0,0,
 		0,1,0,0,
 		0,0,1,0,
 		0,0,0,1};
+//
 float aPold[STATE*STATE] = {
 		STATE_VAR,0,0,0,
 		0,STATE_VAR,0,0,
 		0,0,STATE_VAR,0,
 		0,0,0,STATE_VAR};
+// Control input model that is applied to the control vector
 float aB[STATE*STATE] = {
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1};
+// Covariance of process noise
 float aQ[STATE*STATE] = {
 		TIMESTEP*TIMESTEP*RAND_VAR, TIMESTEP*RAND_VAR, 0, 0,
 		TIMESTEP*RAND_VAR, RAND_VAR, 0, 0,
