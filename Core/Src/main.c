@@ -515,7 +515,7 @@ int main(void)
 	  float vy = stateEstimation_GetState()[body_y];
 	  AckData.rho = sqrt(vx*vx + vy*vy) / CONVERT_RHO;
 	  AckData.angle = stateEstimation_GetState()[body_w] / CONVERT_YAW_REF;
-	  AckData.theta = atan2(vy, vx) / 0.0062; // range is [-512, 511] instead of [-1024, 1023]
+	  AckData.theta = atan2(vy, vx) / CONVERT_THETA;
 	  AckData.wheelLocked = wheels_IsAWheelLocked();
 	  AckData.signalStrength = SX->Packet_status->RSSISync/2;
 	  //memset(&AckData,0xAB,8);
