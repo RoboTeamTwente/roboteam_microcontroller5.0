@@ -40,4 +40,7 @@ void stateEstimation_Update(StateInfo* input);
 
 float* stateEstimation_GetState();
 
+// Transforms local state to global state and returns
+float* stateEstimation_GetGlobalState();
+
 #endif /* DO_STATEESTIMATION_H_ */

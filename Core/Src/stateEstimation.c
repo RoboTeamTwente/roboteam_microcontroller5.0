@@ -4,11 +4,14 @@
 ///////////////////////////////////////////////////// VARIABLES
 
 static float state[3] = {0.0f};
+static float globalState[3] = {0.0f};
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
 //Transforms wheel speed to body velocity
 static void wheels2Body(float wheelSpeeds[4], float output[3]);
+// Transforms local state to global state
+static void local2Global(float global[3], float local[3]);
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTION IMPLEMENTATIONS
 
@@ -44,6 +47,11 @@ float* stateEstimation_GetState() {
 	return state;
 }
 
+float* stateEstimation_GetGlobalState() {
+	local2Global(globalState, state);
+	return globalState;
+}
+
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void wheels2Body(float wheelSpeeds[4], float output[3]){
@@ -51,4 +59,11 @@ static void wheels2Body(float wheelSpeeds[4], float output[3]){
 	output[body_x] = (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_RB] - wheelSpeeds[wheels_LB] - wheelSpeeds[wheels_LF])/sin60 * rad_wheel/4;
 	output[body_y] = (wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_RB] - wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_LF])/cos60 * rad_wheel/4;
 	output[body_w] = (wheelSpeeds[wheels_RF] + wheelSpeeds[wheels_RB] + wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_LF])/rad_robot * rad_wheel/4;
+}
+
+static void local2Global(float global[3], float local[3]){
+	float yaw = local[body_w];
+	global[body_x] = cosf(yaw)*local[body_x] - sinf(yaw)*local[body_y];
+	global[body_y] = sinf(yaw)*local[body_x] + cosf(yaw)*local[body_y];
+	global[body_w] = yaw;
 }

@@ -511,10 +511,10 @@ int main(void)
 	  AckData.genevaWorking = geneva_IsWorking();
 	  AckData.genevaState = geneva_GetState();
 
-	  float vx = stateEstimation_GetState()[body_x];
-	  float vy = stateEstimation_GetState()[body_y];
+	  float vx = stateEstimation_GetGlobalState()[body_x];
+	  float vy = stateEstimation_GetGlobalState()[body_y];
 	  AckData.rho = sqrt(vx*vx + vy*vy) / CONVERT_RHO;
-	  AckData.angle = stateEstimation_GetState()[body_w] / CONVERT_YAW_REF;
+	  AckData.angle = stateEstimation_GetGlobalState()[body_w] / CONVERT_YAW_REF;
 	  AckData.theta = atan2(vy, vx) / CONVERT_THETA;
 	  AckData.wheelLocked = wheels_IsAWheelLocked();
 	  AckData.signalStrength = SX->Packet_status->RSSISync/2;
