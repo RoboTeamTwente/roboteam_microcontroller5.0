@@ -43,6 +43,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "control_util.h"
 #include "gpio_util.h"
 #include "tim_util.h"
 #include "peripheral_util.h"
@@ -422,6 +423,7 @@ int main(void)
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
+  set_Pin(OUT1_pin, HIGH);  // reference pin for motor wattage
   set_Pin(OUT2_pin, HIGH);	// reference pin for feedback header
 
   Putty_Init();
@@ -433,12 +435,15 @@ int main(void)
   dribbler_Init();
   ballSensor_Init();
   buzzer_Init();
-  
+
   SX = Wireless_Init(COMMAND_CHANNEL, COMM_SPI);
   wirelessFeedback = true;//read_Pin(IN2_pin);	// check if we should enable feedback or not (jumper = feedback)
   MTi = MTi_Init(NO_ROTATION_TIME, XSENS_FILTER);
   uint16_t ID = get_Id();
   Putty_printf("\n\rID: %u\n\r",ID);
+  
+  // Check if robot has 30 W or 50 W motors (jumper = 50 W, no jumper = 30 W)
+  MOTORS_50W = read_Pin(IN1_pin);
 
   // start the wireless receiver
   // transmit feedback packet for every received packet if wirelessFeedback==true
@@ -496,6 +501,7 @@ int main(void)
 		  clearReceivedData(&receivedData);
 	  }
 
+	  Putty_printf("Motors 50 W? %u\n\r", MOTORS_50W);
 	  test_Update(&receivedData);
 	  executeCommands(&receivedData);
 
