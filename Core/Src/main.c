@@ -426,6 +426,11 @@ int main(void)
   set_Pin(OUT1_pin, HIGH);  // reference pin for motor wattage
   set_Pin(OUT2_pin, HIGH);	// reference pin for feedback header
 
+  // Check if robot has 30 W or 50 W motors (jumper = 50 W, no jumper = 30 W)
+  MOTORS_50W = read_Pin(IN1_pin);
+  // Initialize control constants
+  control_util_Init();
+
   Putty_Init();
   wheels_Init();
   stateControl_Init();
@@ -441,11 +446,6 @@ int main(void)
   MTi = MTi_Init(NO_ROTATION_TIME, XSENS_FILTER);
   uint16_t ID = get_Id();
   Putty_printf("\n\rID: %u\n\r",ID);
-  
-  // Check if robot has 30 W or 50 W motors (jumper = 50 W, no jumper = 30 W)
-  MOTORS_50W = read_Pin(IN1_pin);
-  // Initialize control constants
-  control_util_Init();
 
   // start the wireless receiver
   // transmit feedback packet for every received packet if wirelessFeedback==true
