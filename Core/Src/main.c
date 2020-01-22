@@ -444,6 +444,8 @@ int main(void)
   
   // Check if robot has 30 W or 50 W motors (jumper = 50 W, no jumper = 30 W)
   MOTORS_50W = read_Pin(IN1_pin);
+  // Initialize control constants
+  control_util_Init();
 
   // start the wireless receiver
   // transmit feedback packet for every received packet if wirelessFeedback==true
@@ -501,7 +503,6 @@ int main(void)
 		  clearReceivedData(&receivedData);
 	  }
 
-	  Putty_printf("Motors 50 W? %u\n\r", MOTORS_50W);
 	  test_Update(&receivedData);
 	  executeCommands(&receivedData);
 
