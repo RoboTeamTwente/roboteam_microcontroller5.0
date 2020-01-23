@@ -521,7 +521,7 @@ int main(void)
 	  AckData.rho = sqrt(vx*vx + vy*vy) / CONVERT_RHO;
 	  AckData.angle = stateEstimation_GetState()[body_w] / CONVERT_YAW_REF;
 	  AckData.theta = atan2(vy, vx) / 0.0062; // range is [-512, 511] instead of [-1024, 1023]
-	  AckData.wheelLocked = wheels_IsBraking(); // TOOD Locked feedback has to be changed to brake feedback, also in PC code
+	  AckData.wheelBraking = wheels_IsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
 	  AckData.signalStrength = SX->Packet_status->RSSISync/2;
 	  //memset(&AckData,0xAB,8);
 
