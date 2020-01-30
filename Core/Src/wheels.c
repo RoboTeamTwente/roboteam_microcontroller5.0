@@ -241,12 +241,14 @@ static void SetDir(){
 }
 
 static void checkEncoder(wheel_names wheel) {
+	static const int threshold = 10; // Number of ticks the encoder data can be the same before detection of unconnected encoder
+
 	bool A = read_Pin(encoderAPins[wheel]);
 	bool B = read_Pin(encoderBPins[wheel]);
 
 	// When pwm is larger than the cutoff pwm, but encoder is not moving, then there is no correct encoder data
 	if (!noEncoder[wheel] && (A == Aold[wheel] || B == Bold[wheel]) && fabs(pwm[wheel]) >= PWM_CUTOFF) {
-		if (count[wheel] >= 10) {
+		if (count[wheel] >= threshold) {
 			noEncoder[wheel] = true;
 		} else {
 			count[wheel]++;
