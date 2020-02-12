@@ -31,8 +31,14 @@
 // Robot
 #define rad_robot 0.081F 	// robot radius (m) (from center to wheel contact point)
 #define rad_wheel 0.028F 	// wheel radius (m)
-#define cos60 0.5F		// cosine of 60 degrees (wheel angle is at 60 degrees)
-#define sin60 0.866F	// sine of 60 degrees
+
+#define FRONT_ANGLE 30		// angle of front wheels (deg)
+#define BACK_ANGLE 60		// angle of back wheels (deg)
+#define cosFront cos(FRONT_ANGLE * M_PI/180)
+#define sinFront sin(FRONT_ANGLE * M_PI/180)
+#define cosBack cos(BACK_ANGLE * M_PI/180)
+#define sinBack sin(BACK_ANGLE * M_PI/180)
+
 bool MOTORS_50W;			// wattage of motors, true = 50 W, false = 30 W
 
 // Wheels
