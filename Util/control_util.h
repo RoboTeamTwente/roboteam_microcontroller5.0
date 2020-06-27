@@ -69,9 +69,9 @@ float WHEEL_REF_LIMIT; // [rad/s] Limit the maximum wheel reference to leave roo
 
 // Shoot
 #define MIN_KICK_TIME 8.2 				// minimum time period of kicking
-#define MAX_KICK_TIME 120 				// maximum time period of kicking
-#define MIN_CHIP_TIME 60 				// minimum time period of chipping
-#define MAX_CHIP_TIME 160 				// maximum time period of chipping
+#define MAX_KICK_TIME 60 				// maximum time period of kicking
+#define MIN_CHIP_TIME 10 				// minimum time period of chipping
+#define MAX_CHIP_TIME 100 				// maximum time period of chipping
 #define TIMER_FREQ 10000 			// frequency [Hz] of TIM6  (Clock frequency divided by prescaler)
 #define READY_CALLBACK_FREQ 1 		// frequency [Hz] of callback when shootState is Ready
 #define CHARGING_CALLBACK_FREQ 10 	// frequency [Hz] of callback when shootState is Charging
