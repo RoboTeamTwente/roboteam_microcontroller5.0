@@ -51,8 +51,8 @@ float MAX_VOLTAGE; // [V] see datasheet
 #define MAX_VOLTAGE_30W 12.0
 #define MAX_VOLTAGE_50W 24.0
 float SPEED_CONSTANT; //[(rad/s)/V] see datasheet
-#define SPEED_CONSTANT_30W 374.0
-#define SPEED_CONSTANT_50W 285.0
+#define SPEED_CONSTANT_30W 374.0F
+#define SPEED_CONSTANT_50W 285.0F
 #define PULSES_PER_ROTATION (float)4*1024 // number of pulses of the encoder per rotation of the motor (see datasheet)
 
 float OMEGAtoPWM; // conversion factor from wheel speed [rad/s] to required PWM on the motor
@@ -111,7 +111,7 @@ typedef enum {
 	idle
 }PID_states;// keeps track of the state of the system
 
-struct PIDstruct{
+static struct PIDstruct{
 	float kP;
 	float kI;
 	float kD;
@@ -122,7 +122,8 @@ struct PIDstruct{
 	float maxOutput;
 	float ramp;
 	float prev_PID;
-}static PIDdefault = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, TIME_DIFF, -1000000, 1000000, 1000000, 0};
+} PIDdefault = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, TIME_DIFF, -1000000, 1000000, 1000000, 0};
+
 
 typedef struct PIDstruct PIDvariables;
 
@@ -132,7 +133,7 @@ typedef struct PIDstruct PIDvariables;
  */
 inline void control_util_Init() {
 	MAX_VOLTAGE = MOTORS_50W ? MAX_VOLTAGE_50W : MAX_VOLTAGE_30W;
-	SPEED_CONSTANT = 2*PI/60.0 * (MOTORS_50W ? SPEED_CONSTANT_50W : SPEED_CONSTANT_30W);
+	SPEED_CONSTANT = 2*PI/60.0F * (MOTORS_50W ? SPEED_CONSTANT_50W : SPEED_CONSTANT_30W);
 	OMEGAtoPWM = (1/SPEED_CONSTANT)*(MAX_PWM/MAX_VOLTAGE)*GEAR_RATIO;
 	WHEEL_REF_LIMIT = WHEEL_REF_LIMIT_PWM/OMEGAtoPWM;
 }
