@@ -28,51 +28,25 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "BaseTypes.h"
-#include "AssuredPacket.h"
-#include "AssuredAck.h"
+#include "AssuredPacketManager.h"
 
-/**
- * @brief Three states to keep track of the state of an AssuredPacket message transmitted by the robot
- * READY : There is no AssuredPacket in transport, and such a packet can be sent
- * AWAITING_TRANSMISSION : There is an AssuredPacket in the buffer, which is ready to be sent
- * AWAITING_ACK : An AssuredPacket has been sent, and the APM is now waiting for an AssuredAck
- */
-typedef enum {
-    READY,
-    AWAITING_TRANSMISSION,
-    AWAITING_ACK
-} ASSURED_STATE ;
+#include "robot.h"
 
 // The time needed in milliseconds before a packet is being retransmitted
 static const RETRANSMISSION_DELAY_MS = 500;
-
-/**
- * @brief Struct to track the state, sequence number, and current message
- * 
- * @param state The state tracks if the APM is either READY, AWAITING_TRANSMISSION, or AWAITING_ACK.
- * @param transmission_timestamp The timestamp in milliseconds of the last transmission attempts. If the time 
- *  between this timestamp and the current timestamp exceeds RETRANSMISSION_DELAY_MS, the packet will be marked
- *  for retransmission by switching the APM to the state AWAITING_TRANSMISSION
- * @param sequence_number The sequence number tracks the "unique" (wraps around after 31) id of the AssuredPacket.
- *  Technically, this number is not needed right now since the APM currently only supports
- *  one AssuredPacket in transit at the time, but it good to have nonetheless I think.
- * @param message_length The size of the message in the buffer, INCLUDING the size of the AssuredPacket header
- * @param message_buffer The buffer holds the AssuredPacket header, and the data to be sent
- */
-typedef struct _AssuredPacketManager {
-    ASSURED_STATE state;
-    uint32_t transmission_timestamp;
-    uint32_t sequence_number;
-    uint8_t message_length;
-    uint8_t message_buffer[127];
-} AssuredPacketManager;
 
 bool APM_isReady(AssuredPacketManager* apm){
     return apm->state == READY;
 }
 
 bool APM_isAwaitingTransmission(AssuredPacketManager* apm){
+    // Check if an AssuredAck is expected and if the RETRANSMISSION_DELAY_MS is exceeded
+    if(APM_isAwaitingAck(apm)){
+        uint32_t current_time = HAL_GetTick();
+        if(RETRANSMISSION_DELAY_MS < current_time - apm->transmission_timestamp)
+            apm->state = AWAITING_TRANSMISSION;
+    }
+
     return apm->state == AWAITING_TRANSMISSION;
 }
 
@@ -85,17 +59,45 @@ bool APM_sendAssuredPacket(AssuredPacketManager* apm, uint8_t* message, uint8_t 
     if(!APM_isReady(apm))
         return false;
 
+    // Length of the complete message, including the AssuredAck header
+    uint8_t total_length = length + PACKET_SIZE_ROBOT_ASSURED_PACKET;
+
     // TODO replace the magic number 127 with a constant, reflecting the max SX1280 buffer size
     // Ensure that the packet can actually be transmitted by the SX1280. Yes, it might be possible
     // to send larger packets over UART, but please just split it up into a few smaller packets.
-    if(127 < length + PACKET_SIZE_ROBOT_ASSURED_PACKET)
+    if(127 < total_length)
         return false;
 
-    AssuredPacketPayload app;
-    AssuredPacket_set_header(&app, PACKET_TYPE_ROBOT_ASSURED_PACKET);
-    AssuredPacket_set_remVersion(&app, LOCAL_REM_VERSION);
-    AssuredPacket_set_sequenceNumber(&app, apm->sequence_number);
+    // Increase the sequence number
+    apm->sequence_number++;
 
+    // Create the AssuredPacket header
+    RobotAssuredPacketPayload rapp;
+    RobotAssuredPacket_set_header(&rapp, PACKET_TYPE_ROBOT_ASSURED_PACKET);
+    RobotAssuredPacket_set_remVersion(&rapp, LOCAL_REM_VERSION);
+    RobotAssuredPacket_set_id(&rapp, robot_getID());
+    RobotAssuredPacket_set_sequenceNumber(&rapp, apm->sequence_number);
+    RobotAssuredPacket_set_messageLength(&rapp, total_length);
 
-    memcpy(apm->message_buffer + PACKET_SIZE_ROBOT_ASSURED_PACKET, app.payload, length);
+    // Copy the AssuredPacket header into the message buffer
+    memcpy(apm->message_buffer, rapp.payload, PACKET_SIZE_ROBOT_ASSURED_PACKET);
+    // Copy the rest of the message into the message buffer
+    memcpy(apm->message_buffer + PACKET_SIZE_ROBOT_ASSURED_PACKET, message, length);
+
+    apm->message_length = total_length;
+    apm->state = AWAITING_TRANSMISSION;
+}
+
+void APM_absorbAssuredAck(AssuredPacketManager* apm, RobotAssuredAckPayload* raap){
+    // Get the sequence number from the AssuredAck
+    uint8_t ack_sequence_number = RobotAssuredAck_get_sequenceNumber(raap);
+    // Ensure the sequence number is correct
+    if(ack_sequence_number != apm->sequence_number)
+        return;
+    
+    // Reset message_length to 0, to prevent accidental retransmission
+    apm->message_length = 0;
+    // Ready to send a new AssuredPacket
+    apm->state = READY;
+
 }
