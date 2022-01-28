@@ -19,6 +19,7 @@
 #include "ballSensor.h"
 #include "testFunctions.h"
 #include "logging.h"
+#include "AssuredPacketManager.h"
 
 #include "rem.h"
 
@@ -26,6 +27,8 @@
 #include "RobotFeedback.h"
 #include "RobotBuzzer.h"
 #include "RobotStateInfo.h"
+#include "RobotAssuredPacket.h"
+#include "RobotAssuredAck.h"
 
 #include "time.h"
 #include <unistd.h>
@@ -42,9 +45,6 @@ MTi_data* MTi;
 
 uint8_t message_buffer_in[127]; // TODO set this to something like MAX_BUF_LENGTH
 uint8_t message_buffer_out[127];
-
-
-char dibs[499404];
 
 /* File-local containers */
 static RobotCommandPayload robotCommandPayload = {0};
@@ -81,8 +81,6 @@ uint32_t heartbeat_17ms_counter = 0;
 uint32_t heartbeat_17ms = 0;
 uint32_t heartbeat_100ms = 0;
 uint32_t heartbeat_1000ms = 0;
-
-
 
 
 void executeCommands(RobotCommand* robotCommand){
@@ -159,7 +157,13 @@ void printRobotStateData() {
 	IWDG_Refresh(iwdg);
 }
 
+void robot_setRobotCommandPayload(RobotCommandPayload* rcp){
+	decodeRobotCommand(&activeRobotCommand, rcp);
+}
 
+uint8_t robot_getID(){
+	return ROBOT_ID;
+}
 
 // ----------------------------------------------------- INIT -----------------------------------------------------
 void init(void){
@@ -344,9 +348,9 @@ void loop(void){
 		uint32_t now = HAL_GetTick();
 		while (heartbeat_17ms < now) heartbeat_17ms += 17;
 
-		encodeRobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
-		// HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO, 2);
-		HAL_UART_Transmit_DMA(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO);
+		// encodeRobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
+		// // HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO, 2);
+		// HAL_UART_Transmit_DMA(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO);
 	}	
 
     // Heartbeat every 100ms	
@@ -360,6 +364,18 @@ void loop(void){
 		uint32_t now = HAL_GetTick();
 		while (heartbeat_1000ms < now) heartbeat_1000ms += 1000;
 		
+		static bool issent = false;
+		if(!issent && 2000 < now-timestamp_initialized ){
+			encodeRobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
+			// HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO, 2);
+			HAL_UART_Transmit_DMA(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO);
+
+			// uint8_t total_packet_length = 0;
+			// encodeRobotFeedback( (RobotFeedbackPayload*) (message_buffer_out + total_packet_length), &robotFeedback);
+			// total_packet_length += PACKET_SIZE_ROBOT_FEEDBACK;
+			// HAL_UART_Transmit(UART_PC, message_buffer_out, total_packet_length, 50);
+		}
+
         // Toggle liveliness LED
         toggle_Pin(LED0_pin);
 		
@@ -393,9 +409,7 @@ void loop(void){
     // LED6 done in Wireless.c
 }
 
-void robot_setRobotCommandPayload(RobotCommandPayload* rcp){
-	decodeRobotCommand(&activeRobotCommand, rcp);
-}
+
 
 // ----------------------------------------------------- STM HAL CALLBACKS -----------------------------------------------------
 /* HAL_SPI_TxRxCpltCallback = Callback for either SPI Transmit or Receive complete */

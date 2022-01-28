@@ -15,5 +15,6 @@ void init(void);
 void loop(void);
 
 void robot_setRobotCommandPayload(RobotCommandPayload* rcp);
+uint8_t robot_getID();
 
 #endif /* __ROBOT__H_ */
