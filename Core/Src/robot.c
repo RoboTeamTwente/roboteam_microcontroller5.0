@@ -42,6 +42,7 @@ static const bool USE_PUTTY = false;
 
 SX1280* SX;
 MTi_data* MTi;
+static AssuredPacketManager APM;
 
 uint8_t message_buffer_in[127]; // TODO set this to something like MAX_BUF_LENGTH
 uint8_t message_buffer_out[127];
@@ -159,6 +160,10 @@ void printRobotStateData() {
 
 void robot_setRobotCommandPayload(RobotCommandPayload* rcp){
 	decodeRobotCommand(&activeRobotCommand, rcp);
+}
+
+void robot_receiveRobotAssuredAck(RobotAssuredAckPayload* raap){
+	APM_absorbAssuredAck(&APM, raap);
 }
 
 uint8_t robot_getID(){
@@ -364,17 +369,20 @@ void loop(void){
 		uint32_t now = HAL_GetTick();
 		while (heartbeat_1000ms < now) heartbeat_1000ms += 1000;
 		
-		static bool issent = false;
-		if(!issent && 2000 < now-timestamp_initialized ){
-			encodeRobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
-			// HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO, 2);
-			HAL_UART_Transmit_DMA(UART_PC, robotStateInfoPayload.payload, PACKET_SIZE_ROBOT_STATE_INFO);
+		/** APM Testing. Can be deleted soonTM **/
+		// if(APM_isReady(&APM)) LOG("APM READY\n");
+		// if(APM_isAwaitingTransmission(&APM)) LOG("APM IAT\n");
+		// if(APM_isAwaitingAck(&APM)) LOG("APM IAA\n");
 
-			// uint8_t total_packet_length = 0;
-			// encodeRobotFeedback( (RobotFeedbackPayload*) (message_buffer_out + total_packet_length), &robotFeedback);
-			// total_packet_length += PACKET_SIZE_ROBOT_FEEDBACK;
-			// HAL_UART_Transmit(UART_PC, message_buffer_out, total_packet_length, 50);
-		}
+		// if(APM_isAwaitingTransmission(&APM)){
+		// 	HAL_UART_Transmit(UART_PC, APM.message_buffer, PACKET_SIZE_ROBOT_ASSURED_PACKET + APM.message_length, 50);
+		// 	APM_packetIsSent(&APM);
+		// }else
+		// if(APM_isReady(&APM) ){
+		// 	uint8_t buffer[20];
+		// 	uint8_t len = sprintf(buffer, "Hello\n");
+		// 	APM_sendAssuredPacket(&APM, &buffer, len);
+		// }
 
         // Toggle liveliness LED
         toggle_Pin(LED0_pin);
