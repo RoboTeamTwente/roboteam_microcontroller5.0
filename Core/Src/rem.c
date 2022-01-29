@@ -9,9 +9,13 @@
 #include "logging.h"
 #include "main.h"
 
+#include "RobotCommand.h"
+#include "RobotAssuredAck.h"
+
 // Buffers to move received packets in to
 static uint8_t REM_buffer[100];
 static RobotCommandPayload rcp;
+static RobotAssuredAckPayload raap;
 
 /**
  * @brief Starts the first UART read. This read will eventually lead to 
@@ -50,10 +54,15 @@ void REM_UARTCallback(UART_HandleTypeDef *huart){
         robot_setRobotCommandPayload(&rcp);
         // Hack. Set flag for robot.c
         robotCommandIsFresh = 1;
-    }else{
+    }else
+    if(packetType == PACKET_TYPE_ROBOT_ASSURED_ACK){
+        HAL_UART_Receive(huart, REM_buffer+1, PACKET_SIZE_ROBOT_ASSURED_ACK-1, 100);
+        memcpy(&raap.payload, REM_buffer, PACKET_SIZE_ROBOT_ASSURED_ACK);
+        robot_receiveRobotAssuredAck(&raap);
+    } else {
         // TODO add some error handling here or something.
-        LOG("Unknown header\n");
-        sprintf(logBuffer, "Received unknown header %d\n", packetType);
+        LOG("[REM] Unknown header\n");
+        LOG_printf("[REM] Received unknown header %d\n", packetType);
     }
     
     // Schedule the read for the next header byte
