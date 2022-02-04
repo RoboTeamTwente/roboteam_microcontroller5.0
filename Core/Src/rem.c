@@ -6,11 +6,16 @@
 #include "peripheral_util.h"
 #include "robot.h"
 #include "PuTTY.h"
-
+#include "logging.h"
 #include "main.h"
 
-// Buffer to move received packets in to
-uint8_t REM_buffer[100];
+#include "RobotCommand.h"
+#include "RobotAssuredAck.h"
+
+// Buffers to move received packets in to
+static uint8_t REM_buffer[100];
+static RobotCommandPayload rcp;
+static RobotAssuredAckPayload raap;
 
 /**
  * @brief Starts the first UART read. This read will eventually lead to 
@@ -19,6 +24,7 @@ uint8_t REM_buffer[100];
  * @param huart The UART to start the first read on. Generally UART_PC.
  */
 void REM_UARTinit(UART_HandleTypeDef *huart){
+    LOG("[REM_UARTinit]\n");
     HAL_UART_Receive_IT(huart, REM_buffer, 1);
 }
 
@@ -43,15 +49,20 @@ void REM_UARTCallback(UART_HandleTypeDef *huart){
     if(packetType == PACKET_TYPE_ROBOT_COMMAND){
         // Receive the entire RobotCommand packet into REM_buffer, excluding the header byte
         HAL_UART_Receive(huart, REM_buffer+1, PACKET_SIZE_ROBOT_COMMAND-1, 100);
-        // Hack. Store into a global, where robot.c can use it
-        memcpy(&myRobotCommandPayload.payload, REM_buffer, PACKET_SIZE_ROBOT_COMMAND);
-        decodeRobotCommand(&myRobotCommand, &myRobotCommandPayload);
+        // Store received packet in local RobotCommandPayload. Send to robot.c for decoding
+        memcpy(&rcp.payload, REM_buffer, PACKET_SIZE_ROBOT_COMMAND);
+        robot_setRobotCommandPayload(&rcp);
         // Hack. Set flag for robot.c
         robotCommandIsFresh = 1;
-
-    }else{
+    }else
+    if(packetType == PACKET_TYPE_ROBOT_ASSURED_ACK){
+        HAL_UART_Receive(huart, REM_buffer+1, PACKET_SIZE_ROBOT_ASSURED_ACK-1, 100);
+        memcpy(&raap.payload, REM_buffer, PACKET_SIZE_ROBOT_ASSURED_ACK);
+        robot_receiveRobotAssuredAck(&raap);
+    } else {
         // TODO add some error handling here or something.
-        sprintf(logBuffer, "Received unknown header %d\n", packetType);
+        LOG("[REM] Unknown header\n");
+        LOG_printf("[REM] Received unknown header %d\n", packetType);
     }
     
     // Schedule the read for the next header byte
