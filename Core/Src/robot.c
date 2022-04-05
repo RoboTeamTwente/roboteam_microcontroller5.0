@@ -71,7 +71,8 @@ uint32_t timestamp_initialized = 0;
 
 
 bool isSerialConnected = false;
-uint32_t timeLastPacket = 0;
+volatile uint32_t timeLastPacket = 0;
+volatile uint32_t timeLastXSens = 0;
 
 uint32_t heartbeat_17ms_counter = 0;
 uint32_t heartbeat_17ms = 0;
@@ -255,6 +256,7 @@ void init(void){
 	buzzer_Play_ID(ID);
 	
 	timestamp_initialized = HAL_GetTick();
+	timeLastXSens = timestamp_initialized;
 }
 
 
@@ -293,7 +295,13 @@ void loop(void){
 
 	// Check XSens
     xsens_CalibrationDone = (MTi->statusword & (0x18)) == 0; // if bits 3 and 4 of status word are zero, calibration is done
-    halt = !(xsens_CalibrationDone && (checkWirelessConnection() || isSerialConnected)) || !REM_last_packet_had_correct_version;
+    
+	// Assume that xsens data  is "fresh" when it is less than 2 seconds old (arbitrary)
+	// Note that these 2 seconds should be changed to something realistic like 250ms. But for now, 2 seconds gives us 
+	// a good indication if the xsens is actually failing, because the robot will rotate for 2 seconds and then suddenly stop.
+	bool xsensDataFresh = (currentTime - timeLastXSens) < 2000;
+	
+	halt = !(xsens_CalibrationDone && (checkWirelessConnection() || isSerialConnected || xsensDataFresh)) || !REM_last_packet_had_correct_version;
     if (halt) {
 		// toggle_Pin(LED5_pin);
         stateControl_ResetAngleI();
@@ -495,6 +503,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		Wireless_IRQ_Handler(SX, message_buffer_out, total_packet_length);
 
 	}else if(GPIO_Pin == MTi_IRQ_pin.PIN){
+		timeLastXSens = HAL_GetTick();
 		MTi_IRQ_Handler(MTi);
 	}else if (GPIO_Pin == BS_IRQ_pin.PIN){
 		// TODO: make this work and use instead of the thing in the while loop
