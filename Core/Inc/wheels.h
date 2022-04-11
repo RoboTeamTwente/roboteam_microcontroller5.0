@@ -50,4 +50,6 @@ void wheels_Brake();
 // Disable the brakes
 void wheels_Unbrake();
 
+PIDvariables* wheels_GetPIDValues();
+
 #endif /* WHEELS_H_ */

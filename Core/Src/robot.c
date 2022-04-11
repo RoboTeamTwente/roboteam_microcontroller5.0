@@ -25,6 +25,8 @@
 #include "REM_RobotFeedback.h"
 #include "REM_RobotBuzzer.h"
 #include "REM_RobotStateInfo.h"
+#include "REM_GetPIDGains.h"
+#include "REM_PIDGains.h"
 
 #include "time.h"
 #include <unistd.h>
@@ -49,6 +51,7 @@ REM_RobotBuzzerPayload robotBuzzerPayload = {0};
 REM_RobotFeedback robotFeedback = {0};
 REM_RobotStateInfo robotStateInfo = {0};
 REM_RobotStateInfoPayload robotStateInfoPayload = {0};
+REM_PIDGains robotPIDGains = {0};
 
 
 REM_RobotCommand activeRobotCommand = {0};
@@ -59,6 +62,7 @@ bool halt = true;
 bool xsens_CalibrationDone = false;
 bool xsens_CalibrationDoneFirst = true;
 volatile bool REM_last_packet_had_correct_version = true;
+volatile bool flagHandlePIDGainValues = false;
 IWDG_Handle* iwdg;
 
 
@@ -350,6 +354,26 @@ void loop(void){
 		robotStateInfo.wheelSpeed4 = stateInfo.wheelSpeeds[3];
 	}
 
+	if(flagHandlePIDGainValues){
+		robotPIDGains.header = PACKET_TYPE_REM_P_I_D_GAINS;
+		robotPIDGains.remVersion = LOCAL_REM_VERSION;
+		robotPIDGains.id = ID;
+		PIDvariables* stateK = stateControl_GetPIDValues();
+		robotPIDGains.PbodyX = stateK[0].kP;
+		robotPIDGains.IbodyX = stateK[0].kI;
+		robotPIDGains.DbodyX = stateK[0].kD;
+		robotPIDGains.PbodyY = stateK[1].kP;
+		robotPIDGains.IbodyY = stateK[1].kI;
+		robotPIDGains.DbodyY = stateK[1].kD;
+		robotPIDGains.PbodyYaw = stateK[2].kP;
+		robotPIDGains.IbodyYaw = stateK[2].kI;
+		robotPIDGains.DbodyYaw = stateK[2].kD;
+		PIDvariables* wheelsK = wheels_GetPIDValues();
+		robotPIDGains.Pwheels = wheelsK->kP;
+		robotPIDGains.Iwheels = wheelsK->kI;
+		robotPIDGains.Dwheels = wheelsK->kD;
+	}
+
     // Heartbeat every 17ms	
 	if(heartbeat_17ms + 17 < HAL_GetTick()){
 		heartbeat_17ms += 17;
@@ -413,6 +437,10 @@ void handleRobotBuzzer(uint8_t* packet_buffer){
 	buzzer_Play_note(period, duration);
 }
 
+void handleGetPIDGains(uint8_t* packet_buffer){
+	flagHandlePIDGainValues = true;
+}
+
 bool handlePacket(uint8_t* packet_buffer, uint8_t packet_length){
 	uint8_t total_bytes_processed = 0;
 	uint8_t packet_header;
@@ -432,7 +460,12 @@ bool handlePacket(uint8_t* packet_buffer, uint8_t packet_length){
 				handleRobotBuzzer(message_buffer_in + total_bytes_processed);
 				total_bytes_processed += PACKET_SIZE_REM_ROBOT_BUZZER;
 				break;
-			
+
+			case PACKET_TYPE_REM_GET_P_I_D_GAINS:
+				handleGetPIDGains(message_buffer_in + total_bytes_processed);
+				total_bytes_processed += PACKET_SIZE_REM_GET_P_I_D_GAINS;
+				break;
+
 			default:
 				sprintf(logBuffer, "[SPI_TxRxCplt] Error! At %d of %d bytes. [@] = %d\n", total_bytes_processed, packet_length, packet_header);
 				return false;
@@ -490,6 +523,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		if(SEND_ROBOT_STATE_INFO){
 			encodeREM_RobotStateInfo( (REM_RobotStateInfoPayload*) (message_buffer_out + total_packet_length), &robotStateInfo);
 			total_packet_length += PACKET_SIZE_REM_ROBOT_STATE_INFO;
+		}
+
+		if(flagHandlePIDGainValues){
+			encodeREM_PIDGains( (REM_PIDGainsPayload*) (message_buffer_out + total_packet_length), &robotPIDGains);
+			total_packet_length += PACKET_SIZE_REM_P_I_D_GAINS;
+			flagHandlePIDGainValues = false;
 		}
 
 		Wireless_IRQ_Handler(SX, message_buffer_out, total_packet_length);

@@ -252,7 +252,9 @@ void wheels_Unbrake(){
 	wheels_braking = false;
 }
 
-
+PIDvariables* wheels_GetPIDValues(){
+	return wheelsK;
+}
 
 
 

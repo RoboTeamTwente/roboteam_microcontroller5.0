@@ -82,6 +82,9 @@ void stateControl_ResetAngleI(){
 	stateK[body_w].I = 0;
 }
 
+PIDvariables* stateControl_GetPIDValues(){
+	return stateK;
+}
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void body2Wheels(float wheelSpeed[4], float vel[3]){
