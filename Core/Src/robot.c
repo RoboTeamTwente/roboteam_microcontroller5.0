@@ -63,6 +63,7 @@ bool xsens_CalibrationDone = false;
 bool xsens_CalibrationDoneFirst = true;
 volatile bool REM_last_packet_had_correct_version = true;
 volatile bool flagHandlePIDGainValues = false;
+volatile bool flagHandledPIDGainValues = false;
 IWDG_Handle* iwdg;
 
 
@@ -355,23 +356,41 @@ void loop(void){
 	}
 
 	if(flagHandlePIDGainValues){
+		
 		robotPIDGains.header = PACKET_TYPE_REM_P_I_D_GAINS;
 		robotPIDGains.remVersion = LOCAL_REM_VERSION;
 		robotPIDGains.id = ID;
+		/*
 		PIDvariables* stateK = stateControl_GetPIDValues();
-		robotPIDGains.PbodyX = stateK[0].kP;
-		robotPIDGains.IbodyX = stateK[0].kI;
-		robotPIDGains.DbodyX = stateK[0].kD;
-		robotPIDGains.PbodyY = stateK[1].kP;
-		robotPIDGains.IbodyY = stateK[1].kI;
-		robotPIDGains.DbodyY = stateK[1].kD;
-		robotPIDGains.PbodyYaw = stateK[2].kP;
-		robotPIDGains.IbodyYaw = stateK[2].kI;
-		robotPIDGains.DbodyYaw = stateK[2].kD;
+		robotPIDGains.PbodyX = stateK[body_x].kP;
+		robotPIDGains.IbodyX = stateK[body_x].kI;
+		robotPIDGains.DbodyX = stateK[body_x].kD;
+		robotPIDGains.PbodyY = stateK[body_y].kP;
+		robotPIDGains.IbodyY = stateK[body_y].kI;
+		robotPIDGains.DbodyY = stateK[body_y].kD;
+		robotPIDGains.PbodyYaw = stateK[body_w].kP;
+		robotPIDGains.IbodyYaw = stateK[body_w].kI;
+		robotPIDGains.DbodyYaw = stateK[body_w].kD;
 		PIDvariables* wheelsK = wheels_GetPIDValues();
 		robotPIDGains.Pwheels = wheelsK->kP;
 		robotPIDGains.Iwheels = wheelsK->kI;
 		robotPIDGains.Dwheels = wheelsK->kD;
+		*/
+		robotPIDGains.PbodyX = 2;
+		robotPIDGains.IbodyX = 0;
+		robotPIDGains.DbodyX = 1;
+		robotPIDGains.PbodyY = 2;
+		robotPIDGains.IbodyY = 0;
+		robotPIDGains.DbodyY = 1;
+		robotPIDGains.PbodyYaw = 2;
+		robotPIDGains.IbodyYaw = 0;
+		robotPIDGains.DbodyYaw = 1;
+		robotPIDGains.Pwheels = 0;
+		robotPIDGains.Iwheels = 0;
+		robotPIDGains.Dwheels = 0;
+		flagHandledPIDGainValues = true;
+		flagHandlePIDGainValues = false;
+
 	}
 
     // Heartbeat every 17ms	
@@ -525,10 +544,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			total_packet_length += PACKET_SIZE_REM_ROBOT_STATE_INFO;
 		}
 
-		if(flagHandlePIDGainValues){
+		if(flagHandledPIDGainValues){
 			encodeREM_PIDGains( (REM_PIDGainsPayload*) (message_buffer_out + total_packet_length), &robotPIDGains);
 			total_packet_length += PACKET_SIZE_REM_P_I_D_GAINS;
-			flagHandlePIDGainValues = false;
+			flagHandledPIDGainValues = false;
 		}
 
 		Wireless_IRQ_Handler(SX, message_buffer_out, total_packet_length);
