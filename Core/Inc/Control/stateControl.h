@@ -63,4 +63,8 @@ void stateControl_SetPIDGains(REM_RobotSetPIDGains* pidConfig);
 
 void stateControl_ResetAngleI();
 
+float stateControl_GetFiltered(body_handles direction);
+
+float stateControl_GetUnfiltered(body_handles direction);
+
 #endif /* DO_STATE_CONTROL_H_ */

@@ -453,8 +453,8 @@ void loop(void){
 		robotStateInfo.wheelSpeed2 = stateInfo.wheelSpeeds[1];
 		robotStateInfo.wheelSpeed3 = stateInfo.wheelSpeeds[2];
 		robotStateInfo.wheelSpeed4 = stateInfo.wheelSpeeds[3];
-		robotStateInfo.bodyXIntegral = stateControl_GetIntegral(body_x);
-		robotStateInfo.bodyYIntegral = stateControl_GetIntegral(body_y);
+		robotStateInfo.bodyXIntegral = stateControl_GetUnfiltered(body_w);
+		robotStateInfo.bodyYIntegral = stateControl_GetFiltered(body_w);
 		robotStateInfo.bodyWIntegral = stateControl_GetIntegral(body_w);
 		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(body_yaw);
 		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RF);

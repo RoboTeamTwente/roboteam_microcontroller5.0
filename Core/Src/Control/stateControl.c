@@ -107,6 +107,14 @@ float stateControl_GetIntegral(body_handles direction) {
 	return stateK[direction].I;
 }
 
+float stateControl_GetUnfiltered(body_handles direction) {
+	return stateK[direction].unfiltered;
+}
+
+float stateControl_GetFiltered(body_handles direction) {
+	return stateK[direction].filtered;
+}
+
 void stateControl_useAbsoluteAngle(bool angularControl){
     useAbsoluteAngle = angularControl;
 }
@@ -131,6 +139,7 @@ void stateControl_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
 
 void stateControl_ResetAngleI(){
 	stateK[body_yaw].I = 0;
+	stateK[body_w].I = 0;
 }
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS

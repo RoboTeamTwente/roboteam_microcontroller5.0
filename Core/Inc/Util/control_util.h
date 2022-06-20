@@ -105,7 +105,11 @@ struct PIDstruct{
 	float maxOutput;
 	float ramp;
 	float prev_PID;
-}static PIDdefault = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, TIME_DIFF, -1000000, 1000000, 1000000, 0};
+	float buffer[10];
+	int idx;
+	float unfiltered;
+	float filtered;
+}static PIDdefault = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, TIME_DIFF, -1000000, 1000000, 1000000, 0, {0.0}, 0};
 
 typedef struct PIDstruct PIDvariables;
 
