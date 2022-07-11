@@ -666,9 +666,8 @@ bool handlePacket(uint8_t* packet_buffer, uint8_t packet_length){
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi){
 
 	// If we received data from the SX1280
-	if(hspi->Instance == SX->Interface->SPI->Instance) {
+	if(SX->Interface != 0 && hspi->Instance == SX->Interface->SPI->Instance) {
 		Wireless_DMA_Handler(SX);
-
 	}
 
 	// If we received data from the XSens
