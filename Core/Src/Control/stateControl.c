@@ -190,6 +190,12 @@ static void velocityControl(float state[3], float velRef[4], float velocityWheel
 	stateLocalRef[body_w] += PID(velwErr, &stateK[body_w]);
 
 	body2Wheels(velocityWheelRef, stateLocalRef); //translate velocity to wheel speed
+
+	if (fabs(stateControl_GetIntegral(body_w)) > 6.0){
+		stateControl_ResetPID();
+		stateControl_ResetAngleI();
+	}
+
 }
 
 static float absoluteAngleControl(float angleRef, float angle){
