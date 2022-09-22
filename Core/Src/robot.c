@@ -115,14 +115,14 @@ void Wireless_Writepacket_Cplt(void){
 		LOG("[Wireless_Writepacket_Cplt] TransmitPacket error!\n");
 }
 /**
- * @brief This function is called when a packet is read from the SX1280
+ * @brief This function is called when a packet only meant for this robot is read from the SX1280
  * 
  * When this callback function is called, it means that we just received a packet from the SX1280. According to the TDMA protocol that
  * we use, we now have 1 millisecond to send our feedback to the SX1280. Therefore, this function needs to be fast. Don't do 
  * any CPU intense stuff in here like matrix multiplications etc etc. This is also the reason that robotFeedback / robotStateInfo / etc
  * is being filled in the main loop, and not in this function; it saves time.
  */
-void Wireless_Readpacket_Cplt(void){
+void Wireless_Readpacket_Direct_Cplt(void){
 	toggle_Pin(LED6_pin);
 	timestamp_last_packet_wireless = HAL_GetTick();
 	handlePacket(rxPacket.message, rxPacket.payloadLength);
@@ -145,18 +145,59 @@ void Wireless_Readpacket_Cplt(void){
 	// TODO insert REM_SX1280Filler packet if total_packet_length < 6. Fine for now since feedback is already more than 6 bytes
 	WritePacket_DMA(SX, &txPacket, &Wireless_Writepacket_Cplt);
 }
+
+/**
+ * @brief This function is called when a packet that is sent to all robots is received by the SX1280
+ * 
+ * When this callback function is called, it means that we just received a packet from the SX1280. 
+ * After broadcast packets do not send feedback, as otherwise all robots will send feedback at the same time, so just start waiting for a new packet.
+ */
+void Wireless_Readpacket_Broadcast_Cplt(void){
+	toggle_Pin(LED6_pin);
+	timestamp_last_packet_wireless = HAL_GetTick();
+	handlePacket(rxPacket.message, rxPacket.payloadLength);
+	WaitForPacket(SX);
+}
+
 void Wireless_Default(){
 	WaitForPacket(SX);
 }
 
+/**
+ * @brief This function is called when a packet has been received by the SX, but is not yet transfered to the STM
+ * 
+ * This is the point where you can filter packets or handle them differently.
+ */
 void Wireless_RXDone(SX1280_Packet_Status *status){
   /* It is possible that random noise can trigger the syncword.
    * Correct syncword from noise have a very weak signal.
    * Threshold is at -160/2 = -80 dBm. */
   if (status->RSSISync < 160) {
-    ReadPacket_DMA(SX, &rxPacket, &Wireless_Readpacket_Cplt);
+	switch(status->sync){
+		// DON'T USE, this syncword index is reserved dor the tx syncword. As such it should not be able to receive on this index.
+		case SYNCWORD_1: 
+			break;
+		// Robot ID Syncword received, see call to Wireless_setRXSyncwords 
+		case SYNCWORD_2: 
+			ReadPacket_DMA(SX, &rxPacket, &Wireless_Readpacket_Direct_Cplt);
+			break;
+		// Broadcast Syncword received, see call to Wireless_setRXSyncwords
+		case SYNCWORD_3: 
+			ReadPacket_DMA(SX, &rxPacket, &Wireless_Readpacket_Broadcast_Cplt);
+			break;
+		// Different Syncword or something received
+		case SYNCWORD_ERROR:
+			WaitForPacket(SX);
+			break;
+		// should not trigger, but there just for safety
+		default:
+			WaitForPacket(SX);
+			break;
+	}
+	// log last valid RSSI for feedback/logging
 	last_valid_RSSI = status->RSSISync;
   }else{
+	// unsatisfactory RSSI, just wait for a new packet
 	WaitForPacket(SX);
   }
 }
@@ -358,8 +399,9 @@ void init(void){
 	}
 	LOG_sendAll();
     // SX1280 section 7.3 FLRC : Syncword is 4 bytes at the beginning of each transmission, that ensures that only the right robot / basestation listens to that transmission.
-	Wireless_setTXSyncword(SX, robot_syncWord[16]); // TX syncword is set to the basestation its syncword
-	uint32_t syncwords[2] = {robot_syncWord[ROBOT_ID],0};
+	Wireless_setTXSyncword(SX, robot_syncWord[SYNCWORD_ID_BASESTATION]); // TX syncword is set to the basestation its syncword
+	// SYNCWORD 2 and 3 are set to match for when receiving packets. First is the robot specific syncword, the second is the syncword meant for all robots (broadcast)
+	uint32_t syncwords[2] = {robot_syncWord[ROBOT_ID],robot_syncWord[SYNCWORD_ID_BROADCAST]};
 	Wireless_setRXSyncwords(SX, syncwords); // RX syncword is specific for the robot its ID
 	set_Pin(LED4_pin, 1);
 

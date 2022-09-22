@@ -40,6 +40,10 @@ typedef enum WIRELESS_CHANNEL {
 
 extern uint32_t robot_syncWord[];
 
+// Syncword indices to robot_syncWord reserved for BaseStation and Broadcast
+#define SYNCWORD_ID_BASESTATION 16
+#define SYNCWORD_ID_BROADCAST 17
+
 ////////////////////////////////////// Function Types
 typedef void Wireless_printf(char *format, ...);
 // DMA complete callback functions
