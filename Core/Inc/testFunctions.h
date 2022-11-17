@@ -10,10 +10,10 @@
 
 #include <stdbool.h>
 #include "stm32f7xx_hal.h"
-#include "PuTTY.h"
 #include "stateControl.h"
-#include "Buzzer/buzzer.h"
+#include "buzzer.h"
 #include "dribbler.h"
+#include "math.h"
 
 ///////////////////////////////////////////////////// DEFINITIONS
 
