@@ -1,0 +1,24 @@
+name: PlatformIO Build
+
+on: 
+  push:
+    branches:
+    - development
+  pull_request:
+    branches:
+    - development
+      
+jobs:
+  build:
+    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@c2
+      
+    - name: Run PlatformIO
+      uses: karniv00l/platformio-run-action@v1.1.1
+      with:
+        verbose: true
+      
