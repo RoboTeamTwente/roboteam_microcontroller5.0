@@ -17,6 +17,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       
+    - name: Fetch REM
+      uses: snickerbockers/submodules-init@v4
+      
     - name: Run PlatformIO
       uses: karniv00l/platformio-run-action@v1.1.1
       with:
