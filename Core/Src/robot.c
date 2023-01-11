@@ -174,10 +174,10 @@ Wireless_IRQcallbacks SX_IRQcallbacks = { .rxdone = &Wireless_RXDone, .default_c
 void executeCommands(REM_RobotCommand* robotCommand){
 	stateControl_useAbsoluteAngle(robotCommand->useAbsoluteAngle);
 	float stateReference[4];
-	stateReference[body_x] = (robotCommand->rho) * cosf(robotCommand->theta);
-	stateReference[body_y] = (robotCommand->rho) * sinf(robotCommand->theta);
-	stateReference[body_w] = robotCommand->angularVelocity;
-	stateReference[body_yaw] = robotCommand->angle;
+	stateReference[vel_x] = (robotCommand->rho) * cosf(robotCommand->theta);
+	stateReference[vel_y] = (robotCommand->rho) * sinf(robotCommand->theta);
+	stateReference[vel_w] = robotCommand->angularVelocity;
+	stateReference[yaw] = robotCommand->angle;
 	stateControl_SetRef(stateReference);
 	dribbler_SetSpeed(robotCommand->dribbler);
 	shoot_SetPower(robotCommand->kickChipPower);
@@ -193,7 +193,7 @@ void executeCommands(REM_RobotCommand* robotCommand){
 		}
 	}
 	else if (robotCommand->kickAtAngle) {
-		if (fabs(stateEstimation_GetState()[body_yaw] - robotCommand->angle) < 0.025) {
+		if (fabs(stateEstimation_GetState()[yaw] - robotCommand->angle) < 0.025) {
 			if (ballPosition.canKickBall || robotCommand->doForce) {
 				shoot_Shoot(shoot_Kick);
 			}
@@ -467,7 +467,7 @@ void loop(void){
         stateControl_ResetAngleI();
         resetRobotCommand(&activeRobotCommand);
 		// Quick fix to also stop the dribbler from rotating when the command is reset
-		// TODO maybe move executeCommand to TIMER_7?
+		// TODO: maybe move executeCommand to TIMER_7?
 		dribbler_SetSpeed(0);
 
 		REM_last_packet_had_correct_version = true;
@@ -496,10 +496,10 @@ void loop(void){
 		robotFeedback.ballSensorSeesBall = ballPosition.canKickBall;
 		robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
 
-		float vx = stateEstimation_GetState()[body_x];
-		float vy = stateEstimation_GetState()[body_y];
+		float vx = stateEstimation_GetState()[vel_x];
+		float vy = stateEstimation_GetState()[vel_y];
 		robotFeedback.rho = sqrt(vx*vx + vy*vy);
-		robotFeedback.angle = stateEstimation_GetState()[body_yaw];
+		robotFeedback.angle = stateEstimation_GetState()[yaw];
 		robotFeedback.theta = atan2(vy, vx);
 		robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
 		robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
@@ -519,14 +519,18 @@ void loop(void){
 		robotStateInfo.dribbleSpeed = stateInfo.dribblerSpeed;
 		robotStateInfo.filteredDribbleSpeed = stateInfo.dribblerFilteredSpeed;
 		robotStateInfo.dribblespeedBeforeGotBall = stateInfo.dribbleSpeedBeforeGotBall;
-		robotStateInfo.bodyXIntegral = stateControl_GetIntegral(body_x);
-		robotStateInfo.bodyYIntegral = stateControl_GetIntegral(body_y);
-		robotStateInfo.bodyWIntegral = stateControl_GetIntegral(body_w);
-		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(body_yaw);
-		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RF);
-		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RB);
-		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_LB);
-		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_LF);
+		robotStateInfo.bodyXIntegral = stateControl_GetIntegral(vel_x);
+		robotStateInfo.bodyYIntegral = stateControl_GetIntegral(vel_y);
+		robotStateInfo.bodyWIntegral = stateControl_GetIntegral(vel_w);
+		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(yaw);
+
+		// FIXME: This does not work...
+		// If we want to send the integrals for the wheels use: robotStateInfo.wheelXIntegral 
+		// Further, wheels are currently not able to send back the integrals.
+		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RF);
+		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RB);
+		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_LB);
+		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_LF);
 	}
 	
 	/* == Fill RobotPIDGains packet == */ {
@@ -534,18 +538,18 @@ void loop(void){
 		stateControl_GetPIDGains(robotGains);
 
 		robotPIDGains.timestamp = current_time;
-		robotPIDGains.PbodyX = robotGains[body_x].kP;
-		robotPIDGains.IbodyX = robotGains[body_x].kI;
-		robotPIDGains.DbodyX = robotGains[body_x].kD;
-		robotPIDGains.PbodyY = robotGains[body_y].kP;
-		robotPIDGains.IbodyY = robotGains[body_y].kI;
-		robotPIDGains.DbodyY = robotGains[body_y].kD;
-		robotPIDGains.PbodyW = robotGains[body_w].kP;
-		robotPIDGains.IbodyW = robotGains[body_w].kI;
-		robotPIDGains.DbodyW = robotGains[body_w].kD;
-		robotPIDGains.PbodyYaw = robotGains[body_yaw].kP;
-		robotPIDGains.IbodyYaw = robotGains[body_yaw].kI;
-		robotPIDGains.DbodyYaw = robotGains[body_yaw].kD;
+		robotPIDGains.PbodyX = robotGains[vel_x].kP;
+		robotPIDGains.IbodyX = robotGains[vel_x].kI;
+		robotPIDGains.DbodyX = robotGains[vel_x].kD;
+		robotPIDGains.PbodyY = robotGains[vel_y].kP;
+		robotPIDGains.IbodyY = robotGains[vel_y].kI;
+		robotPIDGains.DbodyY = robotGains[vel_y].kD;
+		robotPIDGains.PbodyW = robotGains[vel_w].kP;
+		robotPIDGains.IbodyW = robotGains[vel_w].kI;
+		robotPIDGains.DbodyW = robotGains[vel_w].kD;
+		robotPIDGains.PbodyYaw = robotGains[yaw].kP;
+		robotPIDGains.IbodyYaw = robotGains[yaw].kI;
+		robotPIDGains.DbodyYaw = robotGains[yaw].kD;
 	}
 	
     // Heartbeat every 17ms	
@@ -788,8 +792,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		stateInfo.visionYaw = activeRobotCommand.cameraAngle; // TODO check if this is scaled properly with the new REM messages
 		
 		wheels_GetMeasuredSpeeds(stateInfo.wheelSpeeds);
-		stateInfo.xsensAcc[body_x] = MTi->acc[body_x];
-		stateInfo.xsensAcc[body_y] = MTi->acc[body_y];
+		stateInfo.xsensAcc[vel_x] = MTi->acc[vel_x];
+		stateInfo.xsensAcc[vel_y] = MTi->acc[vel_y];
 		stateInfo.xsensYaw = (MTi->angles[2]*M_PI/180); //Gradients to Radians
 		stateInfo.rateOfTurn = MTi->gyr[2];
 		stateEstimation_Update(&stateInfo);

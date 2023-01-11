@@ -1,50 +1,54 @@
 
 #include "stateControl.h"
+#include "matrix_operations.h"
 
 ///////////////////////////////////////////////////// VARIABLES
 
 // The current status of the system.
 static PID_states status = off;
 
-// The PID values for x, y, w and yaw.
+// The PID values for u, v, w and yaw.
 static PIDvariables stateK[4];
 
-// The global x, y, w and yaw velocities to be achieved.
+// The global x, y, w and yaw velocities to be achieved [m/s]
 static float stateRef[4] = {0.0f}; 
 
-// The wheel velocities to be achieved.
-static float wheelRef[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+// The wheel velocities to be achieved [rad/s]
+static float wheelRef[4] = {0.0f};
 
-// The current x, y, w and yaw velocities.
+// The current global x, y, w and yaw velocities.
 static float state[4] = {0.0f};
 
 // Whether to move to an absolute angle. If true yes, otherwise use angular velocity.
 static bool useAbsoluteAngle = true;
 static bool previousUseAbsoluteAngle = true;
 
+// The velocity coupling matrix, used to transform local velocities into wheel velocities [4x3]
+static float D[12] = {0.0f};
+
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
 /**
- * Translates the velocity from a body perspective to wheel speeds.
+ * Translates the velocity from a local perspective to wheel speeds.
  * 
- * @param wheelSpeed The speed to be achieved for each wheel.
- * @param vel 		 The velocities to be achieved seen from the body perspective.
+ * @param wheelSpeed The speed to be achieved for each wheel [rad/s]
+ * @param state  	 The velocities to be achieved seen from the body perspective {vel_u, vel_v, vel_w} [m/s]
  */
 static void body2Wheels(float wheelSpeed[4], float state[3]);
 
 /**
- * Translates the global coordinate frame to the local coordinate frame
+ * Translates the global coordinate frame to the local coordinate frame.
  * 
- * @param global 	The global coordinates
- * @param local 	The local coordinates
- * @param yaw 		Yaw
+ * @param global 	The global coordinates {vel_x, vel_y, vel_w, yaw}
+ * @param local 	The local coordinates {vel_u, vel_v, vel_w, yaw}
+ * @param angle 	Yaw
  */
-static void global2Local(float global[4], float local[4], float yaw);
+static void global2Local(float global[4], float local[4], float angle);
 
 /**
  * Determines the desired wheel speeds given the desired velocities
  * 
- * @param state 			The current x, y, w and yaw speeds seen from the body
+ * @param state 			The current u, v, w and yaw speeds seen from the body
  * @param velRef 			The instructed global x, y, w and yaw speeds
  * @param velocityWheelRef 	The resulting wheel speeds that should be achieved for each wheel
  */
@@ -64,11 +68,26 @@ static float absoluteAngleControl(float angleRef, float angle);
 
 int stateControl_Init(){
 	status = on;
-	initPID(&stateK[body_x], default_P_gain_x, default_I_gain_x, default_D_gain_x);
-	initPID(&stateK[body_y], default_P_gain_y, default_I_gain_y, default_D_gain_y);
-	initPID(&stateK[body_w], default_P_gain_w, default_I_gain_w, default_D_gain_w); 
-	initPID(&stateK[body_yaw], default_P_gain_yaw, default_I_gain_yaw, default_D_gain_yaw);
+	initPID(&stateK[vel_u], default_P_gain_u, default_I_gain_u, default_D_gain_u);
+	initPID(&stateK[vel_v], default_P_gain_v, default_I_gain_v, default_D_gain_v);
+	initPID(&stateK[vel_w], default_P_gain_w, default_I_gain_w, default_D_gain_w); 
+	initPID(&stateK[yaw], default_P_gain_yaw, default_I_gain_yaw, default_D_gain_yaw);
 	HAL_TIM_Base_Start_IT(TIM_CONTROL);
+
+	// Initialize the velocity coupling matrix.
+	D[0] = -sinFront;
+	D[1] = cosFront; 
+	D[2] = rad_robot;
+	D[3] = -sinFront;
+	D[4] = -cosFront;
+	D[5] = rad_robot;
+	D[6] = sinBack;
+	D[7] = -cosBack;
+	D[8] = rad_robot;
+	D[9] = sinBack;
+	D[10] = cosBack;
+	D[11] = rad_robot;
+
 	return 0;
 }
 
@@ -83,19 +102,19 @@ void stateControl_Update(){
 		float velocityWheelRef[4] = {0.0f};
 		velocityControl(state, stateRef, velocityWheelRef);
 
-		float angularRef = useAbsoluteAngle ? absoluteAngleControl(stateRef[body_yaw], state[body_yaw]) : 0.0f;
+		float angularRef = useAbsoluteAngle ? absoluteAngleControl(stateRef[yaw], state[yaw]) : 0.0f;
 
-		for (wheel_names wheel=wheels_RF; wheel<=wheels_LF; wheel++){
+		for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
 			wheelRef[wheel] = velocityWheelRef[wheel] + angularRef;
 		}
 	}
 }
 
 void stateControl_SetRef(float input[4]){
-	stateRef[body_x] = input[body_x];
-	stateRef[body_y] = input[body_y];
-	stateRef[body_w] = input[body_w];
-	stateRef[body_yaw] = input[body_yaw];
+	stateRef[vel_x] = input[vel_x];
+	stateRef[vel_y] = input[vel_y];
+	stateRef[vel_w] = input[vel_w];
+	stateRef[yaw] = input[yaw];
 }
 
 float* stateControl_GetWheelRef() {
@@ -103,31 +122,31 @@ float* stateControl_GetWheelRef() {
 }
 
 void stateControl_SetState(float input[4]){
-	state[body_x] = input[body_x];
-	state[body_y] = input[body_y];
-	state[body_w] = input[body_w];
-	state[body_yaw] = input[body_yaw];
+	state[vel_x] = input[vel_x];
+	state[vel_y] = input[vel_y];
+	state[vel_w] = input[vel_w];
+	state[yaw] = input[yaw];
 }
 
 void stateControl_GetPIDGains(PIDvariables gains[4]){
-	gains[body_x].kP = stateK[body_x].kP;
-	gains[body_x].kI = stateK[body_x].kI;
-	gains[body_x].kD = stateK[body_x].kD;
+	gains[vel_u].kP = stateK[vel_u].kP;
+	gains[vel_u].kI = stateK[vel_u].kI;
+	gains[vel_u].kD = stateK[vel_u].kD;
 
-	gains[body_y].kP = stateK[body_y].kP;
-	gains[body_y].kI = stateK[body_y].kI;
-	gains[body_y].kD = stateK[body_y].kD;
+	gains[vel_v].kP = stateK[vel_v].kP;
+	gains[vel_v].kI = stateK[vel_v].kI;
+	gains[vel_v].kD = stateK[vel_v].kD;
 
-	gains[body_w].kP = stateK[body_w].kP;
-	gains[body_w].kI = stateK[body_w].kI;
-	gains[body_w].kD = stateK[body_w].kD;
+	gains[vel_w].kP = stateK[vel_w].kP;
+	gains[vel_w].kI = stateK[vel_w].kI;
+	gains[vel_w].kD = stateK[vel_w].kD;
 
-	gains[body_yaw].kP = stateK[body_yaw].kP;
-	gains[body_yaw].kI = stateK[body_yaw].kI;
-	gains[body_yaw].kD = stateK[body_yaw].kD;
+	gains[yaw].kP = stateK[yaw].kP;
+	gains[yaw].kI = stateK[yaw].kI;
+	gains[yaw].kD = stateK[yaw].kD;
 }
 
-float stateControl_GetIntegral(body_handles direction) {
+float stateControl_GetIntegral(robot_axes direction) {
 	return stateK[direction].I;
 }
 
@@ -141,75 +160,80 @@ void stateControl_useAbsoluteAngle(bool angularControl){
 }
 
 void stateControl_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
-    stateK[body_x].kP = PIDGains->PbodyX;
-    stateK[body_x].kI = PIDGains->IbodyX;
-    stateK[body_x].kD = PIDGains->DbodyX;
+    stateK[vel_u].kP = PIDGains->PbodyX;
+    stateK[vel_u].kI = PIDGains->IbodyX;
+    stateK[vel_u].kD = PIDGains->DbodyX;
 
-    stateK[body_y].kP = PIDGains->PbodyY;
-    stateK[body_y].kI = PIDGains->IbodyY;
-    stateK[body_y].kD = PIDGains->DbodyY;
+    stateK[vel_v].kP = PIDGains->PbodyY;
+    stateK[vel_v].kI = PIDGains->IbodyY;
+    stateK[vel_v].kD = PIDGains->DbodyY;
 
-    stateK[body_w].kP = PIDGains->PbodyW;
-    stateK[body_w].kI = PIDGains->IbodyW;
-    stateK[body_w].kD = PIDGains->DbodyW;
+    stateK[vel_w].kP = PIDGains->PbodyW;
+    stateK[vel_w].kI = PIDGains->IbodyW;
+    stateK[vel_w].kD = PIDGains->DbodyW;
 
-    stateK[body_yaw].kP = PIDGains->PbodyYaw;
-    stateK[body_yaw].kI = PIDGains->IbodyYaw;
-    stateK[body_yaw].kD = PIDGains->DbodyYaw;
+    stateK[yaw].kP = PIDGains->PbodyYaw;
+    stateK[yaw].kI = PIDGains->IbodyYaw;
+    stateK[yaw].kD = PIDGains->DbodyYaw;
 }
 
 void stateControl_ResetAngleI(){
-	stateK[body_yaw].I = 0;
-	stateK[body_w].I = 0;
+	stateK[yaw].I = 0;
+	stateK[vel_w].I = 0;
 }
 
 void stateControl_ResetPID(){
-	stateK[body_yaw].prev_e = 0;
-	stateK[body_yaw].prev_PID = 0;
-	stateK[body_w].prev_e = 0;
-	stateK[body_w].prev_PID = 0;
+	stateK[yaw].prev_e = 0;
+	stateK[yaw].prev_PID = 0;
+	stateK[vel_w].prev_e = 0;
+	stateK[vel_w].prev_PID = 0;
 }
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void body2Wheels(float wheelSpeed[4], float vel[3]){
-	wheelSpeed[wheels_RF] = (vel[body_x] * cosFront + vel[body_y] * sinFront) / rad_wheel;
-	wheelSpeed[wheels_RB] = (vel[body_x] * cosBack + vel[body_y] * -sinBack) / rad_wheel;
-	wheelSpeed[wheels_LB] = (vel[body_x] * -cosBack + vel[body_y] * -sinBack) / rad_wheel;
-	wheelSpeed[wheels_LF] = (vel[body_x] * -cosFront + vel[body_y] * sinFront) / rad_wheel;
 
+	// Translate the local u, v, and omega velocities into wheel velocities.
+	multiplyMatrix(D, vel, wheelSpeed, 4, 1, 3);
+
+	// Translate wheel velocities into angular velocities
+	for (wheel_names wheel=wheels_RF; wheel <= wheels_RB; wheel++) {
+		wheelSpeed[wheel] = wheelSpeed[wheel] / rad_wheel;
+	}
+
+	// If we use angular velocities, take those into account too.
 	if (!useAbsoluteAngle) {
-        for (wheel_names wheel=wheels_RF; wheel<=wheels_LF; wheel++){
-            wheelSpeed[wheel] += vel[body_w] * rad_robot / rad_wheel;
+        for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
+            wheelSpeed[wheel] += vel[vel_w] * rad_robot / rad_wheel;
         }
 	}
 }
 
-static void global2Local(float global[4], float local[4], float  yaw){
+static void global2Local(float global[4], float local[4], float angle){
 	//trigonometry
-	local[body_x] = cosf(yaw)*global[body_x]+sinf(yaw)*global[body_y];
-	local[body_y] = -sinf(yaw)*global[body_x]+cosf(yaw)*global[body_y];
-    local[body_w] = global[body_w];
-	local[body_yaw] = global[body_yaw];
+	local[vel_u] = cosf(angle)*global[vel_x]-sinf(angle)*global[vel_y];
+	local[vel_v] = sinf(angle)*global[vel_x]+cosf(angle)*global[vel_y];
+    local[vel_w] = global[vel_w];
+	local[yaw] = global[yaw];
 }
 
 static void velocityControl(float state[3], float velRef[4], float velocityWheelRef[4]){
 	float stateLocalRef[3] = {0, 0, 0};
-	global2Local(velRef, stateLocalRef, state[body_yaw]); //transfer global to local
+	global2Local(velRef, stateLocalRef, state[yaw]); //transfer global to local
 
 	// Manually adjusting velocity command
 	//     Explanation: see Velocity Difference file on drive (https://docs.google.com/document/d/1pGKysiwpu19DKLpAZ4GpluMV7UBhBQZ65YMTtI7bd_8/)
-	stateLocalRef[body_x] = 1.12 * stateLocalRef[body_x];
-	stateLocalRef[body_y] = 1.1 * stateLocalRef[body_y];
+	stateLocalRef[vel_u] = 1.12 * stateLocalRef[vel_u];
+	stateLocalRef[vel_v] = 1.1 * stateLocalRef[vel_v];
 
 	// Local control
-	float velxErr = (stateLocalRef[body_x] - state[body_x]);
-	float velyErr = (stateLocalRef[body_y] - state[body_y]);
-	float velwErr = (stateLocalRef[body_w] - state[body_w]);
+	float veluErr = (stateLocalRef[vel_u] - state[vel_u]);
+	float velvErr = (stateLocalRef[vel_v] - state[vel_v]);
+	float velwErr = (stateLocalRef[vel_w] - state[vel_w]);
 
-	stateLocalRef[body_x] += PID(velxErr, &stateK[body_x]);
-	stateLocalRef[body_y] += PID(velyErr, &stateK[body_y]);
-	stateLocalRef[body_w] += PID(velwErr, &stateK[body_w]);
+	stateLocalRef[vel_u] += PID(veluErr, &stateK[vel_u]);
+	stateLocalRef[vel_v] += PID(velvErr, &stateK[vel_v]);
+	stateLocalRef[vel_w] += PID(velwErr, &stateK[vel_w]);
 
 	body2Wheels(velocityWheelRef, stateLocalRef); //translate velocity to wheel speed
 }
@@ -221,8 +245,8 @@ static float absoluteAngleControl(float angleRef, float angle){
 		angleErr = 0.000001*prevangleErr;
 	}
 	if (fabs(angleErr) < YAW_MARGIN || prevangleErr/angleErr < 0) {
-		stateK[body_yaw].I = 0;
+		stateK[yaw].I = 0;
 	}
 	prevangleErr = angleErr;
-	return PID(angleErr, &stateK[body_yaw]);// PID control from control_util.h
+	return PID(angleErr, &stateK[yaw]);// PID control from control_util.h
 }

@@ -20,13 +20,13 @@
 #include "REM_RobotSetPIDGains.h"
 
 // Set default PID values
-#define default_P_gain_x 0.2
-#define default_I_gain_x 0.0
-#define default_D_gain_x 0.0
+#define default_P_gain_u 0.2
+#define default_I_gain_u 0.0
+#define default_D_gain_u 0.0
 
-#define default_P_gain_y 0.3
-#define default_I_gain_y 0.0
-#define default_D_gain_y 0.0
+#define default_P_gain_v 0.3
+#define default_I_gain_v 0.0
+#define default_D_gain_v 0.0
 
 #define default_P_gain_w 0.25
 #define default_I_gain_w 5.0
@@ -43,7 +43,7 @@
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
 /**
- * Initialize the PID controllers.
+ * Initializes the PID controllers and the velocity coupling matrix, D
  */
 int stateControl_Init();
 
@@ -78,19 +78,19 @@ float* stateControl_GetWheelRef();
 void stateControl_SetState(float input[4]);
 
 /**
- * Retrieve the latest PID gains for x, y, w and yaw.
+ * Retrieve the latest PID gains for u, v, w and yaw.
  * 
  * @param gains The struct that will receive the new PID gains.
  */
 void stateControl_GetPIDGains(PIDvariables gains[4]);
 
 /**
- * Retrieves the integral for the provided direction (x,y,w or yaw)
+ * Retrieves the integral for the provided direction (u,v,w or yaw)
  * 
  * @param direction The direction to be requested
  * @return float    The integral for the requested direction
  */
-float stateControl_GetIntegral(body_handles direction);
+float stateControl_GetIntegral(robot_axes direction);
 
 /**
  * Switch between angular velocity or absolute angle.

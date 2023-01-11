@@ -1,19 +1,32 @@
 #include "stateEstimation.h"
+#include "matrix_operations.h"
 #define RoT_BUFFER_SIZE 5
 
 ///////////////////////////////////////////////////// VARIABLES
 
 static float state[4] = {0.0f};
 
+// The pseudoinverse of the velocity coupling matrix, used to transform wheel speeds into local u, v and w speeds.
+static float Dinv[12] = {0.0f};
+
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
 /**
  * Translates the velocities from the wheels to the body velocities.
  * 
- * @param wheelSpeeds The speed achieved by each wheel.
- * @param output 	  The x, y and w speeds from a body perspective.
+ * @param wheelSpeeds The speed achieved by each wheel [rad/s].
+ * @param output 	  The u, v and w speeds from a body perspective [m/s].
  */
 static void wheels2Body(float wheelSpeeds[4], float output[3]);
+
+/**
+ * @brief Translates the local velocities into the global velocities.
+ * 
+ * @param global The global x, y, w and yaw values.
+ * @param local  The local u, v, w, and yaw values.
+ * @param angle  The global angle of the robot (yaw).
+ */
+ static void local2Global(float global[4], float local[4], float angle);
 
 /**
  * Smoothens out the IMU rate of turn data.
@@ -29,6 +42,25 @@ float smoothen_rateOfTurn(float rateOfTurn);
 
 int stateEstimation_Init(){
 	kalman_Init();
+
+	// Initialize the pseudoinverse of the velocity coupling matrix.
+	float divisor_a = sinBack + sinFront;
+	Dinv[0] = -0.5 / divisor_a;
+	Dinv[1] = Dinv[0];
+	Dinv[2] = -Dinv[0];
+	Dinv[3] = -Dinv[0];
+
+	float divisor_b = cosBack * cosBack + cosFront * cosFront;
+	Dinv[4] = cosFront / divisor_b;
+	Dinv[5] = -Dinv[4];
+	Dinv[6] = -cosBack / divisor_b;
+	Dinv[7] = -Dinv[6];
+
+	Dinv[8] = sinBack / divisor_a;
+	Dinv[9] = Dinv[8];
+	Dinv[10] = sinFront / divisor_a;
+	Dinv[11] = Dinv[10];
+
 	return 0;
 }
 
@@ -52,14 +84,17 @@ void stateEstimation_Update(StateInfo* input) {
 	float kalman_State[4] = {0.0f};
 	kalman_GetState(kalman_State);
 
-	// TODO check if input->visionYaw is scaled properly with the new REM messages
+	// TODO: check if input->visionYaw is scaled properly with the new REM messages
 	yaw_Calibrate(input->xsensYaw, input->visionYaw, input->visionAvailable, input->rateOfTurn);
 	float calibratedYaw = yaw_GetCalibratedYaw();
+	
+	float localState[4] = {0.0f}; 
 
-	state[body_x] = kalman_State[0];
-	state[body_y] = kalman_State[2];
-	state[body_w] = smoothen_rateOfTurn(input->rateOfTurn);
-	state[body_yaw] = calibratedYaw;
+	localState[vel_u] = kalman_State[0];
+	localState[vel_v] = kalman_State[2];
+	localState[vel_w] = smoothen_rateOfTurn(input->rateOfTurn);
+	localState[yaw] = calibratedYaw;
+	local2Global(state, localState, localState[yaw]);
 }
 
 float* stateEstimation_GetState() {
@@ -67,22 +102,33 @@ float* stateEstimation_GetState() {
 }
 
 float stateEstimation_GetFilteredRoT() {
-    return state[body_w];
+    return state[vel_w];
 }
 
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void wheels2Body(float wheelSpeeds[4], float output[3]){
-	static const float denominatorA = rad_wheel / (2 * (pow(cosFront, 2) + pow(cosBack, 2)));
-	static const float denominatorB = rad_wheel / (2 * (sinFront + sinBack));
 
-	// Transformation from wheel speeds to translational and angular velocities (assuming no slip)
-	output[body_x] = (cosFront * wheelSpeeds[wheels_RF] + cosBack * wheelSpeeds[wheels_RB] - cosBack * wheelSpeeds[wheels_LB] - cosFront * wheelSpeeds[wheels_LF]) * denominatorA;
-	output[body_y] = (wheelSpeeds[wheels_RF] - wheelSpeeds[wheels_RB] - wheelSpeeds[wheels_LB] + wheelSpeeds[wheels_LF]) * denominatorB;
-	output[body_w] = (sinBack * wheelSpeeds[wheels_RF] + sinFront * wheelSpeeds[wheels_RB] + sinFront * wheelSpeeds[wheels_LB] + sinBack * wheelSpeeds[wheels_LF]) * denominatorB / rad_robot;
+	// Translate angular wheel velocities [rad/s] into regular velocities [m/s] on the outside of each wheel.
+	for (wheel_names wheel=wheels_RF; wheel <= wheels_RB; wheel++) {
+		wheelSpeeds[wheel] = wheelSpeeds[wheel] * rad_wheel;
+	}
+
+	// Translate the wheel speeds into local u, v and r * w speeds.
+	multiplyMatrix(Dinv, wheelSpeeds, output, 3, 1, 4);
+
+	// Translate the rotational velocity to m/s.
+	output[vel_w] = output[vel_w] / rad_robot;
 }
 
+static void local2Global(float global[4], float local[4], float angle) {
+	global[vel_x] = cosf(angle)*local[vel_u]+sinf(angle)*local[vel_v];
+	global[vel_y] = -sinf(angle)*local[vel_u] + cosf(angle)*local[vel_v];
+
+	global[vel_w] = local[vel_w];
+	global[yaw] = local[yaw];
+}
 
 float smoothen_rateOfTurn(float rateOfTurn){
     static float buffer[RoT_BUFFER_SIZE] = {0.0f}; // circular buffer
