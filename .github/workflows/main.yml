@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
-      uses: actions/setup-python@c2
+      uses: actions/setup-python@v2
       
     - name: Run PlatformIO
       uses: karniv00l/platformio-run-action@v1.1.1
