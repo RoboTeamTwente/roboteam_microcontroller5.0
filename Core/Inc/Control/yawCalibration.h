@@ -1,5 +1,12 @@
 
-/* Description: Calibrates the Yaw
+/**
+ * @addtogroup Control 
+ * @{ 
+ * 
+ * @addtogroup State_estimation
+ * @{
+ * 
+ * @brief Calibrates the Yaw
  *
  * Instructions:
  * 1) compares the xsens yaw + offset with the vision yaw

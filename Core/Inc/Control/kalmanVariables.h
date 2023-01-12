@@ -1,5 +1,12 @@
 
-/* Description: Kalman filter variables
+/** 
+ * @addtogroup Control 
+ * @{ 
+ * 
+ * @addtogroup Kalman_filter 
+ * @{
+ * 
+ * @brief Kalman filter variables
  *
  * Instructions:
  * 1) Initializes the necessary arrays and variables for the Kalman filter

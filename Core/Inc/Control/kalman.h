@@ -1,5 +1,12 @@
 
-/* Description: Kalman filter
+/**
+ * @addtogroup Control 
+ * @{ 
+ * 
+ * @addtogroup Kalman_filter 
+ * @{
+ * 
+ * @brief Description: Kalman filter
  *
  * Instructions:
  * 1) See the wikipedia page on kalman filters
@@ -53,3 +60,4 @@ void kalman_GetK(float gain[4][4]);
 void kalman_GetP(float P[16]);
 
 #endif /* KALMAN_KALMAN_H_*/
+/* @} */

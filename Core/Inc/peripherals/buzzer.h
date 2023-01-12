@@ -1,3 +1,18 @@
+/**
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Buzzer
+ * @{
+ * 
+ * @file buzzer.h
+ * @author Simen 
+ * @brief The buzzer on the robot
+ * 
+ * @date 27-04-2019
+ * 
+ */
+
 #ifndef INC_BUZZER_H_
 #define INC_BUZZER_H_
 

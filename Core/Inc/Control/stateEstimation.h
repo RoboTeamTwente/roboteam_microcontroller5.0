@@ -1,5 +1,13 @@
 
-/* Description: Estimates the state
+/** 
+ * @addtogroup Control 
+ * @{ 
+ * 
+ * @addtogroup State_estimation 
+ * @{
+ * 
+ * 
+ * @brief Estimates the state
  *
  * Instructions:
  * 1) Takes all the data received/gathered by the robot

@@ -17,3 +17,7 @@ Drivers
 
 python_utils/rem/*
 *.code-workspace
+
+# Doxygen
+docs/html
+docs/latex

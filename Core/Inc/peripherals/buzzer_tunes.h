@@ -1,8 +1,16 @@
-/*
- * buzzer_Tunes.h
- *
- *  Created on: May 25, 2019
- *      Author: 454b
+/**
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Buzzer
+ * @{
+ * 
+ * @file buzzer_tunes.h
+ * @author 454b
+ * @brief The tunes that can be played by the buzzer on the robot
+ * 
+ * @date 25-05-2019
+ * 
  */
 
 #ifndef BUZZER_TUNES_H_

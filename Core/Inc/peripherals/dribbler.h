@@ -1,14 +1,19 @@
+/**
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Dribbler
+ * @{
+ * 
+ * @file dribbler.h
+ * @author Emiel 
+ * @brief The dribbler that is located on the robot
+ * 
+ * @date 25-08-2022
+ * 
+ * This allows to set the speed of the dribbler between 0 (min) and 1 (max)
+ */
 
-/* Description: Makes the dribbler spin
- *
- * Instructions:
- * 1) set speed (0(off)-1(max))
- *
- * Extra functions:
- *
- * Notes:
- *
-*/
 
 #ifndef DRIBBLER_DRIBBLER_H_
 #define DRIBBLER_DRIBBLER_H_

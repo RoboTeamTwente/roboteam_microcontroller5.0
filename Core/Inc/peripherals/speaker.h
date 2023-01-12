@@ -1,3 +1,17 @@
+/**
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Speaker
+ * @{
+ * 
+ * @file speaker.h
+ * @author Emiel
+ * @brief The speaker that is located on the robot
+ * 
+ * @date 06-09-2022
+ * 
+ */
 #ifndef __SPEAKER_H
 #define __SPEAKER_H
 

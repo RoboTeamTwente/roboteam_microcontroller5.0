@@ -1,20 +1,13 @@
-/*
+/**
+ * @addtogroup Control 
+ * @{ 
+ * 
+ * @brief Control utilities
  * control_util.h
  *
  *  Created on: Nov 14, 2018
- *      Author: kjhertenberg
+ * @author kjhertenberg
  */
-
-/* Description:
- *
- * Instructions:
- * 1)
- *
- * Extra functions:
- *
- * Notes:
- *
-*/
 
 #ifndef UTILS_CONTROL_UTIL_H_
 #define UTILS_CONTROL_UTIL_H_

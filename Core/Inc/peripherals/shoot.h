@@ -1,5 +1,12 @@
 
-/* Description: Makes the robot chip or kick
+/** 
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Shooting
+ * @{
+ * 
+ * @brief Makes the robot chip or kick
  *
  * Instructions:
  * 1) First the robot's needs to charge
@@ -7,7 +14,7 @@
  *
  * Extra functions:
  *
- * Notes:
+ * @note
  * As opposed to other functionalities, shoot uses a callback() instead of an update(). This is because shoot
  * only needs to update when kicking is needed, while for example the velocity control needs to ran constantly. It would be
  * very inefficient to update shoot every cycle. The timer for the callback is set internally. The time after which another

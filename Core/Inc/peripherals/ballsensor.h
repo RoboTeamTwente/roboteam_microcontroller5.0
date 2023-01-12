@@ -1,3 +1,16 @@
+/**
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Ballsensor
+ * @{
+ * 
+ * @file ballsensor.h
+ * @author Emil Karimov
+ * @brief The ballsensor of the robot
+ * 
+ */
+
 #ifndef BALLSENSOR_H_
 #define BALLSENSOR_H_
 

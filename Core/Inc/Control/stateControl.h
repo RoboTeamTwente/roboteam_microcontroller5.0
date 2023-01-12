@@ -1,5 +1,12 @@
 
-/* Description: State control
+/**
+ * @addtogroup Control 
+ * @{ 
+ * 
+ * @addtogroup State_control 
+ * @{
+ * 
+ * @brief State control
  *
  * Instructions:
  * 1) Feedforwards the expected desired wheel stateControl based on the reference stateControl

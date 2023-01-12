@@ -1,5 +1,12 @@
 
-/* Description: wheel velocity controls
+/** 
+ * @addtogroup Peripherals 
+ * @{ 
+ * 
+ * @addtogroup Wheels
+ * @{
+ * 
+ * @brief Wheel velocity controls
  *
  * Instructions:
  * 1) Initialize the wheels by calling wheels_Init()
