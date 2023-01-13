@@ -329,7 +329,6 @@ void init(void){
 	set_Pin(LED2_pin, 1);
 
     // Initialize control constants
-    control_util_Init();
     wheels_Init();
     stateControl_Init();
     stateEstimation_Init();
