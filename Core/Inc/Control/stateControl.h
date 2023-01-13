@@ -73,7 +73,7 @@ float* stateControl_GetWheelRef();
 /**
  * Set the current state as the estimated state as calculated by stateEstimation
  * 
- * @param input The x, y, w and yaw speeds from stateEstimation
+ * @param input The u, v, w and yaw speeds from stateEstimation
  */
 void stateControl_SetState(float input[4]);
 

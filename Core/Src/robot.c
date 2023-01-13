@@ -174,8 +174,8 @@ Wireless_IRQcallbacks SX_IRQcallbacks = { .rxdone = &Wireless_RXDone, .default_c
 void executeCommands(REM_RobotCommand* robotCommand){
 	stateControl_useAbsoluteAngle(robotCommand->useAbsoluteAngle);
 	float stateReference[4];
-	stateReference[vel_x] = (robotCommand->rho) * cosf(robotCommand->theta);
-	stateReference[vel_y] = (robotCommand->rho) * sinf(robotCommand->theta);
+	stateReference[vel_x] = (robotCommand->rho) * sinf(robotCommand->theta);
+	stateReference[vel_y] = (robotCommand->rho) * cosf(robotCommand->theta);
 	stateReference[vel_w] = robotCommand->angularVelocity;
 	stateReference[yaw] = robotCommand->angle;
 	stateControl_SetRef(stateReference);
@@ -496,11 +496,11 @@ void loop(void){
 		robotFeedback.ballSensorSeesBall = ballPosition.canKickBall;
 		robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
 
-		float vx = stateEstimation_GetState()[vel_x];
-		float vy = stateEstimation_GetState()[vel_y];
-		robotFeedback.rho = sqrt(vx*vx + vy*vy);
+		float vu = stateEstimation_GetState()[vel_u];
+		float vv = stateEstimation_GetState()[vel_v];
+		robotFeedback.rho = sqrt(vu*vu + vv*vv);
 		robotFeedback.angle = stateEstimation_GetState()[yaw];
-		robotFeedback.theta = atan2(vy, vx);
+		robotFeedback.theta = atan2(vu, vv);
 		robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
 		robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
 		robotFeedback.dribblerSeesBall = dribbler_hasBall();

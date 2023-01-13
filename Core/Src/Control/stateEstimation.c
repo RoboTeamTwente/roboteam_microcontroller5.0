@@ -1,10 +1,16 @@
 #include "stateEstimation.h"
-#include "matrix_operations.h"
+#include "logging.h"
+
 #define RoT_BUFFER_SIZE 5
 
 ///////////////////////////////////////////////////// VARIABLES
 
-static float state[4] = {0.0f};
+/**
+ * @brief The local current state of the robot.
+ * 
+ * The state consists out of u, v, w and yaw.
+ */
+static float stateLocal[4] = {0.0f};
 
 // The pseudoinverse of the velocity coupling matrix, used to transform wheel speeds into local u, v and w speeds.
 static float Dinv[12] = {0.0f};
@@ -18,15 +24,6 @@ static float Dinv[12] = {0.0f};
  * @param output 	  The u, v and w speeds from a body perspective [m/s].
  */
 static void wheels2Body(float wheelSpeeds[4], float output[3]);
-
-/**
- * @brief Translates the local velocities into the global velocities.
- * 
- * @param global The global x, y, w and yaw values.
- * @param local  The local u, v, w, and yaw values.
- * @param angle  The global angle of the robot (yaw).
- */
- static void local2Global(float global[4], float local[4], float angle);
 
 /**
  * Smoothens out the IMU rate of turn data.
@@ -88,21 +85,18 @@ void stateEstimation_Update(StateInfo* input) {
 	yaw_Calibrate(input->xsensYaw, input->visionYaw, input->visionAvailable, input->rateOfTurn);
 	float calibratedYaw = yaw_GetCalibratedYaw();
 	
-	float localState[4] = {0.0f}; 
-
-	localState[vel_u] = kalman_State[0];
-	localState[vel_v] = kalman_State[2];
-	localState[vel_w] = smoothen_rateOfTurn(input->rateOfTurn);
-	localState[yaw] = calibratedYaw;
-	local2Global(state, localState, localState[yaw]);
+	stateLocal[vel_u] = kalman_State[0];
+	stateLocal[vel_v] = kalman_State[2];
+	stateLocal[vel_w] = smoothen_rateOfTurn(input->rateOfTurn);
+	stateLocal[yaw] = calibratedYaw;
 }
 
 float* stateEstimation_GetState() {
-	return state;
+	return stateLocal;
 }
 
 float stateEstimation_GetFilteredRoT() {
-    return state[vel_w];
+    return stateLocal[vel_w];
 }
 
 
@@ -116,18 +110,12 @@ static void wheels2Body(float wheelSpeeds[4], float output[3]){
 	}
 
 	// Translate the wheel speeds into local u, v and r * w speeds.
-	multiplyMatrix(Dinv, wheelSpeeds, output, 3, 1, 4);
+	output[vel_u] = wheelSpeeds[0] * Dinv[0] + wheelSpeeds[1] * Dinv[1] + wheelSpeeds[2] * Dinv[2] + wheelSpeeds[3] * Dinv[3];
+	output[vel_v] = wheelSpeeds[0] * Dinv[4] + wheelSpeeds[1] * Dinv[5] + wheelSpeeds[2] * Dinv[6] + wheelSpeeds[3] * Dinv[7];
+	output[vel_w] = wheelSpeeds[0] * Dinv[8] + wheelSpeeds[1] * Dinv[9] + wheelSpeeds[2] * Dinv[10] + wheelSpeeds[3] * Dinv[11];
 
 	// Translate the rotational velocity to m/s.
 	output[vel_w] = output[vel_w] / rad_robot;
-}
-
-static void local2Global(float global[4], float local[4], float angle) {
-	global[vel_x] = cosf(angle)*local[vel_u]+sinf(angle)*local[vel_v];
-	global[vel_y] = -sinf(angle)*local[vel_u] + cosf(angle)*local[vel_v];
-
-	global[vel_w] = local[vel_w];
-	global[yaw] = local[yaw];
 }
 
 float smoothen_rateOfTurn(float rateOfTurn){

@@ -53,9 +53,9 @@ int stateEstimation_DeInit();
 void stateEstimation_Update(StateInfo* input);
 
 /**
- * Get the current estimated state
+ * Get the current estimated local state
  * 
- * @return float* The curent state for x, y, w and yaw
+ * @return float* The curent state for u, v, w and yaw
  */
 float* stateEstimation_GetState();
 
