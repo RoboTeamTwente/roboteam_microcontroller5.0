@@ -91,8 +91,11 @@ void stateEstimation_Update(StateInfo* input) {
 	stateLocal[yaw] = calibratedYaw;
 }
 
-float* stateEstimation_GetState() {
-	return stateLocal;
+void stateEstimation_GetState(float _stateLocal[4]) {
+	_stateLocal[vel_u] = stateLocal[vel_u];
+	_stateLocal[vel_v] = stateLocal[vel_v];
+	_stateLocal[vel_w] = stateLocal[vel_w];
+	_stateLocal[yaw] = stateLocal[yaw];
 }
 
 float stateEstimation_GetFilteredRoT() {

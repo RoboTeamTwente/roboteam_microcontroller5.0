@@ -193,7 +193,9 @@ void executeCommands(REM_RobotCommand* robotCommand){
 		}
 	}
 	else if (robotCommand->kickAtAngle) {
-		if (fabs(stateEstimation_GetState()[yaw] - robotCommand->angle) < 0.025) {
+		float localState[4] = {0.0f};
+		stateEstimation_GetState(localState);
+		if (fabs(localState[yaw] - robotCommand->angle) < 0.025) {
 			if (ballPosition.canKickBall || robotCommand->doForce) {
 				shoot_Shoot(shoot_Kick);
 			}
@@ -496,10 +498,12 @@ void loop(void){
 		robotFeedback.ballSensorSeesBall = ballPosition.canKickBall;
 		robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
 
-		float vu = stateEstimation_GetState()[vel_u];
-		float vv = stateEstimation_GetState()[vel_v];
+		float localState[4] = {0.0f};
+		stateEstimation_GetState(localState);
+		float vu = localState[vel_u];
+		float vv = localState[vel_v];
 		robotFeedback.rho = sqrt(vu*vu + vv*vv);
-		robotFeedback.angle = stateEstimation_GetState()[yaw];
+		robotFeedback.angle = localState[yaw];
 		robotFeedback.theta = atan2(vu, vv);
 		robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
 		robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
@@ -809,7 +813,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 
 		// State control
-		stateControl_SetState(stateEstimation_GetState());
+		float stateLocal[4] = {0.0f};
+		stateEstimation_GetState(stateLocal);
+		stateControl_SetState(stateLocal);
 		stateControl_Update();
 
 		wheels_SetSpeeds( stateControl_GetWheelRef() );

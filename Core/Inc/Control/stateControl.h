@@ -59,9 +59,9 @@ void stateControl_Update();
 
 /**
  * Set the new reference values that the robot should achieve.
- * @param input The x, y, w and yaw speeds as instructed by the RobotCommand.
+ * @param _stateGlobalRef The x, y, w and yaw speeds as instructed by the RobotCommand.
  */
-void stateControl_SetRef(float input[4]);
+void stateControl_SetRef(float _stateGlobalRef[4]);
 
 /**
  * Get the referenced wheel speeds.
@@ -73,16 +73,16 @@ float* stateControl_GetWheelRef();
 /**
  * Set the current state as the estimated state as calculated by stateEstimation
  * 
- * @param input The u, v, w and yaw speeds from stateEstimation
+ * @param _stateLocal The u, v, w and yaw speeds from stateEstimation
  */
-void stateControl_SetState(float input[4]);
+void stateControl_SetState(float _stateLocal[4]);
 
 /**
  * Retrieve the latest PID gains for u, v, w and yaw.
  * 
- * @param gains The struct that will receive the new PID gains.
+ * @param gainsLocal The struct that will receive the new PID gains.
  */
-void stateControl_GetPIDGains(PIDvariables gains[4]);
+void stateControl_GetPIDGains(PIDvariables gainsLocal[4]);
 
 /**
  * Retrieves the integral for the provided direction (u,v,w or yaw)
