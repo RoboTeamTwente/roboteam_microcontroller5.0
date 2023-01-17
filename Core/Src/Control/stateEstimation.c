@@ -48,14 +48,14 @@ int stateEstimation_Init(){
 	Dinv[3] = -Dinv[0];
 
 	float divisor_b = cosBack * cosBack + cosFront * cosFront;
-	Dinv[4] = cosFront / divisor_b;
+	Dinv[4] = 0.5 * cosFront / divisor_b;
 	Dinv[5] = -Dinv[4];
-	Dinv[6] = -cosBack / divisor_b;
+	Dinv[6] = -0.5 * cosBack / divisor_b;
 	Dinv[7] = -Dinv[6];
 
-	Dinv[8] = sinBack / divisor_a;
+	Dinv[8] = 0.5 * sinBack / divisor_a;
 	Dinv[9] = Dinv[8];
-	Dinv[10] = sinFront / divisor_a;
+	Dinv[10] = 0.5 * sinFront / divisor_a;
 	Dinv[11] = Dinv[10];
 
 	return 0;
