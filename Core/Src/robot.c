@@ -671,7 +671,6 @@ void handleRobotMusicCommand(uint8_t* packet_buffer){
 
 void robot_setRobotCommandPayload(REM_RobotCommandPayload* rcp){
 	decodeREM_RobotCommand(&activeRobotCommand, rcp);
-	timestamp_last_packet_serial = HAL_GetTick();
 }
 
 void robot_setRobotMusicCommandPayload(REM_RobotMusicCommandPayload* mcp){
@@ -751,6 +750,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi){
 /* Callback for when bytes have been received via the UART */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart->Instance == UART_PC->Instance){
+		timestamp_last_packet_serial = HAL_GetTick();
 		REM_UARTCallback(huart);
 	}
 }
