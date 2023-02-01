@@ -1,13 +1,14 @@
 name: PlatformIO Build
 
 on: 
+  workflow_dispatch:
   push:
     branches:
     - development
   pull_request:
     branches:
     - development
-      
+  
 jobs:
   build:
     
