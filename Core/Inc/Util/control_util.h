@@ -75,18 +75,27 @@
 
 ///////////////////////////////////////////////////// STRUCTS
 
+/*
+* @brief The axis on which a robot is being controlled.
+* 
+* @note The x, y and u, v velocities can technically be used interchangeably. 
+*	However, in order to stick to the conventions one should use x and y when
+*   they refer to the global frame and u and v for the local frame.
+*/
 typedef enum {
-	body_x,		// The velocity in the X direction
-	body_y,		// The velocity in the Y direction
-	body_w,		// The angular velocity
-	body_yaw,	// The angle
-}body_handles;
+	vel_x = 0,		// The global velocity in the sideways direction
+	vel_y = 1,		// The global velocity in the forward/backward direction
+	vel_w = 2,		// The angular velocity
+	vel_u = 0,      // The local velocity in the sideways direction
+	vel_v = 1,      // The local velocity in the forward/backward direction
+	yaw = 3,		// The angle
+}robot_axes;
 
 typedef enum {
 	wheels_RF,	// The right front wheel
-	wheels_RB,	// The right back wheel
-	wheels_LB,	// The left back wheel
 	wheels_LF,	// The left front wheel
+	wheels_LB,	// The left back wheel
+	wheels_RB,	// The right back wheel
 }wheel_names;
 
 typedef enum {

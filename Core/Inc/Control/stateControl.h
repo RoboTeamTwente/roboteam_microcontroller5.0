@@ -20,13 +20,13 @@
 #include "REM_RobotSetPIDGains.h"
 
 // Set default PID values
-#define default_P_gain_x 0.2
-#define default_I_gain_x 0.0
-#define default_D_gain_x 0.0
+#define default_P_gain_u 0.2
+#define default_I_gain_u 0.0
+#define default_D_gain_u 0.0
 
-#define default_P_gain_y 0.3
-#define default_I_gain_y 0.0
-#define default_D_gain_y 0.0
+#define default_P_gain_v 0.3
+#define default_I_gain_v 0.0
+#define default_D_gain_v 0.0
 
 #define default_P_gain_w 0.25
 #define default_I_gain_w 5.0
@@ -43,7 +43,7 @@
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
 /**
- * Initialize the PID controllers.
+ * Initializes the PID controllers and the velocity coupling matrix, D
  */
 int stateControl_Init();
 
@@ -59,9 +59,9 @@ void stateControl_Update();
 
 /**
  * Set the new reference values that the robot should achieve.
- * @param input The x, y, w and yaw speeds as instructed by the RobotCommand.
+ * @param _stateGlobalRef The x, y, w and yaw speeds as instructed by the RobotCommand.
  */
-void stateControl_SetRef(float input[4]);
+void stateControl_SetRef(float _stateGlobalRef[4]);
 
 /**
  * Get the referenced wheel speeds.
@@ -73,24 +73,24 @@ float* stateControl_GetWheelRef();
 /**
  * Set the current state as the estimated state as calculated by stateEstimation
  * 
- * @param input The x, y, w and yaw speeds from stateEstimation
+ * @param _stateLocal The u, v, w and yaw speeds from stateEstimation
  */
-void stateControl_SetState(float input[4]);
+void stateControl_SetState(float _stateLocal[4]);
 
 /**
- * Retrieve the latest PID gains for x, y, w and yaw.
+ * Retrieve the latest PID gains for u, v, w and yaw.
  * 
- * @param gains The struct that will receive the new PID gains.
+ * @param gainsLocal The struct that will receive the new PID gains.
  */
-void stateControl_GetPIDGains(PIDvariables gains[4]);
+void stateControl_GetPIDGains(PIDvariables gainsLocal[4]);
 
 /**
- * Retrieves the integral for the provided direction (x,y,w or yaw)
+ * Retrieves the integral for the provided direction (u,v,w or yaw)
  * 
  * @param direction The direction to be requested
  * @return float    The integral for the requested direction
  */
-float stateControl_GetIntegral(body_handles direction);
+float stateControl_GetIntegral(robot_axes direction);
 
 /**
  * Switch between angular velocity or absolute angle.
