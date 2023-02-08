@@ -43,12 +43,16 @@
 #define PWM_CUTOFF 200.0F 		// arbitrary threshold to avoid motor shutdown
 #define WHEEL_GEAR_RATIO 2.65F 	// gear ratio between motor and wheel
 #define PWM_LIMIT MAX_PWM 		// should be equal to MAX_PWM by default
-#define MAX_VOLTAGE 24.0    	// [V] see datasheet
-#define SPEED_CONSTANT 285.0 	//[(rad/s)/V] see datasheet
+float MAX_VOLTAGE; 				// [V] see datasheet
+#define MAX_VOLTAGE_30W 12.0
+#define MAX_VOLTAGE_50W 24.0
+float SPEED_CONSTANT; 			//[(rad/s)/V] see datasheet
+#define SPEED_CONSTANT_30W 374.0
+#define SPEED_CONSTANT_50W 285.0
 #define WHEEL_PULSES_PER_ROTATION (float)4*1024 // number of pulses of the encoder per rotation of the motor (see datasheet)
 
-#define OMEGAtoPWM (1 / SPEED_CONSTANT) * (MAX_PWM / MAX_VOLTAGE) * WHEEL_GEAR_RATIO // conversion factor from wheel speed [rad/s] to required PWM on the motor
-#define WHEEL_ENCODER_TO_OMEGA (float) 2 * M_PI / (TIME_DIFF * WHEEL_GEAR_RATIO * WHEEL_PULSES_PER_ROTATION) // conversion factor from number of encoder pulses to wheel speed [rad/s]
+float OMEGAtoPWM; // conversion factor from wheel speed [rad/s] to required PWM on the motor
+#define WHEEL_ENCODER_TO_OMEGA (float)2*M_PI/(TIME_DIFF*WHEEL_GEAR_RATIO*WHEEL_PULSES_PER_ROTATION) // conversion factor from number of encoder pulses to wheel speed [rad/s]
 
 // Dribbler
 // TODO: Update these constants once the new dribblers and their encoders are installed.
@@ -58,15 +62,15 @@
 #define DRIBBLER_ENCODER_TO_OMEGA ((2. * M_PI * DRIBBLER_GEAR_RATIO) / (DRIBBLER_TIME_DIFF * DRIBBLER_PULSES_PER_ROTATION)) // conversion factor from number of encoder pulses to dribbler speed [rad/s]
 
 // Control
-#define YAW_MARGIN (0.5F/180.0F)*(float)M_PI  	        // margin at which the I-value of the PID is reset to 0
-#define WHEEL_REF_LIMIT WHEEL_REF_LIMIT_PWM/OMEGAtoPWM  // [rad/s] Limit the maximum wheel reference to leave room for the wheels PID
-#define WHEEL_REF_LIMIT_PWM 2200 				        // [pwm]
+#define YAW_MARGIN (0.5F/180.0F)*(float)M_PI 	// margin at which the I-value of the PID is reset to 0
+float WHEEL_REF_LIMIT; 							// [rad/s] Limit the maximum wheel reference to leave room for the wheels PID
+#define WHEEL_REF_LIMIT_PWM 2200 				// [pwm]
 
 // Shoot
-#define MIN_KICK_TIME 1.0 			// minimum time [ms] period of kicking
-#define MAX_KICK_TIME 25.0 			// maximum time [ms] period of kicking
-#define MIN_CHIP_TIME 10 			// minimum time [ms] period of chipping
-#define MAX_CHIP_TIME 100 			// maximum time [ms] period of chipping
+#define MIN_KICK_TIME 1.0 				// minimum time [ms] period of kicking
+#define MAX_KICK_TIME 25.0 				// maximum time [ms] period of kicking
+#define MIN_CHIP_TIME 10 				// minimum time [ms] period of chipping
+#define MAX_CHIP_TIME 100 				// maximum time [ms] period of chipping
 #define TIMER_FREQ 10000 			// frequency [Hz] of TIM6  (Clock frequency divided by prescaler)
 #define READY_CALLBACK_FREQ 1 		// frequency [Hz] of callback when shootState is Ready
 #define CHARGING_CALLBACK_FREQ 10 	// frequency [Hz] of callback when shootState is Charging
@@ -122,6 +126,10 @@ struct PIDstruct{
 typedef struct PIDstruct PIDvariables;
 
 ///////////////////////////////////////////////////// FUNCTIONS
+/**
+ * Initializes motor wattage dependent constants
+ */
+void control_util_Init();
 
 /**
  * Initializes the PID values.

@@ -46,7 +46,13 @@ void dribbler_SetSpeed(float speed){
     movingAvg.commandedSpeedBuffer[movingAvg.commandedIdx] = speed;
 	movingAvg.commandedIdx = (movingAvg.commandedIdx+1) % sizeOfCommandBuffer;	
 
-	set_PWM(PWM_Dribbler, speed * DRIBBLER_MAX_PWM);
+	// The 12V and 24V boards require different calculations for the dribbler PWM
+	bool MOTORS_50W = true; // Keep this on the offchance that we're going to use the 30W motors again
+	if (MOTORS_50W) {
+		set_PWM(PWM_Dribbler, speed * DRIBBLER_MAX_PWM);
+	} else {
+		set_PWM(PWM_Dribbler, (1 - speed) * DRIBBLER_MAX_PWM);
+	}
 }
 
 

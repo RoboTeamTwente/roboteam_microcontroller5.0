@@ -1,6 +1,14 @@
 #include "main.h"
 #include "control_util.h"
 
+void control_util_Init() {
+	bool MOTORS_50W = true; // Keep this on the in case that we're going to use the 30W motors again
+	MAX_VOLTAGE = MOTORS_50W ? MAX_VOLTAGE_50W : MAX_VOLTAGE_30W;
+	SPEED_CONSTANT = 2*M_PI/60.0 * (MOTORS_50W ? SPEED_CONSTANT_50W : SPEED_CONSTANT_30W);
+	OMEGAtoPWM = (1/SPEED_CONSTANT)*(MAX_PWM/MAX_VOLTAGE)*WHEEL_GEAR_RATIO;
+	WHEEL_REF_LIMIT = WHEEL_REF_LIMIT_PWM/OMEGAtoPWM;
+}
+
 void initPID(PIDvariables* PID, float kP, float kI, float kD) {
 	PID->kP = kP;
 	PID->kI = kI;
