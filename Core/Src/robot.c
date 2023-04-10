@@ -777,11 +777,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 // Handles the interrupts of the different timers.
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {		
-	// Old Geneva timer. Needs to be properly disabled in CubeMX
-	if(htim->Instance == htim6.Instance){
-		counter_htim6++;
-	}
-	else if(htim->Instance == htim7.Instance) {
+	if(htim->Instance == TIM_CONTROL->Instance) {
 		counter_htim7++;
 
 		// if(MTi == NULL) return;
@@ -822,12 +818,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		wheels_Update();
 
 	}
-	else if (htim->Instance == htim10.Instance) {
+	else if (htim->Instance == TIM_BUZZER->Instance) {
 		counter_htim10++;
 		buzzer_Callback();
 	}
 
-	else if (htim->Instance == htim11.Instance) {
+	else if (htim->Instance == TIM_SHOOT->Instance) {
 		counter_htim11++;
 		shoot_Callback();
 	}
