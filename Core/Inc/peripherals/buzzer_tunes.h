@@ -15,11 +15,11 @@ typedef struct song_struct{
 } song_struct;
 
 // BPM definitions
-#define Tbeat 0.4
-#define Mbeat 0.4
-#define fBeat 0.0336
-#define halfBeat 0.168
-#define tempo 0.75
+#define Tbeat 0.4F
+#define Mbeat 0.4F
+#define fBeat 0.0336F
+#define halfBeat 0.168F
+#define tempo 0.75F
 
 ///////////////////////////////////////////////////// TONES
 // tones are counters, so (1e6/tone_freq - 1) in buzzer_Play()
