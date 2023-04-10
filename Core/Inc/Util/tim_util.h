@@ -16,8 +16,8 @@ extern TIM_HandleTypeDef htim2;		// encoder Dribbler
 extern TIM_HandleTypeDef htim3;		// encoder LB		16 bit
 extern TIM_HandleTypeDef htim4;		// encoder RB		16 bit
 extern TIM_HandleTypeDef htim5;		// encoder LF		32 bit
-extern TIM_HandleTypeDef htim6;		// 10 000Hz (100us resolution)
-extern TIM_HandleTypeDef htim7;		// Control 100Hz (10ms resolution)
+extern TIM_HandleTypeDef htim6;		// 1 MHz (1us resolution)
+extern TIM_HandleTypeDef htim7;		// Control 100 Hz (10ms resolution)
 extern TIM_HandleTypeDef htim8;		// PWM (CH1: RB, CH2: RF)
 extern TIM_HandleTypeDef htim9;		// PWM (CH1: LF, CH2: LB)
 extern TIM_HandleTypeDef htim10;	// PWM (Buzzer)
@@ -40,7 +40,7 @@ typedef struct PWM_struct{
 #define ENC_LB 		 (&htim3)
 #define ENC_RB 		 (&htim4)
 #define ENC_LF 		 (&htim5)
-#define TIM_10us     (&htim6)
+#define TIM_1us      (&htim6)
 #define TIM_CONTROL  (&htim7)
 #define TIM_BUZZER	 (&htim10)
 #define TIM_SHOOT	 (&htim11)
