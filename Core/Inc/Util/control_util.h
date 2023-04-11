@@ -34,10 +34,10 @@
 
 #define FRONT_ANGLE 30		// angle of front wheels (deg)
 #define BACK_ANGLE 60		// angle of back wheels (deg)
-#define cosFront cos(FRONT_ANGLE * M_PI/180)
-#define sinFront sin(FRONT_ANGLE * M_PI/180)
-#define cosBack cos(BACK_ANGLE * M_PI/180)
-#define sinBack sin(BACK_ANGLE * M_PI/180)
+#define cosFront cosf(FRONT_ANGLE * M_PI/180)
+#define sinFront sinf(FRONT_ANGLE * M_PI/180)
+#define cosBack cosf(BACK_ANGLE * M_PI/180)
+#define sinBack sinf(BACK_ANGLE * M_PI/180)
 
 // Wheels
 #define PWM_CUTOFF 200.0F 		// arbitrary threshold to avoid motor shutdown

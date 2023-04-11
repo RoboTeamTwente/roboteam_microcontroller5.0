@@ -45,7 +45,8 @@
 
 uint8_t ROBOT_ID;
 WIRELESS_CHANNEL ROBOT_CHANNEL;
-bool IS_RUNNING_TEST = false;
+volatile bool IS_RUNNING_TEST = false;
+volatile bool ROBOT_INITIALIZED = false;
 
 MTi_data* MTi;
 
@@ -76,9 +77,9 @@ IWDG_Handle* iwdg;
 
 volatile uint32_t counter_loop = 0;
 volatile uint32_t counter_htim6 = 0;
-volatile uint32_t counter_htim7 = 0;
-volatile uint32_t counter_htim10 = 0;
-volatile uint32_t counter_htim11 = 0;
+volatile uint32_t counter_TIM_CONTROL = 0;
+volatile uint32_t counter_TIM_BUZZER = 0;
+volatile uint32_t counter_TIM_SHOOT = 0;
 volatile uint32_t counter_RobotCommand = 0;
 volatile uint32_t counter_RobotBuzzer = 0;
 uint32_t timestamp_initialized = 0;
@@ -156,7 +157,6 @@ void Wireless_Readpacket_Cplt(void){
 void Wireless_Default(){
 	WaitForPacket(SX);
 }
-
 void Wireless_RXDone(SX1280_Packet_Status *status){
   /* It is possible that random noise can trigger the syncword.
    * Correct syncword from noise have a very weak signal.
@@ -263,6 +263,8 @@ bool updateTestCommand(REM_RobotCommand* rc, uint32_t time){
 
 
 
+
+
 /* ======================================================== */
 /* ==================== INITIALIZATION ==================== */
 /* ======================================================== */
@@ -271,7 +273,7 @@ void init(void){
 	// Turn off all leds. Use leds to indicate init() progress
 	set_Pin(LED0_pin, 0); set_Pin(LED1_pin, 0); set_Pin(LED2_pin, 0); set_Pin(LED3_pin, 0); set_Pin(LED4_pin, 0); set_Pin(LED5_pin, 0); set_Pin(LED6_pin, 0);
 	
-	{ // ====== WATCHDOG TIMER, COMMUNICATION BUFFERS ON TOPBOARD, BATTERY, ROBOT_ID, OUTGOING PACKET HEADERS
+{ // ====== WATCHDOG TIMER, COMMUNICATION BUFFERS ON TOPBOARD, BATTERY, ROBOT SWITCHES, OUTGOING PACKET HEADERS
 	/* Enable the watchdog timer and set the threshold at 5 seconds. It should not be needed in the initialization but
 	 sometimes for some reason the code keeps hanging when powering up the robot using the power switch. It's not nice
 	 but its better than suddenly having non-responding robots in a match */
@@ -290,9 +292,14 @@ void init(void){
 	// This pin must be set HIGH within a few milliseconds after powering on the robot, or it will turn the robot off again
 	set_Pin(BAT_KILL_pin, 1);
 	
-	/* Read robot ID from switches */
+	/* Read robot ID (d), wireless channel (c), and if we're running a test (t), from the switches on the topboard
+	* d d d d    x x c t 		<= swtiches
+	* 1 2 3 4    1 2 3 4   		<= numbers below the switches
+	*/
 	ROBOT_ID = get_Id();
 	ROBOT_CHANNEL = read_Pin(FT1_pin) == GPIO_PIN_SET ? BLUE_CHANNEL : YELLOW_CHANNEL;
+	IS_RUNNING_TEST = read_Pin(FT0_pin);
+	
 	
 	initPacketHeader((REM_Packet*) &robotFeedback, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_FEEDBACK);
 	initPacketHeader((REM_Packet*) &robotStateInfo, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_STATE_INFO);
@@ -300,9 +307,9 @@ void init(void){
 	initPacketHeader((REM_Packet*) &robotLog, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_LOG);
 	}
 
-
 	set_Pin(LED0_pin, 1);
 
+{ // ====== USER FEEDBACK (LOGGING, BUZZER, GIT BRANCH)
 	LOG_init();
 	LOG("[init:"STRINGIZE(__LINE__)"] Last programmed on " __DATE__ "\n");
 	LOG("[init:"STRINGIZE(__LINE__)"] GIT: " STRINGIZE(__GIT_STRING__) "\n");
@@ -313,9 +320,7 @@ void init(void){
 	/* Initialize buzzer */
 	buzzer_Init();
 	buzzer_Play_QuickBeepUp();
-	HAL_Delay(500);
-
-	set_Pin(LED1_pin, 1);
+	HAL_Delay(500); // The duration of the sound
 
 	/* Play a warning sound if the robot is not programmed with the development branch */
 	#ifdef __GIT_DEVELOPMENT__
@@ -325,11 +330,13 @@ void init(void){
 	}
 	#endif
 
-	/* === Wired communication with robot; Can now receive RobotCommands (and other packets) via UART */
+	/* === Wired communication with robot; Can now receive RobotCommands (and other REM packets) via UART */
 	REM_UARTinit(UART_PC);
+	}
 	
-	set_Pin(LED2_pin, 1);
+	set_Pin(LED1_pin, 1);
 
+{ // ====== INITIALIZE CONTROL CONSTANTS, WHEELS, STATE CONTROL, STATE ESTIMATION, SHOOTER, DRIBBLER, BALLSENSOR
     // Initialize control constants
     control_util_Init();
     wheels_Init();
@@ -337,11 +344,13 @@ void init(void){
     stateEstimation_Init();
     shoot_Init();
     dribbler_Init();
-    // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
-    set_Pin(LED3_pin, 1);
+    if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
+	LOG_sendAll();
+	}
 
+    set_Pin(LED2_pin, 1);
 
-	{ // ====== SX : PINS, CALLBACKS, CHANNEL, SYNCWORDS
+{ // ====== SX : PINS, CALLBACKS, CHANNEL, SYNCWORDS
 	/* Initialize the SX1280 wireless chip */
 	SX1280_Settings set = SX1280_DEFAULT_SETTINGS;
 	set.periodBaseCount = WIRELESS_RX_COUNT;
@@ -355,7 +364,7 @@ void init(void){
 	err = Wireless_setIRQ_Callbacks(SX, &SX_IRQcallbacks);
     if(err != WIRELESS_OK){ LOG("[init:"STRINGIZE(__LINE__)"] SX1280 error\n"); LOG_sendAll(); while(1); }
 	LOG_sendAll();
-	// Read the pins on the topboard to determine the wireless frequency 
+	// Use the pins on the topboard to determine the wireless frequency 
 	if(ROBOT_CHANNEL == BLUE_CHANNEL){
 		Wireless_setChannel(SX, BLUE_CHANNEL);
 		LOG("[init:"STRINGIZE(__LINE__)"] BLUE CHANNEL\n");
@@ -373,33 +382,35 @@ void init(void){
 	set_Pin(LED4_pin, 1);
 	}
 
+	set_Pin(LED3_pin, 1);
 
-	/* Initialize the XSens chip. 1 second calibration time, XFP_VRU_general = no magnetometer */
+{ // ====== INITIALIZE IMU (XSENS). 1 second calibration time, XFP_VRU_general = no magnetometer */
 	LOG("[init:"STRINGIZE(__LINE__)"] Initializing XSens\n");
 	MTi = MTi_Init(1, XFP_VRU_general);
 	if(MTi == NULL){
 		LOG("[init:"STRINGIZE(__LINE__)"] Failed to initialize XSens\n");
 		buzzer_Play_WarningOne();
-		HAL_Delay(1500);
+		HAL_Delay(1500); // The duration of the sound
+	}
+	LOG_sendAll();
 	}
 	
-	set_Pin(LED5_pin, 1);
+	set_Pin(LED4_pin, 1);
 
-	LOG_sendAll();
 	LOG("[init:"STRINGIZE(__LINE__)"] Initialized\n");
 	
-	// Read out jumper FT0 to check if we want to run a test
-	IS_RUNNING_TEST = read_Pin(FT0_pin);
+	// Check if we are running a test. If so, sound an alarm
 	if(IS_RUNNING_TEST){
 		LOG("[init:"STRINGIZE(__LINE__)"] In test-mode! Flip pin FT0 and reboot to disable test-mode\n");
 		LOG_sendAll();
-		// Sound an alarm to let the user know that the robot is going to perform a test
 		for(uint8_t t = 0; t < 5; t++){
 			buzzer_Play(warningRunningTest);
 			HAL_Delay(400);
 		}
 		HAL_Delay(100);
 	}
+
+	set_Pin(LED5_pin, 1);
 
 	// Tell the SX to start listening for packets. This is non-blocking. It simply sets the SX into receiver mode.
 	// SX1280 section 10.7 Transceiver Circuit Modes Graphical Illustration
@@ -408,6 +419,9 @@ void init(void){
 
 	// Ensure that the speaker is stopped. The speaker keeps going even if the robot is reset
 	speaker_Stop();
+
+	// Start timer TIM_1us
+	HAL_TIM_Base_Start_IT(TIM_1us);
 
 	/* Reset the watchdog timer and set the threshold at 200ms */
 	IWDG_Refresh(iwdg);
@@ -423,6 +437,8 @@ void init(void){
 	heartbeat_17ms   = timestamp_initialized + 17;
 	heartbeat_100ms  = timestamp_initialized + 100;
 	heartbeat_1000ms = timestamp_initialized + 1000;
+
+	ROBOT_INITIALIZED = true;
 }
 
 
@@ -637,8 +653,6 @@ uint8_t robot_get_Channel(){
 
 
 
-
-
 /* ========================================================= */
 /* ==================== PACKET HANDLERS ==================== */
 /* ========================================================= */
@@ -694,7 +708,7 @@ bool handlePacket(uint8_t* packet_buffer, uint8_t packet_length){
 	while(total_bytes_processed < packet_length){
 
 		packet_header = packet_buffer[total_bytes_processed];
-
+		
 		switch(packet_header){
 
 			case REM_PACKET_TYPE_REM_ROBOT_COMMAND:
@@ -737,7 +751,12 @@ bool handlePacket(uint8_t* packet_buffer, uint8_t packet_length){
 }
 
 
-// ----------------------------------------------------- STM HAL CALLBACKS -----------------------------------------------------
+
+
+
+/* ============================================================ */
+/* ===================== STM HAL CALLBACKS ==================== */
+/* ============================================================ */
 /* HAL_SPI_TxRxCpltCallback = Callback for either SPI Transmit or Receive complete */
 /* This function is triggered after calling HAL_SPI_TransmitReceive_IT */
 /* Since we transmit everything using blocking mode, this function should only be called when we receive something */
@@ -746,7 +765,6 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi){
 	// If we received data from the SX1280
 	if(hspi->Instance == SX->Interface->SPI->Instance) {
 		Wireless_DMA_Handler(SX);
-
 	}
 
 	// If we received data from the XSens
@@ -775,14 +793,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 // Handles the interrupts of the different timers.
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {		
-	// Old Geneva timer. Needs to be properly disabled in CubeMX
-	if(htim->Instance == htim6.Instance){
-		counter_htim6++;
-	}
-	else if(htim->Instance == htim7.Instance) {
-		counter_htim7++;
+	if(htim->Instance == TIM_CONTROL->Instance) {
+		if(!ROBOT_INITIALIZED) return;
+
+		counter_TIM_CONTROL++;
 
 		// if(MTi == NULL) return;
 		// float speeds[4] = {5., 5., 5., 5.};
@@ -820,15 +835,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 		wheels_SetSpeeds( stateControl_GetWheelRef() );
 		wheels_Update();
-
 	}
-	else if (htim->Instance == htim10.Instance) {
-		counter_htim10++;
+	else if (htim->Instance == TIM_BUZZER->Instance) {
+		counter_TIM_BUZZER++;
 		buzzer_Callback();
 	}
 
-	else if (htim->Instance == htim11.Instance) {
-		counter_htim11++;
+	else if (htim->Instance == TIM_SHOOT->Instance) {
+		counter_TIM_SHOOT++;
 		shoot_Callback();
 	}
 }
