@@ -262,7 +262,14 @@ bool updateTestCommand(REM_RobotCommand* rc, uint32_t time){
 }
 
 
+void TestMath(){
 
+LOG("TestMath\n");
+LOG_sendAll();
+
+	while(1);
+	return;
+}
 
 
 /* ======================================================== */
@@ -316,6 +323,8 @@ void init(void){
 	LOG_printf("[init:"STRINGIZE(__LINE__)"] REM_LOCAL_VERSION: %d\n", REM_LOCAL_VERSION);
 	LOG_printf("[init:"STRINGIZE(__LINE__)"] ROBOT_ID: %d\n", ROBOT_ID);
 	LOG_sendAll();
+
+TestMath();
 
 	/* Initialize buzzer */
 	buzzer_Init();
