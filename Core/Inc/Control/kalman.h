@@ -40,16 +40,5 @@ void kalman_CalculateK();
  */
 void kalman_GetState(float state[4]);
 
-/**
- * Get the kalman gain .
- * @deprecated Seems to not being used 
- */
-void kalman_GetK(float gain[4][4]);
-
-/**
- * Get the prediction matrix used by the kalman filter
- * @deprecated Seems to not being used 
- */
-void kalman_GetP(float P[16]);
 
 #endif /* KALMAN_KALMAN_H_*/

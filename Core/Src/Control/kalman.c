@@ -26,19 +26,19 @@ void kalman_Update(float acc[2], float vel[2]){
 
 		// Computes the formula:
 		// Xk = Fk * X(k-1) + Bk * Uk
-		multiplyMatrix(aF, aXold, aFX, STATE, 1, STATE);
+		multiplyMatrix(aF, aXold, aFX, , 1, STATESTATE);
 		multiplyMatrix(aB, aU, aBU, STATE, 1, STATE);
-		addMatrix(aFX, aBU, aXcurrent, STATE / 2, STATE / 2);
+		addMatrix(aFX, aBU, aXcurrent, 1, STATE); 			//1,4 and not 4,1 because this is how the matrix library works
 
 		// Process data
 		// Yk = Zk - Hk * Xk
 		multiplyMatrix(aH, aXcurrent, aHX, OBSERVE, 1, STATE);
-		subMatrix(az, aHX, ayold, OBSERVE / 2, OBSERVE / 2);
+		subMatrix(az, aHX, ayold, 1, OBSERVE);				//1,4 and not 4,1 because this is how the matrix library works
 
 		// Update
 		// X(k+1) = Kk * Yk + Xk
 		multiplyMatrix(aK, ayold, aKy, STATE, 1, OBSERVE);
-		addMatrix(aXcurrent, aKy, aXnew, STATE / 2, STATE / 2);
+		addMatrix(aXcurrent, aKy, aXnew, 1, STATE);			//1,4 and not 4,1 because this is how the matrix library works
 
 		for (int i=0; i<STATE; i++){
 			aXold[i] = aXnew[i];
@@ -110,20 +110,5 @@ void kalman_CalculateK(){
 void kalman_GetState(float state[STATE]) {
 	for (int i=0; i<STATE; i++) {
 		state[i] = aXold[i];
-	}
-}
-
-void kalman_GetK(float gain[STATE][OBSERVE]) {
-	for (int j=0; j<OBSERVE; j++) {
-		for (int i=0; i<STATE; i++) {
-			gain[i][j] = aK[i+j*STATE];
-		}
-	}
-
-}
-
-void kalman_GetP(float P[STATE*STATE]) {
-	for (int i = 0; i < STATE*STATE; i++) {
-		P[i] = aPold[i];
 	}
 }
