@@ -26,7 +26,7 @@ void kalman_Update(float acc[2], float vel[2]){
 
 		// Computes the formula:
 		// Xk = Fk * X(k-1) + Bk * Uk
-		multiplyMatrix(aF, aXold, aFX, , 1, STATESTATE);
+		multiplyMatrix(aF, aXold, aFX, STATE, 1, STATE);
 		multiplyMatrix(aB, aU, aBU, STATE, 1, STATE);
 		addMatrix(aFX, aBU, aXcurrent, 1, STATE); 			//1,4 and not 4,1 because this is how the matrix library works
 
