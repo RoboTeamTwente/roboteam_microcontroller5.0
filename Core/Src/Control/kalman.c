@@ -46,64 +46,48 @@ void kalman_Update(float acc[2], float vel[2]){
 
 }
 
-void kalman_CalculateK(){
+static float oldK[STATE*OBSERVE] = {0};
+static arm_matrix_instance_f32 arm_oldk = {STATE, OBSERVE, oldK};
 
-	static float count = 0;
-	if (count < 100){
-		static float oldk[STATE*OBSERVE] = {0};
+void kalman_CalculateK_arm(){
+	// Calculates the predicted estimate covariance
+	// Pk = Fk * P(k-1) * Ftk + Qk
+	arm_mat_mult_f32(&arm_aF, &arm_aPold, &arm_aFP);
+	arm_mat_mult_f32(&arm_aFP, &arm_aFt, &arm_aFPFt);
+	arm_mat_add_f32(&arm_aFPFt, &arm_aQ, &arm_aPcurrent);
 
-		// Calculates the predicted estimate covariance
-		// Pk = Fk * P(k-1) * Ftk + Qk
-		multiplyMatrix(aF, aPold, aFP, STATE, STATE, STATE);
-		multiplyMatrix(aFP, aFt, aFPFt, STATE, STATE, STATE);
-		addMatrix(aFPFt, aQ, aPcurrent, STATE, STATE);
+	// Calculates the innovation covariance
+	// Sk = Pk * Htk * Hk + Rk
+	arm_mat_mult_f32(&arm_aPcurrent, &arm_aHt, &arm_aPHt);
+	arm_mat_mult_f32(&arm_aH, &arm_aPHt, &arm_aHPHt);
+	arm_mat_add_f32(&arm_aR, &arm_aHPHt, &arm_aS);
 
-		// Calculates the innovation covariance
-		// Sk = Pk * Htk * Hk + Rk
-		multiplyMatrix(aPcurrent, aHt, aPHt, STATE, OBSERVE, STATE);
-		multiplyMatrix(aH, aPHt, aHPHt, OBSERVE, OBSERVE, STATE);
-		addMatrix(aR, aHPHt, aS, OBSERVE, OBSERVE);
+	// Compute Kalman Gain
+	// Kk = Pk * Htk * Sik
+	arm_mat_inverse_f32(&arm_aS, &arm_aSi);
+	arm_mat_mult_f32(&arm_aPHt, &arm_aSi, &arm_aK);
 
-		// Compute Kalman Gain
-		// Kk = Pk * Htk * Sik
-		inverse(aS, aSi, OBSERVE);
-		multiplyMatrix(aPHt, aSi, aK, STATE, OBSERVE, OBSERVE);
+	// Calculate the posteriori estimate covariance matrix
+	// Pk = (I - Kk * Hk) * P(k - 1) * (I - Kk * Hk)t + Kk * Rk * Ktk
 
-		// Calculate the posteriori estimate covariance matrix
-		// Pk = (I - Kk * Hk) * P(k - 1) * (I - Kk * Hk)t + Kk * Rk * Ktk
+	// KRKt = Kk * Rk * Ktk
+	arm_mat_trans_f32(&arm_aK, &arm_aKt);
+	arm_mat_mult_f32(&arm_aK, &arm_aR, &arm_aKR);
+	arm_mat_mult_f32(&arm_aKR, &arm_aKt, &arm_aKRKt);
 
-		// KRKt = Kk * Rk * Ktk
-		transMatrix(aK, aKt, STATE, OBSERVE);
-		multiplyMatrix(aK, aR, aKR, STATE, OBSERVE, OBSERVE);
-		multiplyMatrix(aKR, aKt, aKRKt, STATE, STATE, OBSERVE);
+	// I-KH = I - Kk * Hh
+	arm_mat_mult_f32(&arm_aK, &arm_aH, &arm_aKH);
+	arm_mat_sub_f32(&arm_aI, &arm_aKH, &arm_aI_KH);
 
-		// I-KH = I - Kk * Hh
-		multiplyMatrix(aK, aH, aKH, STATE, STATE, OBSERVE);
-		subMatrix(aI, aKH, aI_KH, STATE, STATE);
+	// (I-KH)t
+	arm_mat_trans_f32(&arm_aI_KH, &arm_aI_KHt);
+	
+	arm_mat_mult_f32(&arm_aI_KH, &aPcurrent, &aI_KHP);
+	arm_mat_mult_f32(&aI_KHP, &arm_aI_KHt, &arm_aI_KHPI_KHt);
+	arm_mat_add_f32(&arm_aI_KHPI_KHt, &arm_aKRKt, &aPnew);
 
-		// (I-KH)t
-		transMatrix(aI_KH, aI_KHt, STATE, STATE);
-		
-		multiplyMatrix(aI_KH, aPcurrent, aI_KHP, STATE, STATE, STATE);
-		multiplyMatrix(aI_KHP, aI_KHt, aI_KHPI_KHt, STATE, STATE, STATE);
-		addMatrix(aI_KHPI_KHt, aKRKt, aPnew, STATE, STATE);
-
-
-		float same = 0;
-		for (int i=0; i<STATE*OBSERVE; i++){
-			if (oldk[i] - aK[i] < 0.0000001 && oldk[i] - aK[i] > -0.0000001){
-				same +=1;
-			}
-			oldk[i] = aK[i];
-		}
-
-		if (same == STATE*OBSERVE){
-			count += 1;
-		}
-
-		for (int i=0; i<STATE*STATE; i++){
-			aPold[i] = aPnew[i];
-		}
+	for (int i=0; i<STATE*STATE; i++){
+		aPold[i] = aPnew[i];
 	}
 }
 

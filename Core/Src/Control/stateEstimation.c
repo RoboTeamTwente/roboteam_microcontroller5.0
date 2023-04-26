@@ -75,7 +75,8 @@ void stateEstimation_Update(StateInfo* input) {
 	float vel[3] = {0.0f};
 	wheels2Body(input->wheelSpeeds, vel);
 
-	kalman_CalculateK();
+	// kalman_CalculateK();
+	kalman_CalculateK_arm();
 	kalman_Update(input->xsensAcc, vel);
 
 	float kalman_State[4] = {0.0f};

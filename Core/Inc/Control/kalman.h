@@ -33,7 +33,7 @@ void kalman_Update(float acc[2], float vel[2]);
 /**
  * Calculates the kalman gain. 
  */
-void kalman_CalculateK();
+void kalman_CalculateK_arm();
 
 /**
  * Retrieve the state as determined by the kalman filter. 
