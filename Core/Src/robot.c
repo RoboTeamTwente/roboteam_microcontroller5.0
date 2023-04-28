@@ -10,6 +10,7 @@
 #include "stateControl.h"
 #include "stateEstimation.h"
 #include "dribbler.h"
+#include "sdcard.h"
 #include "shoot.h"
 #include "Wireless.h"
 #include "buzzer.h"
@@ -273,6 +274,9 @@ void init(void){
 	// Turn off all leds. Use leds to indicate init() progress
 	set_Pin(LED0_pin, 0); set_Pin(LED1_pin, 0); set_Pin(LED2_pin, 0); set_Pin(LED3_pin, 0); set_Pin(LED4_pin, 0); set_Pin(LED5_pin, 0); set_Pin(LED6_pin, 0);
 	
+	// Initialize (and thus brake) wheels as early as possible, to prevent them from accidentally spinning up
+	wheels_Init();
+
 { // ====== WATCHDOG TIMER, COMMUNICATION BUFFERS ON TOPBOARD, BATTERY, ROBOT SWITCHES, OUTGOING PACKET HEADERS
 	/* Enable the watchdog timer and set the threshold at 5 seconds. It should not be needed in the initialization but
 	 sometimes for some reason the code keeps hanging when powering up the robot using the power switch. It's not nice
@@ -309,13 +313,20 @@ void init(void){
 
 	set_Pin(LED0_pin, 1);
 
-{ // ====== USER FEEDBACK (LOGGING, BUZZER, GIT BRANCH)
+{ // ====== USER FEEDBACK (LOGGING, SDCARD, BUZZER, GIT BRANCH)
 	LOG_init();
 	LOG("[init:"STRINGIZE(__LINE__)"] Last programmed on " __DATE__ "\n");
 	LOG("[init:"STRINGIZE(__LINE__)"] GIT: " STRINGIZE(__GIT_STRING__) "\n");
 	LOG_printf("[init:"STRINGIZE(__LINE__)"] REM_LOCAL_VERSION: %d\n", REM_LOCAL_VERSION);
 	LOG_printf("[init:"STRINGIZE(__LINE__)"] ROBOT_ID: %d\n", ROBOT_ID);
 	LOG_sendAll();
+
+	/* Initialize SD card */
+	if(SDCard_Init()){
+		LOG("[init:"STRINGIZE(__LINE__)"] SD card initialized\n");
+	}else{
+		LOG("[init:"STRINGIZE(__LINE__)"] SD card failed to initialize\n");
+	}
 
 	/* Initialize buzzer */
 	buzzer_Init();
@@ -339,7 +350,6 @@ void init(void){
 { // ====== INITIALIZE CONTROL CONSTANTS, WHEELS, STATE CONTROL, STATE ESTIMATION, SHOOTER, DRIBBLER, BALLSENSOR
     // Initialize control constants
     control_util_Init();
-    wheels_Init();
     stateControl_Init();
     stateEstimation_Init();
     shoot_Init();
