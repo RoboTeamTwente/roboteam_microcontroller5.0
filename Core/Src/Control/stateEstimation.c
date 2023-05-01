@@ -8,11 +8,11 @@
 /**
  * @brief The local current state of the robot.
  * 
- * The state consists out of u, v, w and yaw.
+ * The state consists out of u [m/s], v [m/s], w [rad/s] and yaw [rad].
  */
 static float stateLocal[4] = {0.0f};
 
-// The pseudoinverse of the velocity coupling matrix, used to transform wheel speeds into local u, v and w speeds.
+// The pseudoinverse of the velocity coupling matrix, used to transform wheel speeds into local u [m/s], v [m/s] and w [rad/s] speeds.
 static float Dinv[12] = {0.0f};
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
@@ -21,7 +21,7 @@ static float Dinv[12] = {0.0f};
  * Translates the velocities from the wheels to the body velocities.
  * 
  * @param wheelSpeeds The speed achieved by each wheel [rad/s].
- * @param output 	  The u, v and w speeds from a body perspective [m/s].
+ * @param output 	  The u [m/s], v [m/s] and w [rad/s] speeds from a body perspective.
  */
 static void wheels2Body(float wheelSpeeds[4], float output[3]);
 
@@ -29,8 +29,8 @@ static void wheels2Body(float wheelSpeeds[4], float output[3]);
  * Smoothens out the IMU rate of turn data.
  * While this does decrease the response time slightly, it allows for smoother rotations.
  * 
- * @param rateOfTurn The current rate of turn as measured by the IMU.
- * @return float     The smoothed out rate of turn.
+ * @param rateOfTurn The current rate of turn as measured by the IMU [rad/s].
+ * @return float     The smoothed out rate of turn [rad/s].
  */
 float smoothen_rateOfTurn(float rateOfTurn);
 
@@ -117,7 +117,7 @@ static void wheels2Body(float wheelSpeeds[4], float output[3]){
 	output[vel_v] = wheelSpeeds[0] * Dinv[4] + wheelSpeeds[1] * Dinv[5] + wheelSpeeds[2] * Dinv[6] + wheelSpeeds[3] * Dinv[7];
 	output[vel_w] = wheelSpeeds[0] * Dinv[8] + wheelSpeeds[1] * Dinv[9] + wheelSpeeds[2] * Dinv[10] + wheelSpeeds[3] * Dinv[11];
 
-	// Translate the rotational velocity to m/s.
+	// Translate the rotational velocity of the robot back to rad/s.
 	output[vel_w] = output[vel_w] / rad_robot;
 }
 
