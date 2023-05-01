@@ -204,7 +204,7 @@ static void body2Wheels(float wheelSpeed[4], float stateLocal[3]){
 		wheelSpeed[wheel] = wheelSpeed[wheel] / rad_wheel;
 	}
 
-	// If we use angular velocities, take those into account too.
+	// If we do not use angular velocities (w), remove these.
 	if (!useAbsoluteAngle) {
         for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
             wheelSpeed[wheel] += stateLocal[vel_w] * rad_robot / rad_wheel;

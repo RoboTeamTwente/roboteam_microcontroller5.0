@@ -59,21 +59,21 @@ void stateControl_Update();
 
 /**
  * Set the new reference values that the robot should achieve.
- * @param _stateGlobalRef The x, y, w and yaw speeds as instructed by the RobotCommand.
+ * @param _stateGlobalRef The x [m/s], y [m/s] and w [rad/s] speeds and and yaw [rad] as instructed by the RobotCommand.
  */
 void stateControl_SetRef(float _stateGlobalRef[4]);
 
 /**
  * Get the referenced wheel speeds.
  * 
- * @return float* An array with the wheel speeds.
+ * @return float* An array with the wheel speeds [rad/s].
  */
 float* stateControl_GetWheelRef();
 
 /**
  * Set the current state as the estimated state as calculated by stateEstimation
  * 
- * @param _stateLocal The u, v, w and yaw speeds from stateEstimation
+ * @param _stateLocal The u [m/s], v [m/s] and w [rad/s] speeds and yaw [rad] from stateEstimation
  */
 void stateControl_SetState(float _stateLocal[4]);
 
