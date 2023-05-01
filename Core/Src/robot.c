@@ -682,7 +682,6 @@ void handleRobotSetPIDGains(uint8_t* packet_buffer){
 	REM_last_packet_had_correct_version &= REM_RobotSetPIDGains_get_remVersion(rspidgp) == REM_LOCAL_VERSION;
 	decodeREM_RobotSetPIDGains(&robotSetPIDGains, rspidgp);
 	stateControl_SetPIDGains(&robotSetPIDGains);
-	wheels_SetPIDGains(&robotSetPIDGains);
 }
 
 void handleRobotMusicCommand(uint8_t* packet_buffer){

@@ -36,10 +36,6 @@
 #define default_I_gain_yaw 5.0
 #define default_D_gain_yaw 0.0
 
-#define default_P_gain_wheels 2.0
-#define default_I_gain_wheels 0.0
-#define default_D_gain_wheels 0.0
-
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
 /**

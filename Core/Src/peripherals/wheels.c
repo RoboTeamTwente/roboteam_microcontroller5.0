@@ -2,11 +2,6 @@
 #include "gpio_util.h"
 #include "wheels.h"
 #include "stdlib.h"
-#include "stateControl.h"
-
-///////////////////////////////////////////////////// STRUCTS
-
-static PIDvariables wheelsK[4];
 
 ///////////////////////////////////////////////////// VARIABLES
 
@@ -42,10 +37,6 @@ static void setWheelPWMs(uint32_t pwms[4]);
 // Sets the direction of the wheels
 static void setWheelDirections(bool directions[4]);
 
-
-
-
-
 ///////////////////////////////////////////////////// PUBLIC FUNCTION IMPLEMENTATIONS
 
 /**
@@ -55,11 +46,6 @@ void wheels_Init(){
 
 	/* Brake on startup */
 	wheels_Brake();
-
-	/* Initialize wheel controllers */
-	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		initPID(&wheelsK[wheel], default_P_gain_wheels, default_I_gain_wheels, default_D_gain_wheels);
-	}
 
 	/* Set PWM of wheels to 0, to prevent robot from suddenly shooting forward */
 	/* Should never happen, but can't hurt */
@@ -134,16 +120,11 @@ void wheels_Stop(){
 }
 
 /**
- * @brief Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
+ * @brief Updates the wheels towards the commanded wheel speeds.
  * 
  * This function is resonsible for getting the wheels to the commanded speeds, as stored in the file-local variable
  * "wheels_commanded_speeds". Wheel speeds, given in rad/s, are converted directly to a PWM value with help of the
  * conversion variable OMEGAtoPWM. This variable is based on information from the Maxon Motor datasheet. 
- * 
- * A PID controller is used to handle any error between the commanded and actual wheel speeds. First, the current wheel
- * speeds are measured by reading out the encoders and converting these values to rad/s. The commanded wheel speeds are
- * then subtracted from these measured wheel speeds, giving the error. This error is put through a PID controller, and
- * the resulting PID value is added to the commanded speeds before being converted to a PWM value. 
  * 
  * The resulting PWM values can be both positive and negative. This is split up into a "direction" boolean and a 
  * "PWN" integer. The "direction" boolean is false for CounterClockWise, and true for ClockWise. Finally both the 
@@ -158,20 +139,12 @@ void wheels_Update(){
 	}
 
 	/* Calculate the speeds of each wheel by looking at the encoders */
+	// TODO: Move this outside of the update function
 	computeWheelSpeeds(wheels_measured_speeds);
 
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Calculate the velocity error
-		float angular_velocity_error = wheels_commanded_speeds[wheel] - wheels_measured_speeds[wheel];
-
-		// If the error is very small, ignore it (why is this here?)
-		if (fabs(angular_velocity_error) < 0.1) {
-			angular_velocity_error = 0.0;
-			wheelsK[wheel].I = 0;
-		}
-
-		// Add PID to commanded speed and convert to PWM
-		int32_t wheel_speed = OMEGAtoPWM * (wheels_commanded_speeds[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+		// Convert the commanded speed to PWM (assuming a linear relation)
+		int32_t wheel_speed = OMEGAtoPWM * wheels_commanded_speeds[wheel]; 
 
 		// Determine direction and if pwm is negative, switch directions
 		// PWM < 0 : CounterClockWise. Direction = 0
@@ -218,14 +191,6 @@ void wheels_GetPWM(uint32_t pwms[4]) {
 	pwms[wheels_RB] = get_PWM(PWM_RB);
 	pwms[wheels_LB] = get_PWM(PWM_LB);
 	pwms[wheels_LF] = get_PWM(PWM_LF);
-}
-
-void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		wheelsK[wheel].kP = PIDGains->Pwheels;
-		wheelsK[wheel].kI = PIDGains->Iwheels;
-    	wheelsK[wheel].kD = PIDGains->Dwheels;
-	}
 }
 
 /**
