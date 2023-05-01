@@ -471,9 +471,9 @@ void loop(void){
 			buzzer_Play_WarningTwo();
 
 	// Check for connection to serial, wireless, and xsens
-	is_connected_serial   = (current_time - timestamp_last_packet_serial)   < 250;
-	is_connected_wireless = (current_time - timestamp_last_packet_wireless) < 250;
-	is_connected_xsens    = (current_time - timestamp_last_packet_xsens)    < 250;
+	is_connected_serial   = (int32_t)(current_time - timestamp_last_packet_serial)   < 250;
+	is_connected_wireless = (int32_t)(current_time - timestamp_last_packet_wireless) < 250;
+	is_connected_xsens    = (int32_t)(current_time - timestamp_last_packet_xsens)    < 250;
     
 	// Refresh Watchdog timer
     IWDG_Refresh(iwdg);
