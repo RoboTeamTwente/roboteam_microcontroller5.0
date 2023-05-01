@@ -59,7 +59,7 @@ void stateControl_Update();
 
 /**
  * Set the new reference values that the robot should achieve.
- * @param _stateGlobalRef The x [m/s], y [m/s] and w [rad/s] speeds and and yaw [rad] as instructed by the RobotCommand.
+ * @param _stateGlobalRef The x [m/s], y [m/s] and w [rad/s] speeds and yaw [rad] as instructed by the RobotCommand.
  */
 void stateControl_SetRef(float _stateGlobalRef[4]);
 
