@@ -461,6 +461,8 @@ void loop(void){
 			buzzer_Play_WarningTwo();
 
 	// Check for connection to serial, wireless, and xsens
+	// Cast to int32_t is needed since it might happen that current_time is smaller than time_last_packet_*
+	// Not casting to int32 causes an overflow and thus a false negative
 	is_connected_serial   = (int32_t)(current_time - timestamp_last_packet_serial)   < 250;
 	is_connected_wireless = (int32_t)(current_time - timestamp_last_packet_wireless) < 250;
 	is_connected_xsens    = (int32_t)(current_time - timestamp_last_packet_xsens)    < 250;
