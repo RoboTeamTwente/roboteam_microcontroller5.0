@@ -23,17 +23,17 @@
 /**
  * Calibrates the yaw measured by the IMU.
  * 
- * @param xsensYaw          The yaw as currently being measured by the IMU.
- * @param visionYaw         The yaw as currently being observed by vision
+ * @param xsensYaw          The yaw as currently being measured by the IMU [rad]
+ * @param visionYaw         The yaw as currently being observed by vision [rad]
  * @param visionAvailable   Wether vision can be used at this moment
- * @param rateOfTurn        Our current rate of turn (if it is too high, we cannot reliably calibrate the yaw)
+ * @param rateOfTurn        Our current rate of turn (if it is too high, we cannot reliably calibrate the yaw) [rad/s]
  */
 void yaw_Calibrate(float xsensYaw, float visionYaw, bool visionAvailable, float rateOfTurn);
 
 /**
  * Get the calibrated yaw
  * 
- * @return float 
+ * @return float [rad]
  */
 float yaw_GetCalibratedYaw();
 
