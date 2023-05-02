@@ -274,7 +274,7 @@ void init(void){
 	// Turn off all leds. Use leds to indicate init() progress
 	set_Pin(LED0_pin, 0); set_Pin(LED1_pin, 0); set_Pin(LED2_pin, 0); set_Pin(LED3_pin, 0); set_Pin(LED4_pin, 0); set_Pin(LED5_pin, 0); set_Pin(LED6_pin, 0);
 	
-	// Initialize (and thus brake) wheels as early as possible, to prevent them from accidentally spinning up
+	// Initialize (and break) the wheels as soon as possible. This prevents wheels from randomly spinning when powering up the robot.
 	wheels_Init();
 
 { // ====== WATCHDOG TIMER, COMMUNICATION BUFFERS ON TOPBOARD, BATTERY, ROBOT SWITCHES, OUTGOING PACKET HEADERS
@@ -347,7 +347,7 @@ void init(void){
 	
 	set_Pin(LED1_pin, 1);
 
-{ // ====== INITIALIZE CONTROL CONSTANTS, WHEELS, STATE CONTROL, STATE ESTIMATION, SHOOTER, DRIBBLER, BALLSENSOR
+{ // ====== INITIALIZE CONTROL CONSTANTS, STATE CONTROL, STATE ESTIMATION, SHOOTER, DRIBBLER, BALLSENSOR
     // Initialize control constants
     control_util_Init();
     stateControl_Init();
@@ -471,6 +471,8 @@ void loop(void){
 			buzzer_Play_WarningTwo();
 
 	// Check for connection to serial, wireless, and xsens
+	// Cast to int32_t is needed since it might happen that current_time is smaller than time_last_packet_*
+	// Not casting to int32 causes an overflow and thus a false negative
 	is_connected_serial   = (int32_t)(current_time - timestamp_last_packet_serial)   < 250;
 	is_connected_wireless = (int32_t)(current_time - timestamp_last_packet_wireless) < 250;
 	is_connected_xsens    = (int32_t)(current_time - timestamp_last_packet_xsens)    < 250;
