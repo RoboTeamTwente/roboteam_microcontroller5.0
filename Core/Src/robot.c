@@ -807,13 +807,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		wheels_SetSpeeds( stateControl_GetWheelRef() );
 		wheels_Update();
 
-
-
-
-
-
-
-
 		/* == Fill robotFeedback packet == */ {
 			robotFeedback.timestamp = current_time;
 			robotFeedback.XsensCalibrated = xsens_CalibrationDone;
