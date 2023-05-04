@@ -10,6 +10,7 @@
 #include "stateControl.h"
 #include "stateEstimation.h"
 #include "dribbler.h"
+#include "sdcard.h"
 #include "shoot.h"
 #include "Wireless.h"
 #include "buzzer.h"
@@ -85,6 +86,8 @@ volatile uint32_t counter_RobotBuzzer = 0;
 uint32_t timestamp_initialized = 0;
 
 bool flag_send_PID_gains = false;
+bool flag_sdcard_write_feedback = false;
+bool flag_sdcard_write_command = false;
 bool is_connected_serial = false;
 bool is_connected_wireless = false;
 bool is_connected_xsens = false;
@@ -304,6 +307,7 @@ void init(void){
 	IS_RUNNING_TEST = read_Pin(FT0_pin);
 	
 	
+	initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
 	initPacketHeader((REM_Packet*) &robotFeedback, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_FEEDBACK);
 	initPacketHeader((REM_Packet*) &robotStateInfo, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_STATE_INFO);
  	initPacketHeader((REM_Packet*) &robotPIDGains, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_PIDGAINS);
@@ -312,13 +316,20 @@ void init(void){
 
 	set_Pin(LED0_pin, 1);
 
-{ // ====== USER FEEDBACK (LOGGING, BUZZER, GIT BRANCH)
+{ // ====== USER FEEDBACK (LOGGING, SDCARD, BUZZER, GIT BRANCH)
 	LOG_init();
 	LOG("[init:"STRINGIZE(__LINE__)"] Last programmed on " __DATE__ "\n");
 	LOG("[init:"STRINGIZE(__LINE__)"] GIT: " STRINGIZE(__GIT_STRING__) "\n");
 	LOG_printf("[init:"STRINGIZE(__LINE__)"] REM_LOCAL_VERSION: %d\n", REM_LOCAL_VERSION);
 	LOG_printf("[init:"STRINGIZE(__LINE__)"] ROBOT_ID: %d\n", ROBOT_ID);
 	LOG_sendAll();
+
+	/* Initialize SD card */
+	if(SDCard_Init()){
+		LOG("[init:"STRINGIZE(__LINE__)"] SD card initialized\n");
+	}else{
+		LOG("[init:"STRINGIZE(__LINE__)"] SD card failed to initialize\n");
+	}
 
 	/* Initialize buzzer */
 	buzzer_Init();
@@ -427,7 +438,7 @@ void init(void){
 
 	/* Reset the watchdog timer and set the threshold at 200ms */
 	IWDG_Refresh(iwdg);
-	IWDG_Init(iwdg, 200);
+	IWDG_Init(iwdg, 1000);
 
 	/* Turn of all leds. Will now be used to indicate robot status */
 	set_Pin(LED0_pin, 0); set_Pin(LED1_pin, 0); set_Pin(LED2_pin, 0); set_Pin(LED3_pin, 0); set_Pin(LED4_pin, 0); set_Pin(LED5_pin, 0); set_Pin(LED6_pin, 0);
@@ -488,6 +499,7 @@ void loop(void){
 		// toggle_Pin(LED5_pin);
         stateControl_ResetAngleI();
         resetRobotCommand(&activeRobotCommand);
+		initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
 		// Quick fix to also stop the dribbler from rotating when the command is reset
 		// TODO: maybe move executeCommand to TIMER_7?
 		dribbler_SetSpeed(0);
@@ -510,78 +522,29 @@ void loop(void){
         executeCommands(&activeRobotCommand);
     }
 
-	/* == Fill robotFeedback packet == */ {
-		robotFeedback.timestamp = current_time;
-		robotFeedback.XsensCalibrated = xsens_CalibrationDone;
-		// robotFeedback.batteryLevel = (batCounter > 1000);
-		robotFeedback.ballSensorWorking = ballSensor_isInitialized();
-		robotFeedback.ballSensorSeesBall = ballPosition.canKickBall;
-		robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
+	if(flag_sdcard_write_feedback){
+		flag_sdcard_write_feedback = false;
+		encodeREM_RobotFeedback( &robotFeedbackPayload, &robotFeedback );
+		encodeREM_RobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
 
-		float localState[4] = {0.0f};
-		stateEstimation_GetState(localState);
-		float vu = localState[vel_u];
-		float vv = localState[vel_v];
-		robotFeedback.rho = sqrt(vu*vu + vv*vv);
-		robotFeedback.angle = localState[yaw];
-		robotFeedback.theta = atan2(vu, vv);
-		robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
-		robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
-		robotFeedback.dribblerSeesBall = dribbler_hasBall();
+		// Write to SD card
+		SDCard_Write(robotFeedbackPayload.payload, REM_PACKET_SIZE_REM_ROBOT_FEEDBACK, true);
+		SDCard_Write(robotStateInfoPayload.payload, REM_PACKET_SIZE_REM_ROBOT_STATE_INFO, false);
 	}
-    
-	/* == Fill robotStateInfo packet == */ {	
-		robotStateInfo.timestamp = current_time;	
-		robotStateInfo.xsensAcc1 = stateInfo.xsensAcc[0];
-		robotStateInfo.xsensAcc2 = stateInfo.xsensAcc[1];
-		robotStateInfo.xsensYaw = yaw_GetCalibratedYaw();
-		robotStateInfo.rateOfTurn = stateEstimation_GetFilteredRoT();
-		robotStateInfo.wheelSpeed1 = stateInfo.wheelSpeeds[0];
-		robotStateInfo.wheelSpeed2 = stateInfo.wheelSpeeds[1];
-		robotStateInfo.wheelSpeed3 = stateInfo.wheelSpeeds[2];
-		robotStateInfo.wheelSpeed4 = stateInfo.wheelSpeeds[3];
-		robotStateInfo.dribbleSpeed = stateInfo.dribblerSpeed;
-		robotStateInfo.filteredDribbleSpeed = stateInfo.dribblerFilteredSpeed;
-		robotStateInfo.dribblespeedBeforeGotBall = stateInfo.dribbleSpeedBeforeGotBall;
-		robotStateInfo.bodyXIntegral = stateControl_GetIntegral(vel_x);
-		robotStateInfo.bodyYIntegral = stateControl_GetIntegral(vel_y);
-		robotStateInfo.bodyWIntegral = stateControl_GetIntegral(vel_w);
-		robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(yaw);
+	if(flag_sdcard_write_command){
+		flag_sdcard_write_command = false;
+		activeRobotCommand.timestamp = current_time;
+		encodeREM_RobotCommand( &robotCommandPayload, &activeRobotCommand );
+		SDCard_Write(robotCommandPayload.payload, REM_PACKET_SIZE_REM_ROBOT_COMMAND, false);
+	}
 
-		// FIXME: This does not work...
-		// If we want to send the integrals for the wheels use: robotStateInfo.wheelXIntegral 
-		// Further, wheels are currently not able to send back the integrals.
-		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RF);
-		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_RB);
-		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_LB);
-		// robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(wheels_LF);
-	}
-	
-	/* == Fill RobotPIDGains packet == */ {
-		PIDvariables robotGains[4];
-		stateControl_GetPIDGains(robotGains);
-
-		robotPIDGains.timestamp = current_time;
-		robotPIDGains.PbodyX = robotGains[vel_x].kP;
-		robotPIDGains.IbodyX = robotGains[vel_x].kI;
-		robotPIDGains.DbodyX = robotGains[vel_x].kD;
-		robotPIDGains.PbodyY = robotGains[vel_y].kP;
-		robotPIDGains.IbodyY = robotGains[vel_y].kI;
-		robotPIDGains.DbodyY = robotGains[vel_y].kD;
-		robotPIDGains.PbodyW = robotGains[vel_w].kP;
-		robotPIDGains.IbodyW = robotGains[vel_w].kI;
-		robotPIDGains.DbodyW = robotGains[vel_w].kD;
-		robotPIDGains.PbodyYaw = robotGains[yaw].kP;
-		robotPIDGains.IbodyYaw = robotGains[yaw].kI;
-		robotPIDGains.DbodyYaw = robotGains[yaw].kD;
-	}
-	
     // Heartbeat every 17ms	
 	if(heartbeat_17ms < current_time){
 		while (heartbeat_17ms < current_time) heartbeat_17ms += 17;
 
 		if(IS_RUNNING_TEST){
 			IS_RUNNING_TEST = updateTestCommand(&activeRobotCommand, current_time - timestamp_initialized);
+			flag_sdcard_write_command = true;
 		}
 	}	
 
@@ -641,7 +604,7 @@ void loop(void){
     set_Pin(LED2_pin, wheels_GetWheelsBraking());   // On when braking 
     set_Pin(LED3_pin, halt);						// On when halting
     set_Pin(LED4_pin, ballPosition.canKickBall);    // On when ballsensor says ball is within kicking range
-	// LED5 unused
+	set_Pin(LED5_pin, SDCard_Initialized());		// On when SD card is initialized
     // LED6 Wireless_Readpacket_Cplt : toggled when a packet is received
 }
 
@@ -665,6 +628,7 @@ void handleRobotCommand(uint8_t* packet_buffer){
 	memcpy(robotCommandPayload.payload, packet_buffer, REM_PACKET_SIZE_REM_ROBOT_COMMAND);
 	REM_last_packet_had_correct_version &= REM_RobotCommand_get_remVersion(&robotCommandPayload) == REM_LOCAL_VERSION;
 	decodeREM_RobotCommand(&activeRobotCommand,&robotCommandPayload);
+	flag_sdcard_write_command = true;
 }
 
 void handleRobotBuzzer(uint8_t* packet_buffer){
@@ -698,6 +662,7 @@ void handleRobotMusicCommand(uint8_t* packet_buffer){
 void robot_setRobotCommandPayload(REM_RobotCommandPayload* rcp){
 	decodeREM_RobotCommand(&activeRobotCommand, rcp);
 	timestamp_last_packet_serial = HAL_GetTick();
+	flag_sdcard_write_command = true;
 }
 
 void robot_setRobotMusicCommandPayload(REM_RobotMusicCommandPayload* mcp){
@@ -797,7 +762,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 // Handles the interrupts of the different timers.
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {		
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	uint32_t current_time = HAL_GetTick();
+
 	if(htim->Instance == TIM_CONTROL->Instance) {
 		if(!ROBOT_INITIALIZED) return;
 
@@ -839,6 +806,47 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 		wheels_SetSpeeds( stateControl_GetWheelRef() );
 		wheels_Update();
+
+		/* == Fill robotFeedback packet == */ {
+			robotFeedback.timestamp = current_time;
+			robotFeedback.XsensCalibrated = xsens_CalibrationDone;
+			// robotFeedback.batteryLevel = (batCounter > 1000);
+			robotFeedback.ballSensorWorking = ballSensor_isInitialized();
+			robotFeedback.ballSensorSeesBall = ballPosition.canKickBall;
+			robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
+
+			float localState[4] = {0.0f};
+			stateEstimation_GetState(localState);
+			float vu = localState[vel_u];
+			float vv = localState[vel_v];
+			robotFeedback.rho = sqrt(vu*vu + vv*vv);
+			robotFeedback.angle = localState[yaw];
+			robotFeedback.theta = atan2(vu, vv);
+			robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
+			robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
+			robotFeedback.dribblerSeesBall = dribbler_hasBall();
+		}
+		
+		/* == Fill robotStateInfo packet == */ {	
+			robotStateInfo.timestamp = current_time;	
+			robotStateInfo.xsensAcc1 = stateInfo.xsensAcc[0];
+			robotStateInfo.xsensAcc2 = stateInfo.xsensAcc[1];
+			robotStateInfo.xsensYaw = yaw_GetCalibratedYaw();
+			robotStateInfo.rateOfTurn = stateEstimation_GetFilteredRoT();
+			robotStateInfo.wheelSpeed1 = stateInfo.wheelSpeeds[0];
+			robotStateInfo.wheelSpeed2 = stateInfo.wheelSpeeds[1];
+			robotStateInfo.wheelSpeed3 = stateInfo.wheelSpeeds[2];
+			robotStateInfo.wheelSpeed4 = stateInfo.wheelSpeeds[3];
+			robotStateInfo.dribbleSpeed = stateInfo.dribblerSpeed;
+			robotStateInfo.filteredDribbleSpeed = stateInfo.dribblerFilteredSpeed;
+			robotStateInfo.dribblespeedBeforeGotBall = stateInfo.dribbleSpeedBeforeGotBall;
+			robotStateInfo.bodyXIntegral = stateControl_GetIntegral(vel_x);
+			robotStateInfo.bodyYIntegral = stateControl_GetIntegral(vel_y);
+			robotStateInfo.bodyWIntegral = stateControl_GetIntegral(vel_w);
+			robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(yaw);
+		}
+
+		flag_sdcard_write_feedback = true;
 	}
 	else if (htim->Instance == TIM_BUZZER->Instance) {
 		counter_TIM_BUZZER++;
