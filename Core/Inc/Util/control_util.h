@@ -57,7 +57,7 @@ float OMEGAtoPWM; // conversion factor from wheel speed [rad/s] to required PWM 
 // Dribbler
 // TODO: Update these constants once the new dribblers and their encoders are installed.
 #define DRIBBLER_GEAR_RATIO 0.777777778F // gear ratio between motor and dribbler
-#define DRIBBLER_PULSES_PER_ROTATION 4.0 // number of pulses of the encoder per rotation of the motor (see datasheet)4
+#define DRIBBLER_PULSES_PER_ROTATION 1024 * 4.0 // number of pulses of the encoder per rotation of the motor (see datasheet)4
 #define DRIBBLER_TIME_DIFF 1.
 #define DRIBBLER_ENCODER_TO_OMEGA ((2. * M_PI * DRIBBLER_GEAR_RATIO) / (DRIBBLER_TIME_DIFF * DRIBBLER_PULSES_PER_ROTATION)) // conversion factor from number of encoder pulses to dribbler speed [rad/s]
 
@@ -67,10 +67,10 @@ float WHEEL_REF_LIMIT; 							// [rad/s] Limit the maximum wheel reference to le
 #define WHEEL_REF_LIMIT_PWM 2200 				// [pwm]
 
 // Shoot
-#define MIN_KICK_TIME 1.0 				// minimum time [ms] period of kicking
-#define MAX_KICK_TIME 25.0 				// maximum time [ms] period of kicking
-#define MIN_CHIP_TIME 10 				// minimum time [ms] period of chipping
-#define MAX_CHIP_TIME 100 				// maximum time [ms] period of chipping
+#define MIN_KICK_TIME 10  //1.0 				// minimum time [ms] period of kicking
+#define MAX_KICK_TIME 200 // 25.0 				// maximum time [ms] period of kicking
+#define MIN_CHIP_TIME 1.0 //10 				// minimum time [ms] period of chipping
+#define MAX_CHIP_TIME 25  //100 				// maximum time [ms] period of chipping
 #define TIMER_FREQ 10000 			// frequency [Hz] of TIM6  (Clock frequency divided by prescaler)
 #define READY_CALLBACK_FREQ 1 		// frequency [Hz] of callback when shootState is Ready
 #define CHARGING_CALLBACK_FREQ 10 	// frequency [Hz] of callback when shootState is Charging
