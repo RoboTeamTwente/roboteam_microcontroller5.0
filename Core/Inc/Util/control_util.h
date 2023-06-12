@@ -55,7 +55,6 @@ float OMEGAtoPWM; // conversion factor from wheel speed [rad/s] to required PWM 
 #define WHEEL_ENCODER_TO_OMEGA (float)2*M_PI/(TIME_DIFF*WHEEL_GEAR_RATIO*WHEEL_PULSES_PER_ROTATION) // conversion factor from number of encoder pulses to wheel speed [rad/s]
 
 // Dribbler
-// TODO: Update these constants once the new dribblers and their encoders are installed.
 #define DRIBBLER_GEAR_RATIO 0.777777778F // gear ratio between motor and dribbler
 #define DRIBBLER_PULSES_PER_ROTATION 1024 * 4.0 // number of pulses of the encoder per rotation of the motor (see datasheet)4
 #define DRIBBLER_TIME_DIFF 1.
