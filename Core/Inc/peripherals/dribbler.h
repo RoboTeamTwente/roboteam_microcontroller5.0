@@ -20,7 +20,7 @@
 #define sizeOfMovingAverageBuffer 5
 #define sizeOfDelay 4
 #define sizeOfCommandBuffer 5
-#define minReliableData 550.0
+#define minReliableData 10.0
 
 
 typedef struct movingAverage {

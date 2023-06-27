@@ -91,7 +91,7 @@ float dribbler_GetSpeedBeforeGotBall() {
  */
 bool dribbler_hasBall(){
 	// check if moving average is moving up or down (speed reduces when dribbler gets the ball)
-	bool speed_reducing = ((dribbler_filtered_measured_speed  - dribbler_previous_filtered_measured_speed + 5) < 0); 
+	bool speed_reducing = ((dribbler_filtered_measured_speed  - dribbler_previous_filtered_measured_speed + 1) < 0); 
 	bool speed_increasing = ((dribbler_filtered_measured_speed  - dribbler_previous_filtered_measured_speed) > 0);
 
 	float AvgCommandedSpeed = getAvgOfBuffer(movingAvg.commandedSpeedBuffer,sizeOfCommandBuffer);
@@ -111,7 +111,7 @@ bool dribbler_hasBall(){
 	
 	// Only say we lose the ball if the speed increases above the threshold value or if the dribbler turns off
 	if (hasBall == true){
-		if ((speed_increasing && (dribbler_filtered_measured_speed > (movingAvg.speedBeforeGotBall-5))) || AvgCommandedSpeed < 0.05){
+		if ((speed_increasing && (dribbler_filtered_measured_speed > (movingAvg.speedBeforeGotBall-1))) || AvgCommandedSpeed < 0.05){
 			hasBall = false;
 		}
 	}
