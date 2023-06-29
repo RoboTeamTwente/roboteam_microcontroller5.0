@@ -23,6 +23,10 @@ static float stateLocal[4] = {0.0f};
 static bool useAbsoluteAngle = true;
 static bool previousUseAbsoluteAngle = true;
 
+// Current status of velocity
+static bool lowVel = true;
+static bool lowAngVel = true;
+
 // The velocity coupling matrix, used to transform local velocities into wheel velocities [4x3]
 static float D[12] = {0.0f};
 
@@ -68,9 +72,9 @@ static float absoluteAngleControl(float angleRef, float angle);
 
 int stateControl_Init(){
 	status = on;
-	initPID(&stateLocalK[vel_u], default_P_gain_u, default_I_gain_u, default_D_gain_u);
-	initPID(&stateLocalK[vel_v], default_P_gain_v, default_I_gain_v, default_D_gain_v);
-	initPID(&stateLocalK[vel_w], default_P_gain_w, default_I_gain_w, default_D_gain_w); 
+	initPID(&stateLocalK[vel_u], lowVel_P_gain_u, lowVel_I_gain_u, lowVel_D_gain_u);
+	initPID(&stateLocalK[vel_v], lowVel_P_gain_v, lowVel_I_gain_v, lowVel_D_gain_v);
+	initPID(&stateLocalK[vel_w], lowVel_P_gain_w, lowVel_I_gain_w, lowVel_D_gain_w); 
 	initPID(&stateLocalK[yaw], default_P_gain_yaw, default_I_gain_yaw, default_D_gain_yaw);
 	HAL_TIM_Base_Start_IT(TIM_CONTROL);
 
@@ -187,6 +191,50 @@ void stateControl_ResetPID(){
 	stateLocalK[yaw].prev_PID = 0;
 	stateLocalK[vel_w].prev_e = 0;
 	stateLocalK[vel_w].prev_PID = 0;
+}
+
+stateControl_SetPIDsAccordingToVel(float Velocity, float angularVelocity){
+	if (Velocity > PIDgainVelSwithchThreshold){
+		if(lowVel){ // only change the PID gains when we switch from low to high Vel
+			stateLocalK[vel_u].kP = default_P_gain_u;
+			stateLocalK[vel_u].kI = default_I_gain_u;
+			stateLocalK[vel_u].kD = default_D_gain_u;
+
+			stateLocalK[vel_v].kP = default_P_gain_v;
+			stateLocalK[vel_v].kI = default_I_gain_v;
+			stateLocalK[vel_v].kD = default_D_gain_v;
+			lowVel = false;
+		}
+	}
+	else{
+		if(!lowVel){
+			stateLocalK[vel_u].kP = lowVel_P_gain_u;
+			stateLocalK[vel_u].kI = lowVel_I_gain_u;
+			stateLocalK[vel_u].kD = lowVel_D_gain_u;
+
+			stateLocalK[vel_v].kP = lowVel_P_gain_v;
+			stateLocalK[vel_v].kI = lowVel_I_gain_v;
+			stateLocalK[vel_v].kD = lowVel_D_gain_v;
+			lowVel = true;
+		}
+	}
+
+	if (angularVelocity > PIDgainAngVelSwithchThreshold){
+		if(lowAngVel){
+			stateLocalK[vel_w].kP = default_P_gain_w;
+			stateLocalK[vel_w].kI = default_I_gain_w;
+			stateLocalK[vel_w].kD = default_D_gain_w;
+			lowAngVel = false;
+		}
+	}
+	else{
+		if(!lowAngVel){
+			stateLocalK[vel_w].kP = lowVel_P_gain_w;
+			stateLocalK[vel_w].kI = lowVel_I_gain_w;
+			stateLocalK[vel_w].kD = lowVel_D_gain_w;
+			lowAngVel = true;
+		}
+	}
 }
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
