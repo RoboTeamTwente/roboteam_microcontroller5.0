@@ -20,7 +20,7 @@
 #define sizeOfMovingAverageBuffer 5
 #define sizeOfDelay 4
 #define sizeOfCommandBuffer 5
-#define minReliableData 10.0
+#define minReliableData 20.0
 
 
 typedef struct movingAverage {
@@ -31,10 +31,15 @@ typedef struct movingAverage {
     float speedBeforeGotBall; // keeps speed of ball while we don't have the ball
 } movingAverage;
 
+typedef enum encoderResponse {
+    RISING,     // When the reported dribbler speed increases upon ball contact.
+    DROPPING    // When the reported dribbler speed decreases upon ball contact. 
+} encoderResponse;
+
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
 // Initializes the PIDs / encoders / PWM timers
-void dribbler_Init();
+void dribbler_Init(encoderResponse encResponse);
 // Denitializes the encoders / PWM timers
 void dribbler_DeInit();
 // Sets the dribbler speed and makes sure it's within [0,1]

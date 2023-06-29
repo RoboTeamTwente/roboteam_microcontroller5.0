@@ -7,11 +7,12 @@ static float dribbler_measured_speed = 0.0;             		   // Stores most rece
 static float dribbler_filtered_measured_speed = 0.0; 		       // Stores filtered measurement of dribbler speed in rad/s
 static float dribbler_previous_filtered_measured_speed = 0.0;      // Stores the previous filtered measurement of dribbler speed in rad/s
 static bool hasBall = false;					        		   // Stores information if dribbler thinks it has the ball
+static encoderResponse encResp = DROPPING;                         // If the speed of the encoder increases or decreases when a ball touches the dribbler bar. 
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
 // Reads out the values of the wheel encoders
-static int16_t getEncoderData();
+static uint32_t getEncoderData();
 // Resets the dribbler encoder
 static void resetDribblerEncoders();
 // Calculates angular velocity in rad/s for each wheel based on their encoder values
@@ -23,7 +24,8 @@ float getAvgOfBuffer(float *buffer, int size);
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATIONS
 
-void dribbler_Init(){
+void dribbler_Init(encoderResponse encResponse){
+	encResp = encResponse;
 	start_PWM(PWM_Dribbler);
 	/* Start the encoder */
 	HAL_TIM_Base_Start(ENC_DRIBBLER);
@@ -105,13 +107,14 @@ bool dribbler_hasBall(){
 		}
 	}
 	// check if all conditions are met, assume we have the ball if so
-	if (speed_reducing && (dribbler_filtered_measured_speed > minReliableData) && (AvgCommandedSpeed > 0)){
+	if ((encResp == DROPPING && speed_reducing || encResp == RISING && speed_increasing) && (dribbler_filtered_measured_speed > minReliableData) && (AvgCommandedSpeed > 0)){
 		hasBall = true;
-	}
+	} 
 	
 	// Only say we lose the ball if the speed increases above the threshold value or if the dribbler turns off
 	if (hasBall == true){
-		if ((speed_increasing && (dribbler_filtered_measured_speed > (movingAvg.speedBeforeGotBall-1))) || AvgCommandedSpeed < 0.05){
+		if (((encResp == DROPPING && speed_increasing && (dribbler_filtered_measured_speed > (movingAvg.speedBeforeGotBall-1))) 
+			|| encResp == RISING && speed_reducing && (dribbler_filtered_measured_speed < (movingAvg.speedBeforeGotBall+1))) || AvgCommandedSpeed < 0.05){
 			hasBall = false;
 		}
 	}
@@ -123,7 +126,7 @@ bool dribbler_hasBall(){
 /**
  * @brief Reads out the counts of the dribbler encoder
  */
-static int16_t getEncoderData(){
+static uint32_t getEncoderData(){
 	uint32_t value = __HAL_TIM_GET_COUNTER(ENC_DRIBBLER);
 	return value;
 }
@@ -143,7 +146,7 @@ static void resetDribblerEncoders() {
  * be used to calculate the time difference between two calculations.
  */
 static void computeDribblerSpeed(){
-	int16_t encoder_value = getEncoderData();
+	uint32_t encoder_value = getEncoderData();
 	resetDribblerEncoders();
 	
 	// Convert encoder values to rad/s
