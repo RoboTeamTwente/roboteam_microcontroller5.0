@@ -502,7 +502,7 @@ void loop(void){
 		initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
 		// Quick fix to also stop the dribbler from rotating when the command is reset
 		// TODO: maybe move executeCommand to TIMER_7?
-		dribbler_SetSpeed(0);
+		// dribbler_SetSpeed(0.2);
 
 		REM_last_packet_had_correct_version = true;
     }
@@ -556,6 +556,26 @@ void loop(void){
 		stateInfo.dribblerFilteredSpeed = dribbler_GetFilteredSpeeds();
 		stateInfo.dribbleSpeedBeforeGotBall = dribbler_GetSpeedBeforeGotBall();
 
+		static uint32_t enctotal = 0;
+		uint32_t encval = dribbler_GetEncoderMeasurement();
+		if (encval < 1000) enctotal += encval;
+		LOG_printf("[loop:"STRINGIZE(__LINE__)"] Dribbler speed: %d\n", encval);
+		LOG_printf("[loop:"STRINGIZE(__LINE__)"] Dribbler total: %d\n", enctotal);
+		
+
+
+		uint32_t encval2 = __HAL_TIM_GET_COUNTER(ENC_DRIBBLER);
+		LOG_printf("[loop:"STRINGIZE(__LINE__)"] Dribbler enc  : %u\n", encval2);
+		
+
+
+
+
+		LOG("\n");
+
+
+
+
 		if(is_connected_serial){		
 			encodeREM_RobotFeedback( &robotFeedbackPayload, &robotFeedback );
 			HAL_UART_Transmit(UART_PC, robotFeedbackPayload.payload, REM_PACKET_SIZE_REM_ROBOT_FEEDBACK, 10);
@@ -569,6 +589,9 @@ void loop(void){
 	// Heartbeat every 1000ms
 	if(heartbeat_1000ms < current_time){
 		while (heartbeat_1000ms < current_time) heartbeat_1000ms += 1000;
+
+		// dribbler_SetSpeed(  (current_time%10000)/10000.f );
+		dribbler_SetSpeed(  0.1 );
 
 		// If the XSens isn't connected anymore, play a warning sound
 		if(!is_connected_xsens){
