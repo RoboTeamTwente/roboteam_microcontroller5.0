@@ -20,7 +20,7 @@
 #define sizeOfMovingAverageBuffer 5
 #define sizeOfDelay 4
 #define sizeOfCommandBuffer 5
-#define minReliableData 20.0
+#define minReliableData 10.0
 
 
 typedef struct movingAverage {
@@ -42,6 +42,8 @@ typedef enum encoderResponse {
 void dribbler_Init(encoderResponse encResponse);
 // Denitializes the encoders / PWM timers
 void dribbler_DeInit();
+// Sets the baseline speed of this dribbler
+void dribbler_SetBaselineSpeed(float baseSpeed);
 // Sets the dribbler speed and makes sure it's within [0,1]
 void dribbler_SetSpeed(float speed);
 // Updates the dribbler towards the commanded dribbler speed using the encoder and a PID controller.

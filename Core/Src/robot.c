@@ -74,6 +74,7 @@ StateInfo stateInfo = {0.0f, false, {0.0}, 0.0f, 0.0f, {0.0}};
 bool halt = true;
 bool xsens_CalibrationDone = false;
 bool xsens_CalibrationDoneFirst = true;
+bool dribbler_initialized = false;
 volatile bool REM_last_packet_had_correct_version = true;
 IWDG_Handle* iwdg;
 
@@ -457,8 +458,6 @@ void init(void){
 
 
 
-
-
 /* =================================================== */
 /* ==================== MAIN LOOP ==================== */
 /* =================================================== */
@@ -503,7 +502,9 @@ void loop(void){
 		initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
 		// Quick fix to also stop the dribbler from rotating when the command is reset
 		// TODO: maybe move executeCommand to TIMER_7?
-		dribbler_SetSpeed(0);
+		if (dribbler_initialized) {
+			dribbler_SetSpeed(0);
+		}
 
 		REM_last_packet_had_correct_version = true;
     }
@@ -574,6 +575,14 @@ void loop(void){
 		// If the XSens isn't connected anymore, play a warning sound
 		if(!is_connected_xsens){
 			buzzer_Play_QuickBeepUp();
+		}
+
+		if (heartbeat_1000ms > 2000 && !dribbler_initialized) {
+			float basespeed = dribbler_GetMeasuredSpeeds();
+			dribbler_SetBaselineSpeed(basespeed);
+			LOG_printf("Dribbler initialize %f", basespeed);
+			dribbler_SetSpeed(0);
+			dribbler_initialized = true;
 		}
 
         // Toggle liveliness LED

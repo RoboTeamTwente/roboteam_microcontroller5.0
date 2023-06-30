@@ -1,4 +1,5 @@
 #include "dribbler.h"
+#include "logging.h"
 
 movingAverage movingAvg = {0};
 
@@ -7,7 +8,8 @@ static float dribbler_measured_speed = 0.0;             		   // Stores most rece
 static float dribbler_filtered_measured_speed = 0.0; 		       // Stores filtered measurement of dribbler speed in rad/s
 static float dribbler_previous_filtered_measured_speed = 0.0;      // Stores the previous filtered measurement of dribbler speed in rad/s
 static bool hasBall = false;					        		   // Stores information if dribbler thinks it has the ball
-static encoderResponse encResp = DROPPING;                         // If the speed of the encoder increases or decreases when a ball touches the dribbler bar. 
+static encoderResponse encResp = DROPPING;                         // If the speed of the encoder increases or decreases when a ball touches the dribbler bar.
+static float dribbler_baseline_speed = 0.0f;					   // Stores the baseline at which the dribbler 
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
@@ -29,13 +31,17 @@ void dribbler_Init(encoderResponse encResponse){
 	start_PWM(PWM_Dribbler);
 	/* Start the encoder */
 	HAL_TIM_Base_Start(ENC_DRIBBLER);
-	dribbler_SetSpeed(0);
+	dribbler_SetSpeed(1);
 }
 
 void dribbler_DeInit(){
 	stop_PWM(PWM_Dribbler);
 	/* Stop the encoder */
 	HAL_TIM_Base_Stop(ENC_DRIBBLER);
+}
+
+void dribbler_SetBaselineSpeed(float baseSpeed){
+	dribbler_baseline_speed = baseSpeed;
 }
 
 void dribbler_SetSpeed(float speed){
@@ -107,7 +113,7 @@ bool dribbler_hasBall(){
 		}
 	}
 	// check if all conditions are met, assume we have the ball if so
-	if ((encResp == DROPPING && speed_reducing || encResp == RISING && speed_increasing) && (dribbler_filtered_measured_speed > minReliableData) && (AvgCommandedSpeed > 0)){
+	if ((encResp == DROPPING && speed_reducing || encResp == RISING && speed_increasing && dribbler_filtered_measured_speed > dribbler_baseline_speed + 3) && (dribbler_filtered_measured_speed > minReliableData) && (AvgCommandedSpeed > 0)){
 		hasBall = true;
 	} 
 	
