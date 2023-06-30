@@ -3,15 +3,16 @@
 movingAverage movingAvg = {0};
 
 ///////////////////////////////////////////////////// VARIABLES
-static float dribbler_measured_speed = 0.0;             		   // Stores most recent measurement of dribbler speed in rad/s
-static float dribbler_filtered_measured_speed = 0.0; 		       // Stores filtered measurement of dribbler speed in rad/s
+static float dribbler_measured_speed = 0.0;                        // Stores most recent measurement of dribbler speed in rad/s
+static float dribbler_filtered_measured_speed = 0.0;               // Stores filtered measurement of dribbler speed in rad/s
 static float dribbler_previous_filtered_measured_speed = 0.0;      // Stores the previous filtered measurement of dribbler speed in rad/s
-static bool hasBall = false;					        		   // Stores information if dribbler thinks it has the ball
+static bool hasBall = false;                                       // Stores information if dribbler thinks it has the ball
+static uint32_t last_encoder_measurement = 0;                      // Stores the last encoder measurement
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
 // Reads out the values of the wheel encoders
-static int16_t getEncoderData();
+static int32_t getEncoderData();
 // Resets the dribbler encoder
 static void resetDribblerEncoders();
 // Calculates angular velocity in rad/s for each wheel based on their encoder values
@@ -118,13 +119,21 @@ bool dribbler_hasBall(){
 	return hasBall;
 }
 
+/**
+ * @brief Get the latest encoder measurement
+ */
+uint32_t dribbler_GetEncoderMeasurement() {
+	return last_encoder_measurement;
+}
+
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 /**
  * @brief Reads out the counts of the dribbler encoder
  */
-static int16_t getEncoderData(){
+static int32_t getEncoderData(){
 	uint32_t value = __HAL_TIM_GET_COUNTER(ENC_DRIBBLER);
+	last_encoder_measurement = value;
 	return value;
 }
 
@@ -143,11 +152,11 @@ static void resetDribblerEncoders() {
  * be used to calculate the time difference between two calculations.
  */
 static void computeDribblerSpeed(){
-	int16_t encoder_value = getEncoderData();
+	int32_t encoder_value = getEncoderData();
 	resetDribblerEncoders();
 	
 	// Convert encoder values to rad/s
-	dribbler_measured_speed = DRIBBLER_ENCODER_TO_OMEGA * (float) fabs(encoder_value);
+	dribbler_measured_speed = DRIBBLER_ENCODER_TO_OMEGA * (float) fabs((float)encoder_value);
 }
 
 /**

@@ -49,6 +49,7 @@ float dribbler_GetFilteredSpeeds();
 float dribbler_GetSpeedBeforeGotBall();
 // Returns true if the dribbler speed decreases
 bool dribbler_hasBall();
-
+// Returns the latest encoder measurement
+uint32_t dribbler_GetEncoderMeasurement();
 
 #endif /* DRIBBLER_DRIBBLER_H_ */
