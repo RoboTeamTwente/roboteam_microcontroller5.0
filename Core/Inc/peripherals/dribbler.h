@@ -13,23 +13,9 @@
 #ifndef DRIBBLER_DRIBBLER_H_
 #define DRIBBLER_DRIBBLER_H_
 
+#include <math.h>
 #include "control_util.h"
 #include "tim_util.h"
-
-#define DRIBBLER_MAX_PWM 10000
-#define sizeOfMovingAverageBuffer 5
-#define sizeOfDelay 4
-#define sizeOfCommandBuffer 5
-#define minReliableData 550.0
-
-
-typedef struct movingAverage {
-    float movingAvgBuffer[sizeOfMovingAverageBuffer]; // stores measured speeds for a moving average filter
-    int movingAvgIdx; // index for the moving average buffer
-    float commandedSpeedBuffer[sizeOfCommandBuffer]; // stores commanded speeds to check if the dribbler has been turned off
-    int commandedIdx; // index for commanded speed buffer 
-    float speedBeforeGotBall; // keeps speed of ball while we don't have the ball
-} movingAverage;
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
@@ -48,7 +34,9 @@ float dribbler_GetFilteredSpeeds();
 // Returns the delayed speed of the moving average filter at the time it got the ball
 float dribbler_GetSpeedBeforeGotBall();
 // Returns true if the dribbler speed decreases
-bool dribbler_hasBall();
+void dribbler_CalculateHasBall();
+// Returns true if the dribbler has the ball
+bool dribbler_GetHasBall();
 // Returns the latest encoder measurement
 uint32_t dribbler_GetEncoderMeasurement();
 
