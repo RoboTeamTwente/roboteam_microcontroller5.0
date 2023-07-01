@@ -1,5 +1,4 @@
 #include "dribbler.h"
-#include "logging.h"
 
 static const uint16_t DRIBBLER_MAX_PWM = 10000;
 static const uint8_t  delay_size = 4;

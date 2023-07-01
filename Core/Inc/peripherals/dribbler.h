@@ -33,7 +33,7 @@ float dribbler_GetMeasuredSpeeds();
 float dribbler_GetFilteredSpeeds();
 // Returns the delayed speed of the moving average filter at the time it got the ball
 float dribbler_GetSpeedBeforeGotBall();
-// Returns true if the dribbler speed decreases
+// Calculates whether the dribbler has the ball or not
 void dribbler_CalculateHasBall();
 // Returns true if the dribbler has the ball
 bool dribbler_GetHasBall();
