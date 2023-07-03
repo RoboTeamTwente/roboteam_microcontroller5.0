@@ -55,11 +55,10 @@ float OMEGAtoPWM; // conversion factor from wheel speed [rad/s] to required PWM 
 #define WHEEL_ENCODER_TO_OMEGA (float)2*M_PI/(TIME_DIFF*WHEEL_GEAR_RATIO*WHEEL_PULSES_PER_ROTATION) // conversion factor from number of encoder pulses to wheel speed [rad/s]
 
 // Dribbler
-// TODO: Update these constants once the new dribblers and their encoders are installed.
-#define DRIBBLER_GEAR_RATIO 0.777777778F // gear ratio between motor and dribbler
-#define DRIBBLER_PULSES_PER_ROTATION 4.0 // number of pulses of the encoder per rotation of the motor (see datasheet)4
-#define DRIBBLER_TIME_DIFF 1.
-#define DRIBBLER_ENCODER_TO_OMEGA ((2. * M_PI * DRIBBLER_GEAR_RATIO) / (DRIBBLER_TIME_DIFF * DRIBBLER_PULSES_PER_ROTATION)) // conversion factor from number of encoder pulses to dribbler speed [rad/s]
+#define DRIBBLER_GEAR_RATIO 0.777777778F     // Gear ratio between motor and dribbler
+#define DRIBBLER_PULSES_PER_ROTATION 4096.0F // Number of pulses of the encoder per rotation of the motor (see datasheet)
+#define DRIBBLER_TIME_DIFF 0.1F              // Given that the dribbler is updated/controlled at 10Hz, delta time is 0.1s
+#define DRIBBLER_ENCODER_TO_OMEGA ((2. * M_PI * DRIBBLER_GEAR_RATIO) / (DRIBBLER_TIME_DIFF * DRIBBLER_PULSES_PER_ROTATION)) // Conversion factor from number of encoder pulses to dribbler speed [rad/s]
 
 // Control
 #define YAW_MARGIN (0.5F/180.0F)*(float)M_PI 	// margin at which the I-value of the PID is reset to 0

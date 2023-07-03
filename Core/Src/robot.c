@@ -551,10 +551,6 @@ void loop(void){
     // Heartbeat every 100ms	
 	if(heartbeat_100ms < current_time){
 		while (heartbeat_100ms < current_time) heartbeat_100ms += 100;
-		dribbler_Update();
-		stateInfo.dribblerSpeed = dribbler_GetMeasuredSpeeds();
-		stateInfo.dribblerFilteredSpeed = dribbler_GetFilteredSpeeds();
-		stateInfo.dribbleSpeedBeforeGotBall = dribbler_GetSpeedBeforeGotBall();
 
 		if(is_connected_serial){		
 			encodeREM_RobotFeedback( &robotFeedbackPayload, &robotFeedback );
@@ -563,7 +559,6 @@ void loop(void){
 			encodeREM_RobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
 			HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, REM_PACKET_SIZE_REM_ROBOT_STATE_INFO, 10);
 		}
-
 	}
 
 	// Heartbeat every 1000ms
@@ -589,13 +584,6 @@ void loop(void){
 		// 	HAL_UART_Transmit(UART_BACK, musicbuf2, 6, 10);
 		// }
 
-		// Check if ballsensor connection is still correct
-        /*if ( !ballSensor_isInitialized() ) {
-            ballSensor_Init();
-            __HAL_I2C_DISABLE(BS_I2C);
-            HAL_Delay(1);
-            __HAL_I2C_ENABLE(BS_I2C);
-        }*/
     }
 
     /* LEDs for debugging */
@@ -603,7 +591,7 @@ void loop(void){
     set_Pin(LED1_pin, !xsens_CalibrationDone);		// On while xsens startup calibration is not finished
     set_Pin(LED2_pin, wheels_GetWheelsBraking());   // On when braking 
     set_Pin(LED3_pin, halt);						// On when halting
-    set_Pin(LED4_pin, ballPosition.canKickBall);    // On when ballsensor says ball is within kicking range
+    set_Pin(LED4_pin, dribbler_GetHasBall());       // On when the dribbler detects the ball
 	set_Pin(LED5_pin, SDCard_Initialized());		// On when SD card is initialized
     // LED6 Wireless_Readpacket_Cplt : toggled when a packet is received
 }
@@ -770,6 +758,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 		counter_TIM_CONTROL++;
 
+		// Update the dribbler at 10Hz
+		if(counter_TIM_CONTROL % 10	== 0) {
+			dribbler_Update();
+			dribbler_CalculateHasBall();
+		}
+
 		// if(MTi == NULL) return;
 		// float speeds[4] = {5., 5., 5., 5.};
 		// wheels_Unbrake();
@@ -824,7 +818,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			robotFeedback.theta = atan2(vu, vv);
 			robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
 			robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
-			robotFeedback.dribblerSeesBall = dribbler_hasBall();
+			robotFeedback.dribblerSeesBall = dribbler_GetHasBall();
 		}
 		
 		/* == Fill robotStateInfo packet == */ {	
