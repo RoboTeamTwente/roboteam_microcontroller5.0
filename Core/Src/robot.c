@@ -843,9 +843,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			robotStateInfo.wheelSpeed2 = stateInfo.wheelSpeeds[1];
 			robotStateInfo.wheelSpeed3 = stateInfo.wheelSpeeds[2];
 			robotStateInfo.wheelSpeed4 = stateInfo.wheelSpeeds[3];
-			robotStateInfo.dribbleSpeed = stateInfo.dribblerSpeed;
-			robotStateInfo.filteredDribbleSpeed = stateInfo.dribblerFilteredSpeed;
-			robotStateInfo.dribblespeedBeforeGotBall = stateInfo.dribbleSpeedBeforeGotBall;
+			robotStateInfo.dribbleSpeed = dribbler_GetMeasuredSpeeds();
+			robotStateInfo.filteredDribbleSpeed = dribbler_GetFilteredSpeeds();
+			robotStateInfo.dribblespeedBeforeGotBall = dribbler_GetSpeedBeforeGotBall();
 			robotStateInfo.bodyXIntegral = stateControl_GetIntegral(vel_x);
 			robotStateInfo.bodyYIntegral = stateControl_GetIntegral(vel_y);
 			robotStateInfo.bodyWIntegral = stateControl_GetIntegral(vel_w);
