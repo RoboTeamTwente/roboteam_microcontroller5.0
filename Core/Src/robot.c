@@ -357,7 +357,9 @@ void init(void){
     stateEstimation_Init();
     shoot_Init();
     dribbler_Init();
-    if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
+	// TODO: Currently the ball sensor initialization is just disabled. 
+	// Since we will no longer use it anymore this should be fully removed from the code.
+    // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
 	LOG_sendAll();
 	}
 
