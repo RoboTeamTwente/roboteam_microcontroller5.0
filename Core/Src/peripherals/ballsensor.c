@@ -168,8 +168,8 @@ void ballSensor_IRQ_Handler() {
 			// Received interrupt that can't be handled
 			uint8_t message_size = data[1];
 			for(uint16_t at = 0; at < message_size; at += 10){
-				LOG_printf("[%d] %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				at, data[at+0], data[at+1], data[at+2], data[at+3], data[at+4], data[at+5], data[at+6], data[at+7], data[at+8], data[at+9]);
+				// LOG_printf("[%d] %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+				// at, data[at+0], data[at+1], data[at+2], data[at+3], data[at+4], data[at+5], data[at+6], data[at+7], data[at+8], data[at+9]);
 			}
 		}
 	}
