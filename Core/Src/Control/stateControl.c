@@ -194,46 +194,38 @@ void stateControl_ResetPID(){
 }
 
 stateControl_SetPIDsAccordingToVel(float Velocity, float angularVelocity){
-	if (Velocity > PIDgainVelSwithchThreshold){
-		if(lowVel){ // only change the PID gains when we switch from low to high Vel
-			stateLocalK[vel_u].kP = default_P_gain_u;
-			stateLocalK[vel_u].kI = default_I_gain_u;
-			stateLocalK[vel_u].kD = default_D_gain_u;
+	if (Velocity > PIDgainVelSwithchThreshold && !lowVel){ // only change the PID gains when we switch from low to high Vel
+		LOG("High velocity");
+		stateLocalK[vel_u].kP = default_P_gain_u;
+		stateLocalK[vel_u].kI = default_I_gain_u;
+		stateLocalK[vel_u].kD = default_D_gain_u;
 
-			stateLocalK[vel_v].kP = default_P_gain_v;
-			stateLocalK[vel_v].kI = default_I_gain_v;
-			stateLocalK[vel_v].kD = default_D_gain_v;
-			lowVel = false;
-		}
-	}
-	else{
-		if(!lowVel){
-			stateLocalK[vel_u].kP = lowVel_P_gain_u;
-			stateLocalK[vel_u].kI = lowVel_I_gain_u;
-			stateLocalK[vel_u].kD = lowVel_D_gain_u;
+		stateLocalK[vel_v].kP = default_P_gain_v;
+		stateLocalK[vel_v].kI = default_I_gain_v;
+		stateLocalK[vel_v].kD = default_D_gain_v;
+		lowVel = false;
+	} else if (lowVel){
+		LOG("Low velocity");
+		stateLocalK[vel_u].kP = lowVel_P_gain_u;
+		stateLocalK[vel_u].kI = lowVel_I_gain_u;
+		stateLocalK[vel_u].kD = lowVel_D_gain_u;
 
-			stateLocalK[vel_v].kP = lowVel_P_gain_v;
-			stateLocalK[vel_v].kI = lowVel_I_gain_v;
-			stateLocalK[vel_v].kD = lowVel_D_gain_v;
-			lowVel = true;
-		}
+		stateLocalK[vel_v].kP = lowVel_P_gain_v;
+		stateLocalK[vel_v].kI = lowVel_I_gain_v;
+		stateLocalK[vel_v].kD = lowVel_D_gain_v;
+		lowVel = true;
 	}
 
-	if (angularVelocity > PIDgainAngVelSwithchThreshold){
-		if(lowAngVel){
-			stateLocalK[vel_w].kP = default_P_gain_w;
-			stateLocalK[vel_w].kI = default_I_gain_w;
-			stateLocalK[vel_w].kD = default_D_gain_w;
-			lowAngVel = false;
-		}
-	}
-	else{
-		if(!lowAngVel){
-			stateLocalK[vel_w].kP = lowVel_P_gain_w;
-			stateLocalK[vel_w].kI = lowVel_I_gain_w;
-			stateLocalK[vel_w].kD = lowVel_D_gain_w;
-			lowAngVel = true;
-		}
+	if (angularVelocity > PIDgainAngVelSwithchThreshold && !lowAngVel){
+		stateLocalK[vel_w].kP = default_P_gain_w;
+		stateLocalK[vel_w].kI = default_I_gain_w;
+		stateLocalK[vel_w].kD = default_D_gain_w;
+		lowAngVel = false;
+	} else if (lowAngVel){
+		stateLocalK[vel_w].kP = lowVel_P_gain_w;
+		stateLocalK[vel_w].kI = lowVel_I_gain_w;
+		stateLocalK[vel_w].kD = lowVel_D_gain_w;
+		lowAngVel = true;
 	}
 }
 
