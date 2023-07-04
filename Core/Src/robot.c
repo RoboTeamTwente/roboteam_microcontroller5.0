@@ -46,6 +46,10 @@
 
 uint8_t ROBOT_ID;
 WIRELESS_CHANNEL ROBOT_CHANNEL;
+
+/* Whether the robot should accept an uart connection from the PC */
+volatile bool ENABLE_UART_PC = true;
+
 volatile bool IS_RUNNING_TEST = false;
 volatile bool ROBOT_INITIALIZED = false;
 
@@ -306,6 +310,7 @@ void init(void){
 	ROBOT_ID = get_Id();
 	ROBOT_CHANNEL = read_Pin(FT1_pin) == GPIO_PIN_SET ? BLUE_CHANNEL : YELLOW_CHANNEL;
 	IS_RUNNING_TEST = read_Pin(FT0_pin);
+	ENABLE_UART_PC = read_Pin(FT2_pin);
 	
 	
 	initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
@@ -345,8 +350,13 @@ void init(void){
 	}
 	#endif
 
-	/* === Wired communication with robot; Can now receive RobotCommands (and other REM packets) via UART */
-	REM_UARTinit(UART_PC);
+	// Sometimes the UART pin for the programmer is floating, causing the robot to not boot. 
+	// As a temporary fix one can disable the uart initialization with the FT_2 switch on the robot.
+	// TODO: This will need a proper fix later on.
+	if (ENABLE_UART_PC) {
+		/* === Wired communication with robot; Can now receive RobotCommands (and other REM packets) via UART */
+		REM_UARTinit(UART_PC);
+	}
 	}
 	
 	set_Pin(LED1_pin, 1);
@@ -358,7 +368,9 @@ void init(void){
     stateEstimation_Init();
     shoot_Init();
     dribbler_Init();
-    if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
+	// TODO: Currently the ball sensor initialization is just disabled. 
+	// Since we will no longer use it anymore this should be fully removed from the code.
+    // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
 	LOG_sendAll();
 	}
 
@@ -552,10 +564,6 @@ void loop(void){
     // Heartbeat every 100ms	
 	if(heartbeat_100ms < current_time){
 		while (heartbeat_100ms < current_time) heartbeat_100ms += 100;
-		dribbler_Update();
-		stateInfo.dribblerSpeed = dribbler_GetMeasuredSpeeds();
-		stateInfo.dribblerFilteredSpeed = dribbler_GetFilteredSpeeds();
-		stateInfo.dribbleSpeedBeforeGotBall = dribbler_GetSpeedBeforeGotBall();
 
 		if(is_connected_serial){		
 			encodeREM_RobotFeedback( &robotFeedbackPayload, &robotFeedback );
@@ -564,7 +572,6 @@ void loop(void){
 			encodeREM_RobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
 			HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, REM_PACKET_SIZE_REM_ROBOT_STATE_INFO, 10);
 		}
-
 	}
 
 	// Heartbeat every 1000ms
@@ -590,13 +597,6 @@ void loop(void){
 		// 	HAL_UART_Transmit(UART_BACK, musicbuf2, 6, 10);
 		// }
 
-		// Check if ballsensor connection is still correct
-        /*if ( !ballSensor_isInitialized() ) {
-            ballSensor_Init();
-            __HAL_I2C_DISABLE(BS_I2C);
-            HAL_Delay(1);
-            __HAL_I2C_ENABLE(BS_I2C);
-        }*/
     }
 
     /* LEDs for debugging */
@@ -604,7 +604,7 @@ void loop(void){
     set_Pin(LED1_pin, !xsens_CalibrationDone);		// On while xsens startup calibration is not finished
     set_Pin(LED2_pin, wheels_GetWheelsBraking());   // On when braking 
     set_Pin(LED3_pin, halt);						// On when halting
-    set_Pin(LED4_pin, ballPosition.canKickBall);    // On when ballsensor says ball is within kicking range
+    set_Pin(LED4_pin, dribbler_GetHasBall());       // On when the dribbler detects the ball
 	set_Pin(LED5_pin, SDCard_Initialized());		// On when SD card is initialized
     // LED6 Wireless_Readpacket_Cplt : toggled when a packet is received
 }
@@ -771,6 +771,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 		counter_TIM_CONTROL++;
 
+		// Update the dribbler at 10Hz
+		if(counter_TIM_CONTROL % 10	== 0) {
+			dribbler_Update();
+			dribbler_CalculateHasBall();
+		}
+
 		// if(MTi == NULL) return;
 		// float speeds[4] = {5., 5., 5., 5.};
 		// wheels_Unbrake();
@@ -825,7 +831,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			robotFeedback.theta = atan2(vu, vv);
 			robotFeedback.wheelBraking = wheels_GetWheelsBraking(); // TODO Locked feedback has to be changed to brake feedback in PC code
 			robotFeedback.rssi = last_valid_RSSI; // Should be divided by two to get dBm but RSSI is 8 bits so just send all 8 bits back
-			robotFeedback.dribblerSeesBall = dribbler_hasBall();
+			robotFeedback.dribblerSeesBall = dribbler_GetHasBall();
 		}
 		
 		/* == Fill robotStateInfo packet == */ {	
