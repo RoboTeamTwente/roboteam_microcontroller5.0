@@ -46,6 +46,10 @@
 
 uint8_t ROBOT_ID;
 WIRELESS_CHANNEL ROBOT_CHANNEL;
+
+/* Whether the robot should accept an uart connection from the PC */
+volatile bool ENABLE_UART_PC = true;
+
 volatile bool IS_RUNNING_TEST = false;
 volatile bool ROBOT_INITIALIZED = false;
 
@@ -305,6 +309,7 @@ void init(void){
 	ROBOT_ID = get_Id();
 	ROBOT_CHANNEL = read_Pin(FT1_pin) == GPIO_PIN_SET ? BLUE_CHANNEL : YELLOW_CHANNEL;
 	IS_RUNNING_TEST = read_Pin(FT0_pin);
+	ENABLE_UART_PC = read_Pin(FT2_pin);
 	
 	
 	initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
@@ -344,8 +349,13 @@ void init(void){
 	}
 	#endif
 
-	/* === Wired communication with robot; Can now receive RobotCommands (and other REM packets) via UART */
-	REM_UARTinit(UART_PC);
+	// Sometimes the UART pin for the programmer is floating, causing the robot to not boot. 
+	// As a temporary fix one can disable the uart initialization with the FT_2 switch on the robot.
+	// TODO: This will need a proper fix later on.
+	if (ENABLE_UART_PC) {
+		/* === Wired communication with robot; Can now receive RobotCommands (and other REM packets) via UART */
+		REM_UARTinit(UART_PC);
+	}
 	}
 	
 	set_Pin(LED1_pin, 1);
