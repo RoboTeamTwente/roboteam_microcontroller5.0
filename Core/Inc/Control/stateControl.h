@@ -41,12 +41,12 @@
 #define default_D_gain_wheels 0.0
 
 // Set low velocity PID values
-#define lowVel_P_gain_u 0.6
-#define lowVel_I_gain_u 0.0
+#define lowVel_P_gain_u 0.7
+#define lowVel_I_gain_u 3.2
 #define lowVel_D_gain_u 0.0
 
-#define lowVel_P_gain_v 0.6
-#define lowVel_I_gain_v 0.0
+#define lowVel_P_gain_v 0.7
+#define lowVel_I_gain_v 3.2
 #define lowVel_D_gain_v 0.0
 
 #define lowVel_P_gain_w 0.25
