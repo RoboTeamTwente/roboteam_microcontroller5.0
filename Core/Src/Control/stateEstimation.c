@@ -89,6 +89,11 @@ void stateEstimation_Update(StateInfo* input) {
 	stateLocal[vel_v] = kalman_State[2];
 	stateLocal[vel_w] = smoothen_rateOfTurn(input->rateOfTurn);
 	stateLocal[yaw] = calibratedYaw;
+
+	// Compensate for constant slippage by multiplying with empirically determined values.
+	//  Explanation: https://wiki.roboteamtwente.nl/technical/control/slippage
+	stateLocal[vel_u] = 0.92 * stateLocal[vel_u];
+	stateLocal[vel_v] = 0.9 * stateLocal[vel_v];
 }
 
 void stateEstimation_GetState(float _stateLocal[4]) {

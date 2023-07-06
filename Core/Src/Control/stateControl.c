@@ -224,11 +224,6 @@ static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float 
 	float stateLocalRef[3] = {0, 0, 0};
 	global2Local(stateGlobalRef, stateLocalRef, stateLocal[yaw]); //transfer global to local
 
-	// Manually adjusting velocity command
-	//     Explanation: see Velocity Difference file on drive (https://docs.google.com/document/d/1pGKysiwpu19DKLpAZ4GpluMV7UBhBQZ65YMTtI7bd_8/)
-	stateLocalRef[vel_u] = 1.12 * stateLocalRef[vel_u];
-	stateLocalRef[vel_v] = 1.1 * stateLocalRef[vel_v];
-
 	// Local control
 	float veluErr = (stateLocalRef[vel_u] - stateLocal[vel_u]);
 	float velvErr = (stateLocalRef[vel_v] - stateLocal[vel_v]);
