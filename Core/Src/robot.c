@@ -287,7 +287,7 @@ void init(void){
 	/* Enable the watchdog timer and set the threshold at 5 seconds. It should not be needed in the initialization but
 	 sometimes for some reason the code keeps hanging when powering up the robot using the power switch. It's not nice
 	 but its better than suddenly having non-responding robots in a match */
-	IWDG_Init(iwdg, 5000);
+	IWDG_Init(iwdg, 7500);
 		
 	// Enable the I2C buffer (on the topboard, parts U500, U503).
 	// These two buffers do communication with the ballsensor I2C, and the power monitor I2C + breakout I2C (shared bus)
