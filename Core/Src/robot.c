@@ -186,6 +186,7 @@ void executeCommands(REM_RobotCommand* robotCommand){
 	stateReference[vel_w] = robotCommand->angularVelocity;
 	stateReference[yaw] = robotCommand->angle;
 	stateControl_SetRef(stateReference);
+	stateControl_SetPIDsAccordingToVel(robotCommand->rho, robotCommand->angularVelocity);
 	dribbler_SetSpeed(robotCommand->dribbler);
 	shoot_SetPower(robotCommand->kickChipPower);
 

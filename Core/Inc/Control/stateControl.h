@@ -20,12 +20,12 @@
 #include "REM_RobotSetPIDGains.h"
 
 // Set default PID values
-#define default_P_gain_u 0.2
-#define default_I_gain_u 0.0
+#define default_P_gain_u 0.7
+#define default_I_gain_u 3.2
 #define default_D_gain_u 0.0
 
-#define default_P_gain_v 0.3
-#define default_I_gain_v 0.0
+#define default_P_gain_v 0.7
+#define default_I_gain_v 3.2
 #define default_D_gain_v 0.0
 
 #define default_P_gain_w 0.25
@@ -39,6 +39,24 @@
 #define default_P_gain_wheels 2.0
 #define default_I_gain_wheels 0.0
 #define default_D_gain_wheels 0.0
+
+// Set low velocity PID values
+#define lowVel_P_gain_u 0.7
+#define lowVel_I_gain_u 3.2
+#define lowVel_D_gain_u 0.0
+
+#define lowVel_P_gain_v 0.7
+#define lowVel_I_gain_v 3.2
+#define lowVel_D_gain_v 0.0
+
+#define lowVel_P_gain_w 0.25
+#define lowVel_I_gain_w 5.0
+#define lowVel_D_gain_w 0.0
+
+
+// Set the thresholds to change to different PID gains (they need to be more aggressive at low velocities)
+#define PIDgainVelSwithchThreshold 0.75
+#define PIDgainAngVelSwithchThreshold 0.75
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
