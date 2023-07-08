@@ -272,8 +272,8 @@ bool updateTestCommand(REM_RobotCommand* rc, uint32_t time){
 	// Don't do anything for the first second
 	if(time < 1000) return true;
 	// Don't do anything after 11 seconds
-	if(11000 < time) return false;
-	// These two give a test window of 10 seconds. 
+	if(17000 < time) return false;
+	// These two give a test window of 16 seconds. 
 	
 	// Normalize time to 0 for easier calculations
 	time -= 1000;
