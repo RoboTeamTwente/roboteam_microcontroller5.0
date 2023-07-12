@@ -356,7 +356,7 @@ void init(void){
 		/* === Wired communication with robot; Can now receive RobotCommands (and other REM packets) via UART */
 		REM_UARTinit(UART_PC);
 	}
-	}
+}
 	
 	set_Pin(LED1_pin, 1);
 
@@ -371,9 +371,9 @@ void init(void){
 	// Since we will no longer use it anymore this should be fully removed from the code.
     // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
 	LOG_sendAll();
-	}
+}
 
-    set_Pin(LED2_pin, 1);
+	set_Pin(LED2_pin, 1);
 
 { // ====== SX : PINS, CALLBACKS, CHANNEL, SYNCWORDS
 	/* Initialize the SX1280 wireless chip */
@@ -404,8 +404,7 @@ void init(void){
 	Wireless_setTXSyncword(SX, robot_syncWord[16]); // TX syncword is set to the basestation its syncword
 	uint32_t syncwords[2] = {robot_syncWord[ROBOT_ID],0};
 	Wireless_setRXSyncwords(SX, syncwords); // RX syncword is specific for the robot its ID
-	set_Pin(LED4_pin, 1);
-	}
+}
 
 	set_Pin(LED3_pin, 1);
 
@@ -418,7 +417,7 @@ void init(void){
 		HAL_Delay(1500); // The duration of the sound
 	}
 	LOG_sendAll();
-	}
+}
 	
 	set_Pin(LED4_pin, 1);
 
