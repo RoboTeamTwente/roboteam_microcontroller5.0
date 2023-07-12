@@ -47,6 +47,9 @@
 uint8_t ROBOT_ID;
 WIRELESS_CHANNEL ROBOT_CHANNEL;
 
+/* How often should the IMU try to calibrate before the robot gives up? */
+uint16_t MTi_max_init_attempts = 5;
+
 /* Whether the robot should accept an uart connection from the PC */
 volatile bool ENABLE_UART_PC = true;
 
@@ -410,15 +413,20 @@ void init(void){
 	set_Pin(LED3_pin, 1);
 
 { // ====== INITIALIZE IMU (XSENS). 1 second calibration time, XFP_VRU_general = no magnetometer */
-	LOG("[init:"STRINGIZE(__LINE__)"] Initializing XSens\n");
-	MTi = MTi_Init(1, XFP_VRU_general);
-	if(MTi == NULL){
-		LOG("[init:"STRINGIZE(__LINE__)"] Failed to initialize XSens\n");
+	LOG("[init:"STRINGIZE(__LINE__)"] Initializing MTi\n");
+	MTi = NULL;
+	uint16_t MTi_made_init_attempts = 0;
+	while (MTi == NULL && MTi_made_init_attempts < MTi_max_init_attempts) {
+		MTi = MTi_Init(1, XFP_VRU_general);
+		MTi_made_init_attempts += 1;
+		IWDG_Refresh(iwdg);
+	}
+	if (MTi == NULL) {
+		LOG("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi after "STRINGIZE(MTi_max_init_attempts)" attempts\n");
 		buzzer_Play_WarningOne();
 		HAL_Delay(1500); // The duration of the sound
 	}
 	LOG_sendAll();
-	}
 	
 	set_Pin(LED4_pin, 1);
 
