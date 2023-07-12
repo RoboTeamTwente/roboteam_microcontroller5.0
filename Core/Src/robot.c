@@ -37,6 +37,7 @@
 #include "REM_SX1280Filler.h"
 #include "REM_RobotMusicCommand.h"
 #include "REM_Log.h"
+#include "REM_RobotKillCommand.h"
 
 #include <time.h>
 #include <unistd.h>
