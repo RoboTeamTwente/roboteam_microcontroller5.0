@@ -427,6 +427,7 @@ void init(void){
 		HAL_Delay(1500); // The duration of the sound
 	}
 	LOG_sendAll();
+}
 	
 	set_Pin(LED4_pin, 1);
 
@@ -473,6 +474,7 @@ void init(void){
 
 	ROBOT_INITIALIZED = true;
 }
+
 
 
 
