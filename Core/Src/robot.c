@@ -37,6 +37,7 @@
 #include "REM_SX1280Filler.h"
 #include "REM_RobotMusicCommand.h"
 #include "REM_Log.h"
+#include "REM_RobotKillCommand.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -659,6 +660,10 @@ void handleRobotMusicCommand(uint8_t* packet_buffer){
 	robot_setRobotMusicCommandPayload(rmcp);
 }
 
+void handleRobotKillCommand(){
+	set_Pin(BAT_KILL_pin, 0);
+}
+
 void robot_setRobotCommandPayload(REM_RobotCommandPayload* rcp){
 	decodeREM_RobotCommand(&activeRobotCommand, rcp);
 	timestamp_last_packet_serial = HAL_GetTick();
@@ -707,6 +712,11 @@ bool handlePacket(uint8_t* packet_buffer, uint8_t packet_length){
 
 			case REM_PACKET_TYPE_REM_SX1280FILLER:
 				total_bytes_processed += REM_PACKET_SIZE_REM_SX1280FILLER;
+				break;
+
+			case REM_PACKET_TYPE_REM_ROBOT_KILL_COMMAND:
+				handleRobotKillCommand();
+				total_bytes_processed += REM_PACKET_TYPE_REM_ROBOT_KILL_COMMAND;
 				break;
 
 
