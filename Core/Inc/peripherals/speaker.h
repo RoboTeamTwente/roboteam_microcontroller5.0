@@ -6,6 +6,9 @@
 
 
 void speaker_Play();
+void speaker_PlayIndex(uint8_t index);
+void speaker_Reset();
+void speaker_Wake();
 void speaker_Pause();
 void speaker_NextSong();
 void speaker_PreviousSong();
