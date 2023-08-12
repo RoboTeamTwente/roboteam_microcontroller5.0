@@ -459,6 +459,14 @@ void init(void){
 
 	timestamp_initialized = HAL_GetTick();
 
+	// Should trigger like 20% of the time or something
+	if(HAL_GetTick() % 2 == 1){
+		speaker_Setvolume(30);
+		HAL_Delay(50);
+		speaker_SelectSong(0, 11);
+		HAL_Delay(50);
+	}
+
 	/* Set the heartbeat timers */
 	heartbeat_17ms   = timestamp_initialized + 17;
 	heartbeat_100ms  = timestamp_initialized + 100;
@@ -565,7 +573,15 @@ void loop(void){
 	if(heartbeat_100ms < current_time){
 		while (heartbeat_100ms < current_time) heartbeat_100ms += 100;
 
-		if(is_connected_serial){		
+		static uint32_t played_dribbler_igotit = 0;
+		if(dribbler_GetHasBall() && played_dribbler_igotit < current_time){
+			played_dribbler_igotit = current_time + 10000;
+			speaker_Setvolume(30);
+			HAL_Delay(10);
+			speaker_PlayIndex(11);
+		}
+
+		if(is_connected_serial){
 			encodeREM_RobotFeedback( &robotFeedbackPayload, &robotFeedback );
 			HAL_UART_Transmit(UART_PC, robotFeedbackPayload.payload, REM_PACKET_SIZE_REM_ROBOT_FEEDBACK, 10);
 
@@ -786,8 +802,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			dribbler_CalculateHasBall();
 		}
 
-		// if(MTi == NULL) return;
-		// float speeds[4] = {5., 5., 5., 5.};
+		/* Enable this code to make the robot turn slowly */
+		// float speeds[4] = {8., 8., 8., 8.};
 		// wheels_Unbrake();
 		// wheels_SetSpeeds(speeds);
 		// wheels_Update();
