@@ -21,11 +21,11 @@
 
 /* Frequency steps in MHz, starting at 2.4GHz, going up to 2.5GHz */
 
-/* Frequencies for the RoboCup 2023 */
-#define WIRELESS_CHANNEL_YELLOW_ROBOT_TO_BASESTATION 85  
-#define WIRELESS_CHANNEL_BLUE_ROBOT_TO_BASESTATION   86
-#define WIRELESS_CHANNEL_YELLOW_BASESTATION_TO_ROBOT 87
-#define WIRELESS_CHANNEL_BLUE_BASESTATION_TO_ROBOT   88
+/* Frequencies for the TIGERs Invites (BuGa 2023) */
+#define WIRELESS_CHANNEL_YELLOW_ROBOT_TO_BASESTATION 86  
+#define WIRELESS_CHANNEL_BLUE_ROBOT_TO_BASESTATION   87
+#define WIRELESS_CHANNEL_YELLOW_BASESTATION_TO_ROBOT 88
+#define WIRELESS_CHANNEL_BLUE_BASESTATION_TO_ROBOT   89
 
 /* Frequencies below 2.4GHz to avoid WiFi. Officially not supported by documentation, but according to TIGERs it works */
 /*
