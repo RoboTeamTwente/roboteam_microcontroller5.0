@@ -459,14 +459,6 @@ void init(void){
 
 	timestamp_initialized = HAL_GetTick();
 
-	// Should trigger like 20% of the time or something
-	if(HAL_GetTick() % 2 == 1){
-		speaker_Setvolume(30);
-		HAL_Delay(50);
-		speaker_SelectSong(0, 11);
-		HAL_Delay(50);
-	}
-
 	/* Set the heartbeat timers */
 	heartbeat_17ms   = timestamp_initialized + 17;
 	heartbeat_100ms  = timestamp_initialized + 100;
@@ -573,12 +565,26 @@ void loop(void){
 	if(heartbeat_100ms < current_time){
 		while (heartbeat_100ms < current_time) heartbeat_100ms += 100;
 
+		// Plays a sounds when the robot detects that it has a ball.
 		static uint32_t played_dribbler_igotit = 0;
 		if(dribbler_GetHasBall() && played_dribbler_igotit < current_time){
 			played_dribbler_igotit = current_time + 10000;
 			speaker_Setvolume(30);
 			HAL_Delay(10);
 			speaker_PlayIndex(11);
+		}
+
+		// Plays the id of the robot after boot-up.
+		static bool played_id = false;
+		if(!played_id && current_time > 500) {
+			played_id = true;
+
+			// Currently there are sounds for ids 1 up and till 11.
+			if (ROBOT_ID > 0 && ROBOT_ID < 12) {
+				speaker_Setvolume(30);
+				HAL_Delay(10);
+				speaker_SelectSong(0,ROBOT_ID);
+			}
 		}
 
 		if(is_connected_serial){
