@@ -416,6 +416,9 @@ void init(void){
 	LOG("[init:"STRINGIZE(__LINE__)"] Initializing MTi\n");
 	MTi = NULL;
 	uint16_t MTi_made_init_attempts = 0;
+
+	// Check whether the MTi is already intialized.
+	// If the 3rd and 4th bit of the statusword are non-zero, then the initializion hasn't completed yet.
 	while ((MTi == NULL || (MTi->statusword & (0x18)) != 0) && MTi_made_init_attempts < MTi_max_init_attempts) {
 		MTi = MTi_Init(1, XFP_VRU_general);
 		IWDG_Refresh(iwdg);
@@ -425,8 +428,12 @@ void init(void){
 		}
 		MTi_made_init_attempts += 1;
 		LOG_sendAll();
+
+		// The MTi is allowed to take 1 second per attempt. Hence we wait a bit more and then check again whether the initialization succeeded.
 		HAL_Delay(1100);
 	}
+
+	// If after the maximum number of attempts the calibration still failed, play a warning sound... :(
 	if (MTi == NULL || (MTi->statusword & (0x18)) != 0) {
 		LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi after %d out of %d attempts\n", MTi_made_init_attempts, MTi_max_init_attempts);
 		buzzer_Play_WarningOne();
