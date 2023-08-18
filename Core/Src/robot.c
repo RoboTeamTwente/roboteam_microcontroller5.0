@@ -416,13 +416,19 @@ void init(void){
 	LOG("[init:"STRINGIZE(__LINE__)"] Initializing MTi\n");
 	MTi = NULL;
 	uint16_t MTi_made_init_attempts = 0;
-	while (MTi == NULL && MTi_made_init_attempts < MTi_max_init_attempts) {
+	while ((MTi == NULL || (MTi->statusword & (0x18)) != 0) && MTi_made_init_attempts < MTi_max_init_attempts) {
 		MTi = MTi_Init(1, XFP_VRU_general);
-		MTi_made_init_attempts += 1;
 		IWDG_Refresh(iwdg);
+
+		if (MTi_made_init_attempts > 0) {
+			LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi in attempt %d out of %d\n", MTi_made_init_attempts, MTi_max_init_attempts);
+		}
+		MTi_made_init_attempts += 1;
+		LOG_sendAll();
+		HAL_Delay(1100);
 	}
-	if (MTi == NULL) {
-		LOG("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi after "STRINGIZE(MTi_max_init_attempts)" attempts\n");
+	if (MTi == NULL || (MTi->statusword & (0x18)) != 0) {
+		LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi after %d out of %d attempts\n", MTi_made_init_attempts, MTi_max_init_attempts);
 		buzzer_Play_WarningOne();
 		HAL_Delay(1500); // The duration of the sound
 	}
@@ -533,7 +539,6 @@ void loop(void){
     if (xsens_CalibrationDoneFirst && xsens_CalibrationDone) {
         xsens_CalibrationDoneFirst = false;
         wheels_Unbrake();
-		LOG_printf("[loop:"STRINGIZE(__LINE__)"] XSens calibrated after %dms\n", current_time-timestamp_initialized);
     }
 
     // Update test (if active)
