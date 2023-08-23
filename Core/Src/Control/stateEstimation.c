@@ -92,8 +92,9 @@ void stateEstimation_Update(StateInfo* input) {
 
 	// Compensate for constant slippage by multiplying with empirically determined values.
 	//  Explanation: https://wiki.roboteamtwente.nl/technical/control/slippage
-	stateLocal[vel_u] = 0.92 * stateLocal[vel_u];
-	stateLocal[vel_v] = 0.9 * stateLocal[vel_v];
+	stateLocal[vel_u] = SLIPPAGE_FACTOR_U * stateLocal[vel_u];
+	stateLocal[vel_v] = SLIPPAGE_FACTOR_V * stateLocal[vel_v];
+	stateLocal[vel_w] = SLIPPAGE_FACTOR_W * stateLocal[vel_w];
 }
 
 void stateEstimation_GetState(float _stateLocal[4]) {

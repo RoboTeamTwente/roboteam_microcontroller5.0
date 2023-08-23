@@ -19,6 +19,13 @@
 #include "kalman.h"
 #include "control_util.h"
 
+///////////////////////////////////////////////////// CONSTANTS
+
+/* Factors to align vision velocities with robot velocities (see https://wiki.roboteamtwente.nl/technical/control/slippage) */
+#define SLIPPAGE_FACTOR_U 0.92	// Correction constant for slippage u direction
+#define SLIPPAGE_FACTOR_V 0.90  // Correction constant for slippage v direction
+#define SLIPPAGE_FACTOR_W 1.00  // Correction constant for slippage w direction (angular velocity)
+
 ///////////////////////////////////////////////////// STRUCTS
 
 typedef struct StateInfo {
