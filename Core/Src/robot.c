@@ -442,7 +442,7 @@ void init(void){
 	if(DRAIN_BATTERY) {
 		LOG("[init:"STRINGIZE(__LINE__)"] In drain mode! Flip pin FT3 and reboot to disable.");
 		LOG_sendAll();
-		buzzer_Play_PowerUp();
+		buzzer_Play_BatteryDrainWarning();
 		HAL_Delay(1000);
 	}
 
