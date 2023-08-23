@@ -48,6 +48,9 @@
 uint8_t ROBOT_ID;
 WIRELESS_CHANNEL ROBOT_CHANNEL;
 
+/* How often should the IMU try to calibrate before the robot gives up? */
+uint16_t MTi_MAX_INIT_ATTEMPTS = 5;
+
 /* Whether the robot should accept an uart connection from the PC */
 volatile bool ENABLE_UART_PC = true;
 
@@ -412,10 +415,29 @@ void init(void){
 	set_Pin(LED3_pin, 1);
 
 { // ====== INITIALIZE IMU (XSENS). 1 second calibration time, XFP_VRU_general = no magnetometer */
-	LOG("[init:"STRINGIZE(__LINE__)"] Initializing XSens\n");
-	MTi = MTi_Init(1, XFP_VRU_general);
-	if(MTi == NULL){
-		LOG("[init:"STRINGIZE(__LINE__)"] Failed to initialize XSens\n");
+	LOG("[init:"STRINGIZE(__LINE__)"] Initializing MTi\n");
+	MTi = NULL;
+	uint16_t MTi_made_init_attempts = 0;
+
+	// Check whether the MTi is already intialized.
+	// If the 3rd and 4th bit of the statusword are non-zero, then the initializion hasn't completed yet.
+	while ((MTi == NULL || (MTi->statusword & (0x18)) != 0) && MTi_made_init_attempts < MTi_MAX_INIT_ATTEMPTS) {
+		MTi = MTi_Init(1, XFP_VRU_general);
+		IWDG_Refresh(iwdg);
+
+		if (MTi_made_init_attempts > 0) {
+			LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi in attempt %d out of %d\n", MTi_made_init_attempts, MTi_MAX_INIT_ATTEMPTS);
+		}
+		MTi_made_init_attempts += 1;
+		LOG_sendAll();
+
+		// The MTi is allowed to take 1 second per attempt. Hence we wait a bit more and then check again whether the initialization succeeded.
+		HAL_Delay(1100);
+	}
+
+	// If after the maximum number of attempts the calibration still failed, play a warning sound... :(
+	if (MTi == NULL || (MTi->statusword & (0x18)) != 0) {
+		LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi after %d out of %d attempts\n", MTi_made_init_attempts, MTi_MAX_INIT_ATTEMPTS);
 		buzzer_Play_WarningOne();
 		HAL_Delay(1500); // The duration of the sound
 	}
@@ -480,6 +502,7 @@ void init(void){
 
 
 
+
 /* =================================================== */
 /* ==================== MAIN LOOP ==================== */
 /* =================================================== */
@@ -533,7 +556,6 @@ void loop(void){
     if (xsens_CalibrationDoneFirst && xsens_CalibrationDone) {
         xsens_CalibrationDoneFirst = false;
         wheels_Unbrake();
-		LOG_printf("[loop:"STRINGIZE(__LINE__)"] XSens calibrated after %dms\n", current_time-timestamp_initialized);
     }
 
     // Update test (if active)
