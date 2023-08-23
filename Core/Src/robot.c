@@ -250,22 +250,26 @@ bool updateTestCommand(REM_RobotCommand* rc, uint32_t time){
 	// Don't do anything for the first second
 	if(time < 1000) return true;
 	// Don't do anything after 11 seconds
-	if(11000 < time) return false;
-	// These two give a test window of 10 seconds. 
+	if(17000 < time) return false;
+	// These two give a test window of 16 seconds. 
 	
 	// Normalize time to 0 for easier calculations
 	time -= 1000;
 
-	// Split up testing window into blocks of two seconds
-	float period_fraction = (time%2000)/2000.;
+	// Split up testing window into blocks of four seconds
+	float period_fraction = (time%4000)/4000.;
 
 	// Rotate around, slowly
 	rc->angularVelocity = 6 * sin(period_fraction * 2 * M_PI);
 	// Turn on dribbler
 	rc->dribbler = period_fraction;
 	// Kick a little every block
-	if(0.95 < period_fraction){
+	if(0.45 < period_fraction && 0.65 > period_fraction){
 		rc->doKick = true;
+		rc->kickChipPower = 1;
+		rc->doForce = true;
+	} else if (0.95 < period_fraction) {
+		rc->doChip = true;
 		rc->kickChipPower = 1;
 		rc->doForce = true;
 	}
@@ -809,6 +813,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi){
 /* Callback for when bytes have been received via the UART */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart->Instance == UART_PC->Instance){
+		toggle_Pin(LED6_pin);
 		REM_UARTCallback(huart);
 	}
 }
