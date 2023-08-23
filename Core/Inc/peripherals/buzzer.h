@@ -31,7 +31,7 @@ void buzzer_Play_Startup();
 void buzzer_Play_Tetris();
 void buzzer_Play_Mario();
 void buzzer_Play_PinkPanther();
-void buzzer_Play_PowerUp();
+void buzzer_Play_BatteryDrainWarning();
 void buzzer_Play_WarningOne();
 void buzzer_Play_WarningTwo();
 void buzzer_Play_WarningThree();
