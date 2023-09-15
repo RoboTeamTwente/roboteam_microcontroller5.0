@@ -11,6 +11,7 @@
  */
 
 #include <stdint.h>
+#include <math.h>
 
 /* 7.6.1 Device Registers */
 #define PM_CONFIGURATION_REGISTER 0x0
@@ -43,7 +44,7 @@
 // TODO naming. Calling something _ENUM is lame but "PM_CONFIGURATION_AVG" is already taken
 // PM_CONFIGURATION_AVG
 typedef enum {
-    PM_CONFIGURATION_AVG_1    = 0b00,
+    PM_CONFIGURATION_AVG_1    = 0b000,
     PM_CONFIGURATION_AVG_4    = 0b001,
     PM_CONFIGURATION_AVG_16   = 0b010,
     PM_CONFIGURATION_AVG_64   = 0b011,
@@ -125,7 +126,7 @@ typedef enum {
 *   Equation 4 : POWER [W]        = 32 * CURRENT_LSB * POWER
 */
 
-
+/* 8.2.1 Design parameters */
 struct Design_Parameters_ {
     float power_supply_voltage;
     float bus_supply_rail;
@@ -135,10 +136,10 @@ struct Design_Parameters_ {
     float ADC_range_selection;
 } Design_Parameters = {
     3.3,
-    24,
-    3,
+    12,
+    6,
+    9,
     10,
-    20,
     81.92
 };
 
@@ -154,6 +155,14 @@ void PM_Init(){
 
 }
 
+/* 8.2.3.5 Calculate Returned Values by LSB Value 
+*  The received contents of shunt voltage, current & bus voltage need to be right shifted by 4 bits
+*  After shifting the contents convert it to decimals before multiplying it by the correct LSB value
+*/
+#define PM_LSB_ALERT_LIMIT     = 40 * 10^-6    //40 microvolt
+#define PM_LSB_SHUNT_VOLTAGE   = 40 * 10^-6    //40 microvolt
+#define PM_LSB_BUS_VOLTAGE     = 25.6 * 10^-3  //25.6 millivolt
+#define PM_LSB_CURRENT         = 5 * 10^-3     //5 milliampere
 
 
 
