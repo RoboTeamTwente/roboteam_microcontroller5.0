@@ -48,11 +48,15 @@
 uint8_t ROBOT_ID;
 WIRELESS_CHANNEL ROBOT_CHANNEL;
 
+/* How often should the IMU try to calibrate before the robot gives up? */
+uint16_t MTi_MAX_INIT_ATTEMPTS = 5;
+
 /* Whether the robot should accept an uart connection from the PC */
 volatile bool ENABLE_UART_PC = true;
 
 volatile bool IS_RUNNING_TEST = false;
 volatile bool ROBOT_INITIALIZED = false;
+volatile bool DRAIN_BATTERY = false;
 
 MTi_data* MTi;
 
@@ -311,6 +315,7 @@ void init(void){
 	ROBOT_CHANNEL = read_Pin(FT1_pin) == GPIO_PIN_SET ? BLUE_CHANNEL : YELLOW_CHANNEL;
 	IS_RUNNING_TEST = read_Pin(FT0_pin);
 	ENABLE_UART_PC = read_Pin(FT2_pin);
+	DRAIN_BATTERY = read_Pin(FT3_pin);
 	
 	
 	initPacketHeader((REM_Packet*) &activeRobotCommand, ROBOT_ID, ROBOT_CHANNEL, REM_PACKET_TYPE_REM_ROBOT_COMMAND);
@@ -410,10 +415,29 @@ void init(void){
 	set_Pin(LED3_pin, 1);
 
 { // ====== INITIALIZE IMU (XSENS). 1 second calibration time, XFP_VRU_general = no magnetometer */
-	LOG("[init:"STRINGIZE(__LINE__)"] Initializing XSens\n");
-	MTi = MTi_Init(1, XFP_VRU_general);
-	if(MTi == NULL){
-		LOG("[init:"STRINGIZE(__LINE__)"] Failed to initialize XSens\n");
+	LOG("[init:"STRINGIZE(__LINE__)"] Initializing MTi\n");
+	MTi = NULL;
+	uint16_t MTi_made_init_attempts = 0;
+
+	// Check whether the MTi is already intialized.
+	// If the 3rd and 4th bit of the statusword are non-zero, then the initializion hasn't completed yet.
+	while ((MTi == NULL || (MTi->statusword & (0x18)) != 0) && MTi_made_init_attempts < MTi_MAX_INIT_ATTEMPTS) {
+		MTi = MTi_Init(1, XFP_VRU_general);
+		IWDG_Refresh(iwdg);
+
+		if (MTi_made_init_attempts > 0) {
+			LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi in attempt %d out of %d\n", MTi_made_init_attempts, MTi_MAX_INIT_ATTEMPTS);
+		}
+		MTi_made_init_attempts += 1;
+		LOG_sendAll();
+
+		// The MTi is allowed to take 1 second per attempt. Hence we wait a bit more and then check again whether the initialization succeeded.
+		HAL_Delay(1100);
+	}
+
+	// If after the maximum number of attempts the calibration still failed, play a warning sound... :(
+	if (MTi == NULL || (MTi->statusword & (0x18)) != 0) {
+		LOG_printf("[init:"STRINGIZE(__LINE__)"] Failed to initialize MTi after %d out of %d attempts\n", MTi_made_init_attempts, MTi_MAX_INIT_ATTEMPTS);
 		buzzer_Play_WarningOne();
 		HAL_Delay(1500); // The duration of the sound
 	}
@@ -435,12 +459,20 @@ void init(void){
 		HAL_Delay(100);
 	}
 
+	// Check if we are draining the battery. If so, sound an alarm
+	if(DRAIN_BATTERY) {
+		LOG("[init:"STRINGIZE(__LINE__)"] In drain mode! Flip pin FT3 and reboot to disable.");
+		LOG_sendAll();
+		buzzer_Play_BatteryDrainWarning();
+		HAL_Delay(1000);
+	}
+
 	set_Pin(LED5_pin, 1);
 
 	// Tell the SX to start listening for packets. This is non-blocking. It simply sets the SX into receiver mode.
 	// SX1280 section 10.7 Transceiver Circuit Modes Graphical Illustration
-	// Ignore packets when we're in test-mode by simply never entering this receive-respond loop
-	if(!IS_RUNNING_TEST) WaitForPacket(SX);
+	// Ignore packets when we're in test- or battery drain mode by simply never entering this receive-respond loop
+	if(!(IS_RUNNING_TEST || DRAIN_BATTERY)) WaitForPacket(SX);
 
 	// Ensure that the speaker is stopped. The speaker keeps going even if the robot is reset
 	speaker_Stop();
@@ -465,6 +497,7 @@ void init(void){
 
 	ROBOT_INITIALIZED = true;
 }
+
 
 
 
@@ -504,7 +537,7 @@ void loop(void){
 	/* === Determine HALT state === */
     xsens_CalibrationDone = (MTi->statusword & (0x18)) == 0; // if bits 3 and 4 of status word are zero, calibration is done
     halt = !xsens_CalibrationDone || !(is_connected_wireless || is_connected_serial) || !REM_last_packet_had_correct_version;
-	if(IS_RUNNING_TEST) halt = false;
+	if(IS_RUNNING_TEST || DRAIN_BATTERY) halt = false;
 
 	if (halt) {
 		// LOG_printf("HALT %d %d %d\n", xsens_CalibrationDone, checkWirelessConnection(), isSerialConnected);
@@ -523,7 +556,6 @@ void loop(void){
     if (xsens_CalibrationDoneFirst && xsens_CalibrationDone) {
         xsens_CalibrationDoneFirst = false;
         wheels_Unbrake();
-		LOG_printf("[loop:"STRINGIZE(__LINE__)"] XSens calibrated after %dms\n", current_time-timestamp_initialized);
     }
 
     // Update test (if active)
@@ -842,6 +874,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		stateControl_Update();
 
 		wheels_SetSpeeds( stateControl_GetWheelRef() );
+
+		// In order to drain the battery as fast as possible we instruct the wheels to go their maximum possible speeds.
+		// However, for the sake of safety we make sure that if the robot actually turns it immediately stops doing this, since you
+		// only want to execute this on a roll of tape.
+		//
+		// TODO: Once the battery meter has been implemented in software, it would perhaps be nice to stop the drainaige at programmable level.
+		//       Currently you are stuck on the automated shutdown value that is controlled by the powerboard.
+		if(DRAIN_BATTERY){
+
+			// Instruct each wheel to go 30 rad/s
+			float wheel_speeds[4] = {30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI};
+			wheels_SetSpeeds(wheel_speeds);
+
+			// If the gyroscope detects some rotational movement, we stop the drainage program.
+			if (fabs(MTi->gyr[2]) > 0.3f) {
+				DRAIN_BATTERY = false;
+			}
+		}
 		wheels_Update();
 
 		/* == Fill robotFeedback packet == */ {
