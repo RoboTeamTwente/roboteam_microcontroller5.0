@@ -273,46 +273,46 @@ status executeSquareDrive() {
 	int reps = 1;
 	int t = 1500;
 	if (HAL_GetTick() - velTimer < t) {
-		velocityRef[body_x] = v;
-		velocityRef[body_y] = 0.0;
-		velocityRef[body_yaw] = 0.0;
+		velocityRef[vel_x] = v;
+		velocityRef[vel_y] = 0.0;
+		velocityRef[yaw] = 0.0;
 	} else if (HAL_GetTick() - velTimer < 2*t) {
-		velocityRef[body_x] = v;
-		velocityRef[body_y] = 0.0;
-		velocityRef[body_yaw] = 0.5*M_PI;
+		velocityRef[vel_x] = v;
+		velocityRef[vel_y] = 0.0;
+		velocityRef[yaw] = 0.5*M_PI;
 	} else if (HAL_GetTick() - velTimer < 3*t) {
-		velocityRef[body_x] = 0.0;
-		velocityRef[body_y] = v;
-		velocityRef[body_yaw] = 0.0;
+		velocityRef[vel_x] = 0.0;
+		velocityRef[vel_y] = v;
+		velocityRef[yaw] = 0.0;
 	} else if (HAL_GetTick() - velTimer < 4*t) {
-		velocityRef[body_x] = 0.0;
-		velocityRef[body_y] = v;
-		velocityRef[body_yaw] = 0.5*M_PI;
+		velocityRef[vel_x] = 0.0;
+		velocityRef[vel_y] = v;
+		velocityRef[yaw] = 0.5*M_PI;
 	} else if (HAL_GetTick() - velTimer < 5*t) {
-		velocityRef[body_x] = -v;
-		velocityRef[body_y] = 0.0;
-		velocityRef[body_yaw] = 0.0;
+		velocityRef[vel_x] = -v;
+		velocityRef[vel_y] = 0.0;
+		velocityRef[yaw] = 0.0;
 	} else if (HAL_GetTick() - velTimer < 6*t) {
-		velocityRef[body_x] = -v;
-		velocityRef[body_y] = 0.0;
-		velocityRef[body_yaw] = 0.5*M_PI;
+		velocityRef[vel_x] = -v;
+		velocityRef[vel_y] = 0.0;
+		velocityRef[yaw] = 0.5*M_PI;
 	} else if (HAL_GetTick() - velTimer < 7*t) {
-		velocityRef[body_x] = 0.0;
-		velocityRef[body_y] = -v;
-		velocityRef[body_yaw] = 0.0;
+		velocityRef[vel_x] = 0.0;
+		velocityRef[vel_y] = -v;
+		velocityRef[yaw] = 0.0;
 	} else if (HAL_GetTick() - velTimer < 8*t) {
-		velocityRef[body_x] = 0.0;
-		velocityRef[body_y] = -v;
-		velocityRef[body_yaw] = 0.5*M_PI;
+		velocityRef[vel_x] = 0.0;
+		velocityRef[vel_y] = -v;
+		velocityRef[yaw] = 0.5*M_PI;
 	} else if (count < reps-1) {
 		velTimer = HAL_GetTick();
 		count++;
 	} else if (HAL_GetTick() - velTimer > 10*t) {
 		velTimer = HAL_GetTick();
 	} else {
-		velocityRef[body_x] = 0.0;
-		velocityRef[body_y] = 0.0;
-		velocityRef[body_yaw] = 0.0;
+		velocityRef[vel_x] = 0.0;
+		velocityRef[vel_y] = 0.0;
+		velocityRef[yaw] = 0.0;
 		LOG("---------- End of test ----------\n");
 		return test_done;
 	}

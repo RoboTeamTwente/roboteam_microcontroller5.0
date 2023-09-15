@@ -16,6 +16,22 @@ void speaker_Play(){
     uint8_t command[4] = {0x7e, 0x02, 0x01, 0xef};
     sendCommand(command, 4);
 }
+void speaker_PlayIndex(uint8_t index){
+    uint8_t command[6] = {0x7e, 0x04, 0x41, 0x00, index, 0xEF};
+    sendCommand(command, 6);
+}
+void speaker_InjectIndex(uint8_t index){
+    uint8_t command[6] = {0x7e, 0x04, 0x43, 0x00, index, 0xEF};
+    sendCommand(command, 6);
+}
+void speaker_Reset(){
+    uint8_t command[5] = {0x7e, 0x03, 0x35, 0x05, 0xEF};
+    sendCommand(command, 5);
+}
+void speaker_Wake(){
+    uint8_t command[5] = {0x7e, 0x03, 0x35, 0x02, 0xEF};
+    sendCommand(command, 5);
+}
 void speaker_Pause(){
     uint8_t command[4] = {0x7e, 0x02, 0x02, 0xef};
     sendCommand(command, 4);
@@ -69,7 +85,7 @@ void speaker_HandleCommand(REM_RobotMusicCommand* rmc){
     // Select the right song only if one is given
     if(rmc->folderId != 0 && rmc->songId != 0) {
         speaker_SelectSong(rmc->folderId, rmc->songId);
-        speaker_Play();
+        // speaker_Play();
     }
     if(rmc->nextSong) speaker_NextSong();
     if(rmc->previousSong) speaker_PreviousSong();
