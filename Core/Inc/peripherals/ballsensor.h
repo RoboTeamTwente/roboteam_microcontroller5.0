@@ -4,7 +4,7 @@
 #include "gpio_util.h"
 
 #define BALLSENSOR_NO_BALL -1
-#define BS_I2C_ADDR (uint16_t)(0x50 << 1)
+#define  BS_I2C_ADDR (uint16_t)(0x50 << 1)
 
 /* position struct */
 volatile typedef struct{

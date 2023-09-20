@@ -23,6 +23,7 @@
 #include "logging.h"
 #include "SX1280_Constants.h"
 #include "AssuredPacketManager.h"
+#include "powerMonitor.h"
 
 #include "rem.h"
 
@@ -496,6 +497,9 @@ void init(void){
 	heartbeat_1000ms = timestamp_initialized + 1000;
 
 	ROBOT_INITIALIZED = true;
+
+
+	readData(PM_CURRENT_REGISTER);
 }
 
 

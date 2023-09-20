@@ -25,6 +25,11 @@
 #define PM_MANUFACTURER_ID_REGISTER 0x3E
 #define PM_DEVICE_ID_REGISTER 0x3F
 
+/* 7.5.1 A0 PIN states */
+#define GND  1000000
+#define VS   1000001
+#define SDA  1000010
+#define SCL  1000011
 
 
 /* 7.6.1.1 Configuration Register (Address = 0h) [reset = 4127h] */
@@ -127,33 +132,22 @@ typedef enum {
 */
 
 /* 8.2.1 Design parameters */
-struct Design_Parameters_ {
-    float power_supply_voltage;
-    float bus_supply_rail;
-    float average_current;
-    float overcurrent_fault_threshold;
-    float maximum_current_monitored;
-    float ADC_range_selection;
-} Design_Parameters = {
-    3.3,
-    12,
-    6,
-    9,
-    10,
-    81.92
-};
+// struct Design_Parameters_ {
+//     float power_supply_voltage;
+//     float bus_supply_rail;
+//     float average_current;
+//     float overcurrent_fault_threshold;
+//     float maximum_current_monitored;
+//     float ADC_range_selection;
+// } Design_Parameters = {
+//     3.3,
+//     12,
+//     6,
+//     9,
+//     10,
+//     81.92
+// };
 
-
-void PM_Init(){
-// This design example walks through the process of selecting the shunt resistor, programming the calibration
-// register, setting the correct fault thresholds, and how to properly scale returned values from the device.
-    
-    // 8.2.3.2 Configure the Device : The first step to program the INA234 is to properly set the device Configuration register
-    uint16_t configuration_register = 0;
-    
-    // 8.2.3.3 Program the Shunt Calibration Register : The shunt calibration register needs to be correctly programmed at each Vs power up
-
-}
 
 /* 8.2.3.5 Calculate Returned Values by LSB Value 
 *  The received contents of shunt voltage, current & bus voltage need to be right shifted by 4 bits

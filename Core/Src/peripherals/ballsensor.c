@@ -16,10 +16,6 @@ static uint32_t error; // for i2c errors
 static volatile bool initialized = false; // ball sensor initialization status
 uint8_t data[255] __attribute__((aligned(16))); // byte array for received messages
 
-
-
-
-
 // ====================== REQUESTS / RESPONSES / NOTIFICATIONS ====================== //
 
 // Important. Values above 127 are represented by two bytes, even though it fits in one.
