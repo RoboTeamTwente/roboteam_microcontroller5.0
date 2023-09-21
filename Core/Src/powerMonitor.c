@@ -4,10 +4,22 @@
 
 uint8_t  ACKNOWLEDGEMENT;    // TO DO :: we only need 1 bit here to change if possible
 uint8_t  I2C_return;         // for the return of the  errors
-uint8_t  REGISTER_POINTER;   // current address the INA234 is pointed 
+uint8_t  REGISTER_POINTER = 0b11111111;   // current address the INA234 is pointed 
 uint16_t RECEIVED_DATA;      // supposed to be a buffer 
 HAL_StatusTypeDef I2C_return; // Process the 
 
+
+
+void init_BattMeter(){
+    RECEIVED_DATA = 0b0000000000000000;       
+    I2C_return = BATT_I2C -> State;
+    if (I2C_return == HAL_I2C_STATE_READY )
+        LOG("Power mointor checked state\n");
+    I2C_return = HAL_I2C_IsDeviceReady(BATT_I2C, SDA << 1 | 0x1, 5, 10);
+    if (I2C_return  == HAL_OK )
+        LOG("Powermonitor ready\n");
+    readData(PM_CURRENT_REGISTER);
+}
 
 /*
     This method will request data from the INA234
@@ -15,10 +27,10 @@ HAL_StatusTypeDef I2C_return; // Process the
         - Done by setting the A0 PIN to SDA_0
         - We should recieve a 0 after the SDA implying an acnkowledge
     After we send a a byte indicating the register pointer
-        - We should then recieve a 0 indicating acknowledege
+        - We should then recieve a0 indicating acknowledege
 */
 void changeRegisterPointer(uint8_t registerToChange){
-    I2C_return = HAL_I2C_Master_Transmit(BATT_I2C, SCL, registerToChange, sizeof(registerToChange), 10);
+    I2C_return = HAL_I2C_Master_Transmit(BATT_I2C, SDA << 1 | 0x0, registerToChange, sizeof(registerToChange), 50);
     if (I2C_return != HAL_OK){ 
         LOG("[POWERMONITOR] : Failed to change pointer\n");
         return;
@@ -48,11 +60,11 @@ void readData(uint8_t registerToReadFrom){
     }
 
     uint8_t secondHalf;
-    HAL_I2C_Master_Receive(BATT_I2C, GND, RECEIVED_DATA, sizeof(uint8_t), 10);
-    HAL_I2C_Master_Receive(BATT_I2C, GND, secondHalf, sizeof(uint8_t), 10);
+    HAL_I2C_Master_Receive(BATT_I2C, SDA << 1 | 0x1, RECEIVED_DATA, sizeof(uint8_t), 50);
+    HAL_I2C_Master_Receive(BATT_I2C, SDA << 1 | 0x1, secondHalf, sizeof(uint8_t), 50);
     RECEIVED_DATA = RECEIVED_DATA << 8;
     RECEIVED_DATA = RECEIVED_DATA | secondHalf;
-    LOG("[POWERMONITOR] : Voltage read %d\n", RECEIVED_DATA);
+    LOG("[POWERMONITOR] : Voltage read %i\n", 100);
 }
 
 /*

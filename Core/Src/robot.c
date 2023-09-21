@@ -497,10 +497,8 @@ void init(void){
 	heartbeat_1000ms = timestamp_initialized + 1000;
 
 	ROBOT_INITIALIZED = true;
-
-
-	readData(PM_CURRENT_REGISTER);
-}
+	init_BattMeter();
+}	
 
 
 
@@ -516,7 +514,6 @@ void loop(void){
 
 	/* Send anything in the log buffer over UART */
 	LOG_send();
-	
 	// Play a warning if a REM packet with an incorrect version was received
 	if(!REM_last_packet_had_correct_version)
 		if(!buzzer_IsPlaying())
@@ -664,6 +661,15 @@ void loop(void){
     set_Pin(LED4_pin, dribbler_GetHasBall());       // On when the dribbler detects the ball
 	set_Pin(LED5_pin, SDCard_Initialized());		// On when SD card is initialized
     // LED6 Wireless_Readpacket_Cplt : toggled when a packet is received
+
+	// HAL_StatusTypeDef I2C_return; // Process the 
+	// I2C_return = HAL_I2C_IsDeviceReady(BS_I2C, BS_I2C_ADDR, 10, 50);
+	// if (I2C_return != HAL_OK){ 
+    //     LOG("[POWERMONITOR] : Failed to initalize battery meter\n");
+    //     return;
+    // }
+    // LOG("[POWERMONITOR] : Battery meter ready for slave work\n");
+
 }
 
 uint8_t robot_get_ID(){
