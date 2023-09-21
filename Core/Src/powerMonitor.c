@@ -51,7 +51,7 @@ void readData(uint8_t registerToReadFrom){
     HAL_I2C_Master_Receive(BATT_I2C, GND, RECEIVED_DATA, sizeof(uint8_t), 10);
     HAL_I2C_Master_Receive(BATT_I2C, GND, secondHalf, sizeof(uint8_t), 10);
     RECEIVED_DATA = RECEIVED_DATA << 8;
-    RECEIVED_DATA = RECEIVED_DATA & secondHalf;
+    RECEIVED_DATA = RECEIVED_DATA | secondHalf;
     LOG("[POWERMONITOR] : Voltage read %d\n", RECEIVED_DATA);
 }
 
