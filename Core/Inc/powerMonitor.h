@@ -26,10 +26,10 @@
 #define PM_DEVICE_ID_REGISTER 0x3F
 
 /* 7.5.1 A0 PIN states */
-#define GND  1000000
-#define VS   1000001
-#define SDA  1000010
-#define SCL  1000011
+#define GND  0b1000000
+#define VS   0b1000001
+#define SDA  0b1000010
+#define SCL  0b1000011
 
 
 /* 7.6.1.1 Configuration Register (Address = 0h) [reset = 4127h] */
