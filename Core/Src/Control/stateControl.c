@@ -204,7 +204,7 @@ static void body2Wheels(float wheelSpeed[4], float stateLocal[3]){
 		wheelSpeed[wheel] = wheelSpeed[wheel] / rad_wheel;
 	}
 
-	// If we use angular velocities, take those into account too.
+	// If we do not use angular velocities (w), remove these.
 	if (!useAbsoluteAngle) {
         for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
             wheelSpeed[wheel] += stateLocal[vel_w] * rad_robot / rad_wheel;
@@ -223,11 +223,6 @@ static void global2Local(float global[4], float local[4], float angle){
 static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float velocityWheelRef[4]){
 	float stateLocalRef[3] = {0, 0, 0};
 	global2Local(stateGlobalRef, stateLocalRef, stateLocal[yaw]); //transfer global to local
-
-	// Manually adjusting velocity command
-	//     Explanation: see Velocity Difference file on drive (https://docs.google.com/document/d/1pGKysiwpu19DKLpAZ4GpluMV7UBhBQZ65YMTtI7bd_8/)
-	stateLocalRef[vel_u] = 1.12 * stateLocalRef[vel_u];
-	stateLocalRef[vel_v] = 1.1 * stateLocalRef[vel_v];
 
 	// Local control
 	float veluErr = (stateLocalRef[vel_u] - stateLocal[vel_u]);

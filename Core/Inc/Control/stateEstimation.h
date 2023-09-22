@@ -19,18 +19,25 @@
 #include "kalman.h"
 #include "control_util.h"
 
+///////////////////////////////////////////////////// CONSTANTS
+
+/* Factors to align vision velocities with robot velocities (see https://wiki.roboteamtwente.nl/technical/control/slippage) */
+#define SLIPPAGE_FACTOR_U 0.92	// Correction constant for slippage u direction
+#define SLIPPAGE_FACTOR_V 0.90  // Correction constant for slippage v direction
+#define SLIPPAGE_FACTOR_W 1.00  // Correction constant for slippage w direction (angular velocity)
+
 ///////////////////////////////////////////////////// STRUCTS
 
 typedef struct StateInfo {
-	float visionYaw;					// The yaw for this robot as indicated by vision
+	float visionYaw;					// The yaw for this robot as indicated by vision [rad]
 	bool visionAvailable;				// Wether vision data can be used at this point
-	float xsensAcc[2];					// The acceleration as measured by the IMU in the X and Y directions
-	float xsensYaw;						// They yaw for this robot as indicated by the IMU
-	float rateOfTurn;					// [rad/s]
-	float wheelSpeeds[4];				// The speed for each wheel 
-	float dribblerSpeed;				// The measured speed of the dribbler
-	float dribblerFilteredSpeed;		// The filtered speed of the dribbler
-	float dribbleSpeedBeforeGotBall;	// The speed of the dribbler before it had a ball
+	float xsensAcc[2];					// The acceleration as measured by the IMU in the X and Y directions [m/(s^2)]
+	float xsensYaw;						// They yaw for this robot as indicated by the IMU [rad]
+	float rateOfTurn;					// The angular velocity of the robot [rad/s]
+	float wheelSpeeds[4];				// The speed for each wheel [rad/s]
+	float dribblerSpeed;				// The measured speed of the dribbler [rad/s]
+	float dribblerFilteredSpeed;		// The filtered speed of the dribbler [rad/s]
+	float dribbleSpeedBeforeGotBall;	// The speed of the dribbler before it had a ball [rad/s]
 } StateInfo;
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
@@ -55,12 +62,12 @@ void stateEstimation_Update(StateInfo* input);
 /**
  * Get the current estimated local state
  * 
- * @param _stateLocal The curent state for u, v, w and yaw
+ * @param _stateLocal The curent state for u [m/s], v [m/s], w [rad/s] and yaw [rad]
  */
 void stateEstimation_GetState(float _stateLocal[4]);
 
 /**
- * Identical to stateEstimation_GetState(), but only returns w.
+ * Identical to stateEstimation_GetState(), but only returns w [rad/s].
  * 
  * @return float Rate of return
  */

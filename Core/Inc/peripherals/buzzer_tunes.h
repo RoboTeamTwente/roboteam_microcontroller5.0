@@ -122,7 +122,7 @@ extern song_struct quickBeepDown[];
 extern song_struct startup_song[];
 extern song_struct tetris[];
 extern song_struct mario_victory[];
-extern song_struct powerUp[];
+extern song_struct batteryDrainWarning[];
 extern song_struct warningOne[];
 extern song_struct warningTwo[];
 extern song_struct warningThree[];
