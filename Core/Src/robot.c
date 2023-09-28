@@ -501,10 +501,6 @@ void init(void){
 }	
 
 
-
-
-
-
 /* =================================================== */
 /* ==================== MAIN LOOP ==================== */
 /* =================================================== */
@@ -626,6 +622,7 @@ void loop(void){
 			encodeREM_RobotStateInfo( &robotStateInfoPayload, &robotStateInfo);
 			HAL_UART_Transmit(UART_PC, robotStateInfoPayload.payload, REM_PACKET_SIZE_REM_ROBOT_STATE_INFO, 10);
 		}
+		readData(PM_CURRENT_REGISTER);
 	}
 
 	// Heartbeat every 1000ms
@@ -650,7 +647,6 @@ void loop(void){
 		// 	uint8_t musicbuf2[6] = {0x7e, 0x04, 0x42, 0x01, 10, 0xef};
 		// 	HAL_UART_Transmit(UART_BACK, musicbuf2, 6, 10);
 		// }
-
     }
 
     /* LEDs for debugging */
@@ -669,7 +665,6 @@ void loop(void){
     //     return;
     // }
     // LOG("[POWERMONITOR] : Battery meter ready for slave work\n");
-
 }
 
 uint8_t robot_get_ID(){

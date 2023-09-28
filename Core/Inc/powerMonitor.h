@@ -15,7 +15,7 @@
 
 /* 7.6.1 Device Registers */
 #define PM_CONFIGURATION_REGISTER 0x0
-#define PM_SHUNT_VOLTAGE_REGISTER 0x1
+#define PM_SHUNT_VOLTAGE_REGISTER 0x1 
 #define PM_BUS_VOLTAGE_REGISTER 0x2
 #define PM_POWER_REGISTER 0x3
 #define PM_CURRENT_REGISTER 0x4
@@ -30,6 +30,8 @@
 #define VS   0b1000001
 #define SDA  0b1000010
 #define SCL  0b1000011
+
+#define CONFIGURATION_BYTES  0b1101011001001011
 
 
 /* 7.6.1.1 Configuration Register (Address = 0h) [reset = 4127h] */
