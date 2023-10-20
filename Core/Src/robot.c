@@ -195,12 +195,12 @@ void executeCommands(REM_RobotCommand* robotCommand){
 	shoot_SetPower(robotCommand->kickChipPower);
 
 	if (robotCommand->doKick) {
-		if (ballPosition.canKickBall || robotCommand->doForce){
+		if (ballSensor_seesBall() || robotCommand->doForce){
 			shoot_Shoot(shoot_Kick);
 		}
 	}
 	else if (robotCommand->doChip) {
-		if (ballPosition.canKickBall || robotCommand->doForce) {
+		if (ballSensor_seesBall() || robotCommand->doForce) {
 			shoot_Shoot(shoot_Chip);
 		}
 	}
@@ -208,7 +208,7 @@ void executeCommands(REM_RobotCommand* robotCommand){
 		float localState[4] = {0.0f};
 		stateEstimation_GetState(localState);
 		if (fabs(localState[yaw] - robotCommand->angle) < 0.025) {
-			if (ballPosition.canKickBall || robotCommand->doForce) {
+			if (ballSensor_seesBall() || robotCommand->doForce) {
 				shoot_Shoot(shoot_Kick);
 			}
 		}
@@ -373,9 +373,7 @@ void init(void){
     stateEstimation_Init();
     shoot_Init();
     dribbler_Init();
-	// TODO: Currently the ball sensor initialization is just disabled. 
-	// Since we will no longer use it anymore this should be fully removed from the code.
-    // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
+	ballSensor_Init();
 	LOG_sendAll();
 }
 
@@ -657,7 +655,7 @@ void loop(void){
     set_Pin(LED1_pin, !xsens_CalibrationDone);		// On while xsens startup calibration is not finished
     set_Pin(LED2_pin, wheels_GetWheelsBraking());   // On when braking 
     set_Pin(LED3_pin, halt);						// On when halting
-    set_Pin(LED4_pin, dribbler_GetHasBall());       // On when the dribbler detects the ball
+    set_Pin(LED4_pin, ballSensor_seesBall());     	// On when the ballsensor detects the ball
 	set_Pin(LED5_pin, SDCard_Initialized());		// On when SD card is initialized
     // LED6 Wireless_Readpacket_Cplt : toggled when a packet is received
 }
@@ -898,9 +896,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			robotFeedback.timestamp = current_time;
 			robotFeedback.XsensCalibrated = xsens_CalibrationDone;
 			// robotFeedback.batteryLevel = (batCounter > 1000);
-			robotFeedback.ballSensorWorking = ballSensor_isInitialized();
-			robotFeedback.ballSensorSeesBall = ballPosition.canKickBall;
-			robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
+			robotFeedback.ballSensorWorking = true; //Should be removed later from REM_RobotFeedback, as we cannot check if the current sensor is working
+			robotFeedback.ballSensorSeesBall = ballSensor_seesBall();
+			//robotFeedback.ballPos = ballSensor_isInitialized() ? (-.5 + ballPosition.x / 700.) : 0;
 
 			float localState[4] = {0.0f};
 			stateEstimation_GetState(localState);
