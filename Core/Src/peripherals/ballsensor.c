@@ -22,8 +22,23 @@ void ballSensor_DeInit() {
 	seesBall = false;
 }
 
+/*
+*	read from GPIO:
+		If high:
+			set seesball to false --> we lost the ball
+		else low --> ball is present:
+			set seesball to true
+		write to LOG about current ball state
+		set LED to value of seesBall
+*/
 void ballSensor_IRQ_Handler() {
 	read_gpio();
+	if (!seesBall){
+		LOG("[BALLSENSOR]:: We lost the ball");
+	} else{
+		LOG("[BALLSENSOR]:: We have the ball");
+	}
+	set_Pin(LED4_pin, seesBall);
 }
 
 bool ballSensor_seesBall() {
@@ -34,8 +49,17 @@ bool ballSensor_seesBall() {
 
 // ====================== PRIVATE FUNCTIONS ====================== //
 void read_gpio() {
-	//HAL_GPIO_ReadPin returns GPIO_PIN_SET if value is high, and GPIO_PIN_RESET if value is low
-	seesBall = HAL_GPIO_ReadPin(BS_IRQ_GPIO_Port, BS_IRQ_Pin) != GPIO_PIN_SET;
+	/*
+		Call readPin, will return GPIO_PIN_SET --> that value is high
+					  otherwise will return GPIO_PIN_RESET
+		If GPIO_PIN_SET then set return to false, otherwise true
+	*/
+	GPIO_PinState portState = HAL_GPIO_ReadPin(BS_IRQ_GPIO_Port, BS_IRQ_Pin);
+	if (portState == GPIO_PIN_RESET){
+		seesBall = false;
+		return;
+	}
+	seesBall = true;
 }
 
 void bs_I2C_error(uint8_t error){
