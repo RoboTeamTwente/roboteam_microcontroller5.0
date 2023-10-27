@@ -851,6 +851,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		stateInfo.visionYaw = activeRobotCommand.cameraAngle; // TODO check if this is scaled properly with the new REM messages
 		
 		wheels_GetMeasuredSpeeds(stateInfo.wheelSpeeds);
+		
 		stateInfo.xsensAcc[vel_x] = MTi->acc[vel_x];
 		stateInfo.xsensAcc[vel_y] = MTi->acc[vel_y];
 		stateInfo.xsensYaw = (MTi->angles[2]*M_PI/180); //Gradients to Radians
