@@ -49,7 +49,7 @@ float MAX_VOLTAGE; 				// [V] see datasheet
 float SPEED_CONSTANT; 			//[(rad/s)/V] see datasheet
 #define SPEED_CONSTANT_30W 374.0
 #define SPEED_CONSTANT_50W 285.0
-#define WHEEL_PULSES_PER_ROTATION (float)1024/4 // number of pulses of the encoder per rotation of the motor (see datasheet)
+#define WHEEL_PULSES_PER_ROTATION (float)4*1024 // number of pulses of the encoder per rotation of the motor (see datasheet)
 
 float OMEGAtoPWM; // conversion factor from wheel speed [rad/s] to required PWM on the motor
 #define WHEEL_ENCODER_TO_OMEGA (float)2*M_PI/(TIME_DIFF*WHEEL_GEAR_RATIO*WHEEL_PULSES_PER_ROTATION) // conversion factor from number of encoder pulses to wheel speed [rad/s]
