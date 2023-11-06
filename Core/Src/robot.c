@@ -596,7 +596,7 @@ void loop(void){
 
 		// Plays a sounds when the robot detects that it has a ball.
 		static uint32_t played_dribbler_igotit = 0;
-		if(dribbler_GetHasBall() && played_dribbler_igotit < current_time){
+		if(ballSensor_seesBall() && played_dribbler_igotit < current_time){
 			played_dribbler_igotit = current_time + 10000;
 			speaker_Setvolume(30);
 			HAL_Delay(10);
@@ -655,7 +655,7 @@ void loop(void){
     set_Pin(LED1_pin, !xsens_CalibrationDone);		// On while xsens startup calibration is not finished
     set_Pin(LED2_pin, wheels_GetWheelsBraking());   // On when braking 
     set_Pin(LED3_pin, halt);						// On when halting
-    //set_Pin(LED4_pin, ballSensor_seesBall());     	// On when the ballsensor detects the ball
+    // LED4 : On when the ballsensor detects the ball
 	set_Pin(LED5_pin, SDCard_Initialized());		// On when SD card is initialized
     // LED6 Wireless_Readpacket_Cplt : toggled when a packet is received
 }
