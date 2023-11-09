@@ -151,13 +151,16 @@ void Wireless_Readpacket_Cplt(void){
 	txPacket.payloadLength = 0;
 
 	robotFeedback.messageId = activeRobotCommand.messageId;
+	robotFeedback.timestamp = activeRobotCommand.timestamp;
 	encodeREM_RobotFeedback( (REM_RobotFeedbackPayload*) (txPacket.message + txPacket.payloadLength), &robotFeedback);
 	txPacket.payloadLength += REM_PACKET_SIZE_REM_ROBOT_FEEDBACK;
 
+	robotStateInfo.timestamp = activeRobotCommand.timestamp;
 	encodeREM_RobotStateInfo( (REM_RobotStateInfoPayload*) (txPacket.message + txPacket.payloadLength), &robotStateInfo);
 	txPacket.payloadLength += REM_PACKET_SIZE_REM_ROBOT_STATE_INFO;
 
 	if(flag_send_PID_gains){
+		robotPIDGains.timestamp = activeRobotCommand.timestamp;
 		encodeREM_RobotPIDGains( (REM_RobotPIDGainsPayload*) (txPacket.message + txPacket.payloadLength), &robotPIDGains);
 		txPacket.payloadLength += REM_PACKET_SIZE_REM_ROBOT_PIDGAINS;
 		flag_send_PID_gains = false;
@@ -166,9 +169,11 @@ void Wireless_Readpacket_Cplt(void){
 	// TODO insert REM_SX1280Filler packet if total_packet_length < 6. Fine for now since feedback is already more than 6 bytes
 	WritePacket_DMA(SX, &txPacket, &Wireless_Writepacket_Cplt);
 }
+
 void Wireless_Default(){
 	WaitForPacket(SX);
 }
+
 void Wireless_RXDone(SX1280_Packet_Status *status){
   /* It is possible that random noise can trigger the syncword.
    * Correct syncword from noise have a very weak signal.
@@ -375,7 +380,7 @@ void init(void){
     dribbler_Init();
 	// TODO: Currently the ball sensor initialization is just disabled. 
 	// Since we will no longer use it anymore this should be fully removed from the code.
-    // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");
+    // if(ballSensor_Init()) LOG("[init:"STRINGIZE(__LINE__)"] Ballsensor initialized\n");	
 	LOG_sendAll();
 }
 
@@ -577,7 +582,6 @@ void loop(void){
 	}
 	if(flag_sdcard_write_command){
 		flag_sdcard_write_command = false;
-		activeRobotCommand.timestamp = current_time;
 		encodeREM_RobotCommand( &robotCommandPayload, &activeRobotCommand );
 		SDCard_Write(robotCommandPayload.payload, REM_PACKET_SIZE_REM_ROBOT_COMMAND, false);
 	}
@@ -819,7 +823,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	}else if(GPIO_Pin == MTi_IRQ_pin.PIN){
 		MTi_IRQ_Handler(MTi);
 	}else if (GPIO_Pin == BS_IRQ_pin.PIN){
-		// TODO: make this work and use instead of the thing in the while loop
 		ballSensor_IRQ_Handler();
 	}
 }
@@ -895,7 +898,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		wheels_Update();
 
 		/* == Fill robotFeedback packet == */ {
-			robotFeedback.timestamp = current_time;
 			robotFeedback.XsensCalibrated = xsens_CalibrationDone;
 			// robotFeedback.batteryLevel = (batCounter > 1000);
 			robotFeedback.ballSensorWorking = ballSensor_isInitialized();
@@ -915,7 +917,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 		
 		/* == Fill robotStateInfo packet == */ {	
-			robotStateInfo.timestamp = current_time;	
+			robotStateInfo.timestamp = activeRobotCommand.timestamp;	
 			robotStateInfo.xsensAcc1 = stateInfo.xsensAcc[0];
 			robotStateInfo.xsensAcc2 = stateInfo.xsensAcc[1];
 			robotStateInfo.xsensYaw = yaw_GetCalibratedYaw();
@@ -934,6 +936,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 
 		flag_sdcard_write_feedback = true;
+
 	}
 	else if (htim->Instance == TIM_BUZZER->Instance) {
 		counter_TIM_BUZZER++;
@@ -944,4 +947,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		counter_TIM_SHOOT++;
 		shoot_Callback();
 	}
+
+	activeRobotCommand.timestamp += 10;
 }
