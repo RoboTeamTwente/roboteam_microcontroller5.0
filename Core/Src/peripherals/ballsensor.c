@@ -10,6 +10,9 @@
 static uint32_t error; // for i2c errors
 static volatile bool seesBall = false; // ball sensor sees ball
 
+// ================ PRIVATE FUNCTION DECLARATIONS ================ //
+void read_gpio();
+void bs_I2C_error(uint8_t error);
 
 
 // ====================== PUBLIC FUNCTIONS ====================== //

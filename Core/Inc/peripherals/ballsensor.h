@@ -4,16 +4,11 @@
 #include "gpio_util.h"
 
 
-/* ballsensor functions */
+/* public functions declarations */
 void ballSensor_Init(); // initialize
 void ballSensor_DeInit(); // deinitialize
 void ballSensor_IRQ_Handler(); // irq handler
 bool ballSensor_seesBall(); // getter
-
-
-/* ballsensor private functions */
-void read_gpio();
-void bs_I2C_error(uint8_t error);
 
 
 #endif /* BALLSENSOR_H_ */
