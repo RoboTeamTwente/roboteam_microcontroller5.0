@@ -93,6 +93,8 @@ volatile uint32_t counter_TIM_SHOOT = 0;
 volatile uint32_t counter_RobotCommand = 0;
 volatile uint32_t counter_RobotBuzzer = 0;
 uint32_t timestamp_initialized = 0;
+uint64_t unix_timestamp = 0;
+bool unix_initalized = false;
 
 bool flag_send_PID_gains = false;
 bool flag_sdcard_write_feedback = false;
@@ -151,16 +153,13 @@ void Wireless_Readpacket_Cplt(void){
 	txPacket.payloadLength = 0;
 
 	robotFeedback.messageId = activeRobotCommand.messageId;
-	robotFeedback.timestamp = activeRobotCommand.timestamp;
 	encodeREM_RobotFeedback( (REM_RobotFeedbackPayload*) (txPacket.message + txPacket.payloadLength), &robotFeedback);
 	txPacket.payloadLength += REM_PACKET_SIZE_REM_ROBOT_FEEDBACK;
 
-	robotStateInfo.timestamp = activeRobotCommand.timestamp;
 	encodeREM_RobotStateInfo( (REM_RobotStateInfoPayload*) (txPacket.message + txPacket.payloadLength), &robotStateInfo);
 	txPacket.payloadLength += REM_PACKET_SIZE_REM_ROBOT_STATE_INFO;
 
 	if(flag_send_PID_gains){
-		robotPIDGains.timestamp = activeRobotCommand.timestamp;
 		encodeREM_RobotPIDGains( (REM_RobotPIDGainsPayload*) (txPacket.message + txPacket.payloadLength), &robotPIDGains);
 		txPacket.payloadLength += REM_PACKET_SIZE_REM_ROBOT_PIDGAINS;
 		flag_send_PID_gains = false;
@@ -834,6 +833,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if(htim->Instance == TIM_CONTROL->Instance) {
 		if(!ROBOT_INITIALIZED) return;
 
+		if (!unix_initalized & activeRobotCommand.timestamp != 0){
+			memcpy(unix_timestamp, activeRobotCommand.timestamp, 40);
+			unix_initalized = true;
+		}
+
 		counter_TIM_CONTROL++;
 
 		// Update the dribbler at 10Hz
@@ -898,6 +902,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		wheels_Update();
 
 		/* == Fill robotFeedback packet == */ {
+			robotFeedback.timestamp = unix_timestamp;
 			robotFeedback.XsensCalibrated = xsens_CalibrationDone;
 			// robotFeedback.batteryLevel = (batCounter > 1000);
 			robotFeedback.ballSensorWorking = ballSensor_isInitialized();
@@ -917,7 +922,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 		
 		/* == Fill robotStateInfo packet == */ {	
-			robotStateInfo.timestamp = activeRobotCommand.timestamp;	
+			robotStateInfo.timestamp = unix_timestamp;
 			robotStateInfo.xsensAcc1 = stateInfo.xsensAcc[0];
 			robotStateInfo.xsensAcc2 = stateInfo.xsensAcc[1];
 			robotStateInfo.xsensYaw = yaw_GetCalibratedYaw();
@@ -948,5 +953,5 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		shoot_Callback();
 	}
 
-	activeRobotCommand.timestamp += 10;
+	unix_timestamp += 1	;
 }
