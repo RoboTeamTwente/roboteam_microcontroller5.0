@@ -834,7 +834,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		if(!ROBOT_INITIALIZED) return;
 
 		if (!unix_initalized & activeRobotCommand.timestamp != 0){
-			memcpy(unix_timestamp, activeRobotCommand.timestamp, 40);
+			unix_timestamp = activeRobotCommand.timestamp;
 			unix_initalized = true;
 		}
 
