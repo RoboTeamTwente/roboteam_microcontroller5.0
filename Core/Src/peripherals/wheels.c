@@ -177,10 +177,10 @@ void wheels_Update(){
     feed_forward[wheel] = 0;
 		} 
 		else if (wheels_commanded_speeds[wheel] > 0) {
-    feed_forward[wheel] += 13;
+	feed_forward[wheel] = wheels_commanded_speeds[wheel] + 13;
     	}
 		else if (wheels_commanded_speeds[wheel] < 0) {
-    feed_forward[wheel] -= 15;
+	feed_forward[wheel] = wheels_commanded_speeds[wheel] - 13;
     	}
 
 		// Add PID to commanded speed and convert to PWM
