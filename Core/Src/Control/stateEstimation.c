@@ -112,16 +112,17 @@ float stateEstimation_GetFilteredRoT() {
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 static void wheels2Body(float wheelSpeeds[4], float output[3]){
-
+	float wheelSpeedsLinear[4]; // The linear speed for each wheel [m/s]
+	
 	// Translate angular wheel velocities [rad/s] into regular velocities [m/s] on the outside of each wheel.
 	for (wheel_names wheel=wheels_RF; wheel <= wheels_RB; wheel++) {
-		wheelSpeeds[wheel] = wheelSpeeds[wheel] * rad_wheel;
+		wheelSpeedsLinear[wheel] = wheelSpeeds[wheel] * rad_wheel;
 	}
 
 	// Translate the wheel speeds into local u, v and r * w speeds.
-	output[vel_u] = wheelSpeeds[0] * Dinv[0] + wheelSpeeds[1] * Dinv[1] + wheelSpeeds[2] * Dinv[2] + wheelSpeeds[3] * Dinv[3];
-	output[vel_v] = wheelSpeeds[0] * Dinv[4] + wheelSpeeds[1] * Dinv[5] + wheelSpeeds[2] * Dinv[6] + wheelSpeeds[3] * Dinv[7];
-	output[vel_w] = wheelSpeeds[0] * Dinv[8] + wheelSpeeds[1] * Dinv[9] + wheelSpeeds[2] * Dinv[10] + wheelSpeeds[3] * Dinv[11];
+	output[vel_u] = wheelSpeedsLinear[0] * Dinv[0] + wheelSpeedsLinear[1] * Dinv[1] + wheelSpeedsLinear[2] * Dinv[2] + wheelSpeedsLinear[3] * Dinv[3];
+	output[vel_v] = wheelSpeedsLinear[0] * Dinv[4] + wheelSpeedsLinear[1] * Dinv[5] + wheelSpeedsLinear[2] * Dinv[6] + wheelSpeedsLinear[3] * Dinv[7];
+	output[vel_w] = wheelSpeedsLinear[0] * Dinv[8] + wheelSpeedsLinear[1] * Dinv[9] + wheelSpeedsLinear[2] * Dinv[10] + wheelSpeedsLinear[3] * Dinv[11];
 
 	// Translate the rotational velocity of the robot back to rad/s.
 	output[vel_w] = output[vel_w] / rad_robot;
