@@ -170,8 +170,21 @@ void wheels_Update(){
 			wheelsK[wheel].I = 0;
 		}
 
+		float feed_forward[4];
+		float threshold = 0.05;
+
+		if (abs(wheels_commanded_speeds[wheel]) < threshold) {
+    feed_forward[wheel] = 0;
+		} 
+		else if (wheels_commanded_speeds[wheel] > 0) {
+	feed_forward[wheel] = wheels_commanded_speeds[wheel] + 13;
+    	}
+		else if (wheels_commanded_speeds[wheel] < 0) {
+	feed_forward[wheel] = wheels_commanded_speeds[wheel] - 13;
+    	}
+
 		// Add PID to commanded speed and convert to PWM
-		int32_t wheel_speed = OMEGAtoPWM * (wheels_commanded_speeds[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+		int32_t wheel_speed = OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
 
 		// Determine direction and if pwm is negative, switch directions
 		// PWM < 0 : CounterClockWise. Direction = 0
