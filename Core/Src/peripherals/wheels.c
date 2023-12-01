@@ -184,12 +184,12 @@ void wheels_Update(){
     	}
 
 		// Add PID to commanded speed and convert to PWM
-		int32_t wheel_speed = OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+		int32_t wheel_speed = OMEGAtoPWM * (feed_forward[wheel]*0 + PID(angular_velocity_error, &wheelsK[wheel])); 
 
 		// Determine direction and if pwm is negative, switch directions
 		// PWM < 0 : CounterClockWise. Direction = 0
 		// 0 < PWM : ClockWise. Direction = 1
-		wheels_commanded_directions[wheel] = 0 <= wheel_speed;
+		wheels_commanded_directions[wheel] = 0 >= wheel_speed;
 		wheel_pwms[wheel] = abs(wheel_speed);
 	}
 
