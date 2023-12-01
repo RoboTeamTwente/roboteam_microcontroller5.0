@@ -41,7 +41,7 @@
 
 // Wheels
 #define PWM_CUTOFF 200.0F 		// arbitrary threshold to avoid motor shutdown
-#define WHEEL_GEAR_RATIO 2.65F 	// gear ratio between motor and wheel
+#define WHEEL_GEAR_RATIO 1.0 	// gear ratio between motor and wheel
 #define PWM_LIMIT MAX_PWM 		// should be equal to MAX_PWM by default
 float MAX_VOLTAGE; 				// [V] see datasheet
 #define MAX_VOLTAGE_30W 12.0
