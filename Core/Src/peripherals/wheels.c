@@ -322,7 +322,7 @@ static void computeWheelSpeeds(float speeds[4]){
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 		// Convert encoder values to rad/s
 		// We define clockwise as positive, therefore we have a minus sign here
-		speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
+		speeds[wheel] = WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
 	}	
 }
 
