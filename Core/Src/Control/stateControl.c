@@ -1,5 +1,6 @@
 
 #include "stateControl.h"
+#include "stateEstimation.h"
 #include "logging.h"
 
 ///////////////////////////////////////////////////// VARIABLES
@@ -229,9 +230,9 @@ static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float 
 	float velvErr = (stateLocalRef[vel_v] - stateLocal[vel_v]);
 	float velwErr = (stateLocalRef[vel_w] - stateLocal[vel_w]);
 
-	stateLocalRef[vel_u] += PID(veluErr, &stateLocalK[vel_u]);
-	stateLocalRef[vel_v] += PID(velvErr, &stateLocalK[vel_v]);
-	stateLocalRef[vel_w] += PID(velwErr, &stateLocalK[vel_w]);
+	stateLocalRef[vel_u] = stateLocalRef[vel_u]/SLIPPAGE_FACTOR_U + PID(veluErr, &stateLocalK[vel_u]);
+	stateLocalRef[vel_v] = stateLocalRef[vel_v]/SLIPPAGE_FACTOR_V + PID(velvErr, &stateLocalK[vel_v]);
+	stateLocalRef[vel_w] = stateLocalRef[vel_w]/SLIPPAGE_FACTOR_W + PID(velwErr, &stateLocalK[vel_w]);
 
 	body2Wheels(velocityWheelRef, stateLocalRef); //translate velocity to wheel speed
 }
