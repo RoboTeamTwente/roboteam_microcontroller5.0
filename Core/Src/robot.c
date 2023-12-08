@@ -833,7 +833,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if(htim->Instance == TIM_CONTROL->Instance) {
 		if(!ROBOT_INITIALIZED) return;
 
-		if (!unix_initalized & activeRobotCommand.timestamp != 0){
+		if (!unix_initalized && activeRobotCommand.timestamp != 0){
 			unix_timestamp = activeRobotCommand.timestamp;
 			unix_initalized = true;
 		}
