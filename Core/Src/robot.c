@@ -869,7 +869,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
             return;
         }
 
-		if( halt && !test_isTestRunning(square)){
+		if(halt && !test_isTestRunning(square)) {
+			unix_initalized = false;
 			wheels_Stop();
 			return;
 		}
