@@ -869,7 +869,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
             return;
         }
 
-		if( halt && !test_isTestRunning(square)){
+		if(halt && !test_isTestRunning(square)) {
+			unix_initalized = false;
 			wheels_Stop();
 			return;
 		}
@@ -941,6 +942,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 
 		flag_sdcard_write_feedback = true;
+		unix_timestamp += 1;
 
 	}
 	else if (htim->Instance == TIM_BUZZER->Instance) {
@@ -953,5 +955,4 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		shoot_Callback();
 	}
 
-	unix_timestamp += 1	;
 }
