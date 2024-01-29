@@ -3,6 +3,19 @@
 #include "kalmanVariables.h"
 #include "matrix_operations.h"
 
+#define Acc_BUFFER_SIZE 10
+
+///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
+
+/**
+ * Smoothens out the IMU accelerometer
+ * While this does decrease the response time slightly, it allows for smoother accelerations
+ * 
+ * @param xsensAcc The current x and y acceleration as measured by the IMU accelerometer [m/s^2].
+ * @param smoothed_Acc The smoothed acceleration in x and y direction -> watch out IMU axis are different than robot axis!
+ */
+static void smoothen_xsensAcc(float xsensAcc[2], float smoothed_Acc[2]);
+
 ///////////////////////////////////////////////////// PUBLIC FUNCTION IMPLEMENTATIONS
 
 void kalman_Init(){
@@ -19,10 +32,16 @@ void kalman_Update(float acc[2], float vel[2]){
 	//	for (int i = 0; i < STATE; i++) {
 	//		aU[i] = controlInput[i];
 	//	}
+		float correct_acc[2] = {0.0f, 0.0f}; // to not overwrite raw acceleration (acc[2])
+		correct_acc[0] = -1 * acc[0]; // xsensAcc1 is in opposite direction of robot velocity v
+		correct_acc[1] = acc[1];  
+
+		float smoothed_Acc[2] = {0.0f, 0.0f};
+		smoothen_xsensAcc(correct_acc, smoothed_Acc);
 		az[0] = vel[0];
-		az[1] = acc[0];
+		az[1] = smoothed_Acc[1]; // xsensAcc2 = same axis as robot velocity u
 		az[2] = vel[1];
-		az[3] = acc[1];
+		az[3] = smoothed_Acc[0]; // xsensAcc1 = same axis as robot velocity v
 
 		// Computes the formula:
 		// Xk = Fk * X(k-1) + Bk * Uk
@@ -126,4 +145,34 @@ void kalman_GetP(float P[STATE*STATE]) {
 	for (int i = 0; i < STATE*STATE; i++) {
 		P[i] = aPold[i];
 	}
+
+///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
+
+static void smoothen_xsensAcc(float xsensAcc[2], float smoothed_Acc[2]){
+    static float buffer_Acc1[Acc_BUFFER_SIZE] = {0.0f}; // circular buffer
+	static float buffer_Acc2[Acc_BUFFER_SIZE] = {0.0f}; // circular buffer
+
+    static int idx_Acc1 = 0; // holds current index of buffer
+	static int idx_Acc2 = 0; // holds current index of buffer
+
+    buffer_Acc1[idx_Acc1] = xsensAcc[0];
+	buffer_Acc2[idx_Acc2] = xsensAcc[1];
+
+    //idx = idx >= RoT_BUFFER_SIZE-1 ? 0 : idx + 1;
+	idx_Acc1 = (idx_Acc1+1) % Acc_BUFFER_SIZE ;
+	idx_Acc2 = (idx_Acc2+1) % Acc_BUFFER_SIZE ;
+
+    float avg_Acc1 = 0.0f;  // average of buffer, which is the smoothed acceleration
+	float avg_Acc2 = 0.0f;  // average of buffer, which is the smoothed acceleration
+
+    for (int i=0; i<Acc_BUFFER_SIZE ; i++){
+        avg_Acc1 += buffer_Acc1[i];
+    }
+
+	for (int i=0; i<Acc_BUFFER_SIZE ; i++){
+        avg_Acc2 += buffer_Acc2[i];
+    }
+
+	smoothed_Acc[0] = avg_Acc1 / Acc_BUFFER_SIZE; // smoothed Acc1
+	smoothed_Acc[1] = avg_Acc2 / Acc_BUFFER_SIZE; // smoothed Acc2
 }
