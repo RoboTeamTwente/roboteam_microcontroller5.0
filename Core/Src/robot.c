@@ -540,7 +540,7 @@ void loop(void){
 
 	/* === Determine HALT state === */
     xsens_CalibrationDone = (MTi->statusword & (0x18)) == 0; // if bits 3 and 4 of status word are zero, calibration is done
-    halt = !xsens_CalibrationDone || !(is_connected_wireless || is_connected_serial) || !REM_last_packet_had_correct_version;
+    halt = !xsens_CalibrationDone || !(is_connected_wireless || is_connected_serial) || !REM_last_packet_had_correct_version || !yaw_hasCalibratedOnce(); // halt is true when no yaw calibration was done, thus calibration will be required (halt is neceassry to have enough time for yaw calibration)
 	if(IS_RUNNING_TEST || DRAIN_BATTERY) halt = false;
 
 	if (halt) {
