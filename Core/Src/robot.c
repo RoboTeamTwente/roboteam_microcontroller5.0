@@ -875,6 +875,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			return;
 		}
 
+		// if(!yaw_hasCalibratedOnce()){
+		// 	wheels_Stop();
+		// 	yaw_Calibrate(stateInfo.xsensYaw, stateInfo.visionYaw, stateInfo.visionAvailable, stateInfo.rateOfTurn);
+		// 	return;
+		// }
+
 		// State control
 		float stateLocal[4] = {0.0f};
 		stateEstimation_GetState(stateLocal);
