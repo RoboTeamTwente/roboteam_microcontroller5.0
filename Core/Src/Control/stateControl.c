@@ -24,10 +24,10 @@ static float stateGlobalRef[4] = {0.0f};
 static float wheelRef[4] = {0.0f};
 
 // The voltages to be applied to each wheel
-static uint32_t voltage_list[4] = {0.0f};
+static float voltage_list[4] = {0.0f};
 
 // The wheel PWMs sent to each wheel [-6000, 6000]
-static uint32_t pwm_list[4] = {0.0f};
+static int32_t pwm_list[4] = {0};
 
 // The current global u, v, w and yaw velocities.
 static float stateLocal[4] = {0.0f};
@@ -194,7 +194,7 @@ void stateControl_Update_Wheels(){
 
 			// Add PID to commanded speed and convert to voltage
 			float PIDvoltageoutputfactor = 0.004; // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
-			voltage_list[wheel] = (uint32_t) feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * PID(angular_velocity_error, &wheelsK[wheel]); 
+			voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * PID(angular_velocity_error, &wheelsK[wheel]); 
 		}
 
 	}
@@ -208,7 +208,7 @@ void stateControl_voltage2PWM(){
 	float batteryVoltage = 24;
 
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		pwm_list[wheel] = voltage_list[wheel]*(MAX_PWM/batteryVoltage);
+		pwm_list[wheel] = (int32_t) voltage_list[wheel]*(MAX_PWM/batteryVoltage);
 	}
 }
 

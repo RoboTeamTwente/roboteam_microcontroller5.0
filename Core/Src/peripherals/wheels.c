@@ -219,9 +219,9 @@ void wheels_GetMeasuredSpeeds(float speeds[4]) {
 /**
  * @brief Sets the current wheel PWMs
  * 
- * @param wheel_pwm_list uint32_t[4]{RF, LF, LB, RB} iput array in which the wheel PWMs are stored
+ * @param wheel_pwm_list int32_t[4]{RF, LF, LB, RB} iput array in which the wheel PWMs are stored
  */
-void wheels_SetPWM(uint32_t wheel_pwm_list[4]) {
+void wheels_SetPWM(int32_t wheel_pwm_list[4]) {
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 		// Determine direction and if pwm is negative, switch directions
 		// PWM < 0 : CounterClockWise. Direction = 0

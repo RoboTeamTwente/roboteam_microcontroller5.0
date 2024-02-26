@@ -45,7 +45,7 @@ void wheels_SetSpeeds(const float speeds[4]);
 // Get the last measured wheel speeds in rad/s
 void wheels_GetMeasuredSpeeds(float speeds[4]);
 // Set the current wheel PWMs
-void wheels_SetPWM(uint32_t wheel_pwm_list[4]);
+void wheels_SetPWM(int32_t wheel_pwm_list[4]);
 // Get the current wheel PWMs
 void wheels_GetPWM(uint32_t pwms[4]);
 // Get the current status of the brakes
