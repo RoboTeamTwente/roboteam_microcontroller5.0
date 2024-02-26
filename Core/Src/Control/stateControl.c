@@ -42,6 +42,9 @@ static bool previousUseAbsoluteAngle = true;
 // The velocity coupling matrix, used to transform local velocities into wheel velocities [4x3]
 static float D[12] = {0.0f};
 
+static float wheels_measured_speeds[4] = {};      // Stores most recent measurement of wheel speeds in rad/s
+static float wheels_commanded_speeds[4] = {};     // Holds most recent commanded wheel speeds in rad/s
+
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
 /**
@@ -217,6 +220,51 @@ void stateControl_SetRef(float _stateGlobalRef[4]){
 	stateGlobalRef[vel_y] = _stateGlobalRef[vel_y];
 	stateGlobalRef[vel_w] = _stateGlobalRef[vel_w];
 	stateGlobalRef[yaw] = _stateGlobalRef[yaw];
+}
+
+/**
+ * @brief Calculates angular velocity in rad/s for each wheel based on their encoder values
+ * 
+ * @todo This function requires to be called every 10 milliseconds, as dictated by the variable TIME_DIFF contained
+ * within the variable ENCODERtoOMEGA. This can of course not always be perfectly guaranteed. Therefore, a timer should
+ * be used to calculate the time difference between two calculations.
+ * 
+ * @param speeds float[4]{RF, LF, LB, RB} output array in which the calculated wheels speeds will be placed
+ */
+void computeWheelSpeeds(){
+	int16_t encoder_values[4] = {0};
+	getEncoderData(encoder_values);
+	resetWheelEncoders();
+	
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Convert encoder values to rad/s
+		// We define clockwise as positive, therefore we have a minus sign here
+		wheels_measured_speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
+	}	
+}
+
+/**
+ * @brief Stores the reference wheel speeds, in rad/s, to be used in the next stateControl_Update_Wheels call 
+ * 
+ * @param speeds float[4]{RF, LF, LB, RB} reference wheels speeds, in rad/s. These values are stored in the file-local
+ * variable 'wheelRef'. This variable will later be used in stateControl_Update_Wheels.
+ */
+void wheels_SetSpeeds(const float speeds[4]){
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		wheelRef[wheel] = speeds[wheel];
+	}
+}
+
+/**
+ * @brief Get the last measured wheel speeds in rad/s
+ * 
+ * @param speeds float[4]{RF, LF, LB, RB} output array in which the measured speeds will be stored
+ */
+void wheels_GetMeasuredSpeeds(float speeds[4]) {
+	// Copy into "speeds", so that the file-local variable "wheels_measured_speeds" doesn't escape
+	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++) {
+		speeds[wheel] = wheels_measured_speeds[wheel];
+	}
 }
 
 float* stateControl_GetWheelRef() {

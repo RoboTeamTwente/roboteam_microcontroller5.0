@@ -9,8 +9,6 @@
 static bool wheels_initialized = false;
 static bool wheels_braking = true;
 
-static float wheels_measured_speeds[4] = {};      // Stores most recent measurement of wheel speeds in rad/s
-static float wheels_commanded_speeds[4] = {};     // Holds most recent commanded wheel speeds in rad/s
 static bool wheels_commanded_directions[4] = {};  // Holds most recent commanded wheel direction. 0 = CCW, 1 = CW
 static uint32_t wheel_pwms[4] = {0};              // Holds the most recent wheel PWMs
 
@@ -19,12 +17,6 @@ static GPIO_Pin encoder_pins_A[4];
 static GPIO_Pin encoder_pins_B[4];
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
-
-// Reads out the values of the wheel encoders
-static void getEncoderData(int16_t output_array[4]);
-
-// Resets the wheel encoders
-static void resetWheelEncoders();
 
 // Clamps PWM values between PWM_CUTOFF and MAX_PWM
 static void limitWheelPWMs(uint32_t pwms[4]);
@@ -122,7 +114,7 @@ void wheels_DeInit(){
 void wheels_Stop(){
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 		wheel_pwms[wheel] = 0;
-		wheels_commanded_speeds[wheel] = 0;
+		// wheels_commanded_speeds[wheel] = 0;
 	}
 	setWheelPWMs(wheel_pwms);
 	
@@ -193,30 +185,6 @@ void wheels_Stop(){
 // }
 
 /**
- * @brief Stores the commanded wheel speeds, in rad/s, to be used in the next wheels_Update() call
- * 
- * @param speeds float[4]{RF, LF, LB, RB} commanded wheels speeds, in rad/s. These values are stored in the file-local
- * variable 'wheels_commanded_speeds'. This variable will later be used in wheels_Update() to control the wheels.
- */
-void wheels_SetSpeeds(const float speeds[4]){
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		wheels_commanded_speeds[wheel] = speeds[wheel];
-	}
-}
-
-/**
- * @brief Get the last measured wheel speeds in rad/s
- * 
- * @param speeds float[4]{RF, LF, LB, RB} output array in which the measured speeds will be stored
- */
-void wheels_GetMeasuredSpeeds(float speeds[4]) {
-	// Copy into "speeds", so that the file-local variable "wheels_measured_speeds" doesn't escape
-	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++) {
-		speeds[wheel] = wheels_measured_speeds[wheel];
-	}
-}
-
-/**
  * @brief Sets the current wheel PWMs
  * 
  * @param wheel_pwm_list int32_t[4]{RF, LF, LB, RB} iput array in which the wheel PWMs are stored
@@ -283,37 +251,11 @@ void wheels_Unbrake(){
 }
 
 /**
- * @brief Calculates angular velocity in rad/s for each wheel based on their encoder values
- * 
- * @todo This function requires to be called every 10 milliseconds, as dictated by the variable TIME_DIFF contained
- * within the variable ENCODERtoOMEGA. This can of course not always be perfectly guaranteed. Therefore, a timer should
- * be used to calculate the time difference between two calculations.
- * 
- * @param speeds float[4]{RF, LF, LB, RB} output array in which the calculated wheels speeds will be placed
- */
-void computeWheelSpeeds(){
-	int16_t encoder_values[4] = {0};
-	getEncoderData(encoder_values);
-	resetWheelEncoders();
-	
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Convert encoder values to rad/s
-		// We define clockwise as positive, therefore we have a minus sign here
-		wheels_measured_speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
-	}	
-}
-
-
-
-
-///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
-
-/**
  * @brief Reads out the values of the wheel encoders
  * 
  * @param output_array int16_t[4]{RF, LF, LB, RB} output array in which the current encoder values will be placed
  */
-static void getEncoderData(int16_t output_array[4]){
+void getEncoderData(int16_t output_array[4]){
 	output_array[wheels_RF] = __HAL_TIM_GET_COUNTER(ENC_RF);
 	output_array[wheels_RB] = __HAL_TIM_GET_COUNTER(ENC_RB);
 	output_array[wheels_LB] = __HAL_TIM_GET_COUNTER(ENC_LB);
@@ -323,12 +265,14 @@ static void getEncoderData(int16_t output_array[4]){
 /**
  * @brief Resets the wheel encoders
  */
-static void resetWheelEncoders() {
+void resetWheelEncoders() {
 	__HAL_TIM_SET_COUNTER(ENC_RF, 0);
 	__HAL_TIM_SET_COUNTER(ENC_RB, 0);
 	__HAL_TIM_SET_COUNTER(ENC_LB, 0);
 	__HAL_TIM_SET_COUNTER(ENC_LF, 0);
 }
+
+///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
 /**
  * @brief Clamps PWM values between PWM_CUTOFF and MAX_PWM

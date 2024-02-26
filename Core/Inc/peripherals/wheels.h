@@ -57,4 +57,10 @@ void wheels_Unbrake();
 // Calculates angular velocity in rad/s for each wheel based on their encoder values
 void computeWheelSpeeds();
 
+// Reads out the values of the wheel encoders
+void getEncoderData(int16_t output_array[4]);
+
+// Resets the wheel encoders
+void resetWheelEncoders();
+
 #endif /* WHEELS_H_ */

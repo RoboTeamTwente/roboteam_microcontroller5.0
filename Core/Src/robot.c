@@ -885,7 +885,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		float* refSpeedWheelsPointer;
 		refSpeedWheelsPointer = stateControl_GetWheelRef();
 
-		// wheels_SetSpeeds( stateControl_GetWheelRef() );
+		wheels_SetSpeeds( stateControl_GetWheelRef() );
 
 
 		// In order to drain the battery as fast as possible we instruct the wheels to go their maximum possible speeds.
@@ -903,7 +903,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			// !!!!!!!!!!!!!!!!!!!!!!!! get the line below working again with the new architecture:
 			// 
 			// 
-			// wheels_SetSpeeds(wheel_speeds);
+			wheels_SetSpeeds(wheel_speeds);
 
 			// If the gyroscope detects some rotational movement, we stop the drainage program.
 			if (fabs(MTi->gyr[2]) > 0.3f) {
