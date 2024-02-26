@@ -173,8 +173,8 @@ void stateControl_Update_Wheels(){
 		
 		for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 			// Feedforward
-			float identified_friction = 1.15;
-			float identified_damping = 0.0888;
+			float identified_friction = 1.15f;
+			float identified_damping = 0.0888f;
 			if (wheelRef[wheel] > 0) {
 				feed_forward[wheel] = identified_damping*wheelRef[wheel] + identified_friction;
 			}
@@ -188,12 +188,12 @@ void stateControl_Update_Wheels(){
 
 			// If the error is very small, ignore it (why is this here?)
 			if (fabs(angular_velocity_error) < 0.1) {
-				angular_velocity_error = 0.0;
+				angular_velocity_error = 0.0f;
 				wheelsK[wheel].I = 0;
 			}
 
 			// Add PID to commanded speed and convert to voltage 
-			float PIDvoltageoutputfactor = 0.004; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
+			float PIDvoltageoutputfactor = 0.004f; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
 			voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * PID(angular_velocity_error, &wheelsK[wheel]); 
 		}
 
