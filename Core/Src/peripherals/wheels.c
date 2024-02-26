@@ -4,10 +4,6 @@
 #include "stdlib.h"
 #include "stateControl.h"
 
-///////////////////////////////////////////////////// STRUCTS
-
-static PIDvariables wheelsK[4];
-
 ///////////////////////////////////////////////////// VARIABLES
 
 static bool wheels_initialized = false;
@@ -29,9 +25,6 @@ static void getEncoderData(int16_t output_array[4]);
 
 // Resets the wheel encoders
 static void resetWheelEncoders();
-
-// Calculates angular velocity in rad/s for each wheel based on their encoder values
-static void computeWheelSpeeds(float speeds[4]);
 
 // Clamps PWM values between PWM_CUTOFF and MAX_PWM
 static void limitWheelPWMs(uint32_t pwms[4]);
@@ -55,11 +48,6 @@ void wheels_Init(){
 
 	/* Brake on startup */
 	wheels_Brake();
-
-	/* Initialize wheel controllers */
-	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		initPID(&wheelsK[wheel], default_P_gain_wheels, default_I_gain_wheels, default_D_gain_wheels);
-	}
 
 	/* Set PWM of wheels to 0, to prevent robot from suddenly shooting forward */
 	/* Should never happen, but can't hurt */
@@ -96,6 +84,13 @@ void wheels_Init(){
 
 	// Set wheels to initialized
 	wheels_initialized = true;
+}
+
+/**
+ * @brief Returns boolean value to is inititiales (true) or not (false)
+ */
+bool wheels_Initialized(){
+	return wheels_initialized;
 }
 
 /**
@@ -149,53 +144,53 @@ void wheels_Stop(){
  * "PWN" integer. The "direction" boolean is false for CounterClockWise, and true for ClockWise. Finally both the 
  * directions and PWMs are sent to the wheels.
  */
-void wheels_Update(){
-	/* Don't run the wheels if these are not initialized */
-	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-	if(!wheels_initialized){
-		wheels_Stop();
-		return;
-	}
+// void wheels_Update(){
+// 	/* Don't run the wheels if these are not initialized */
+// 	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
+// 	if(!wheels_initialized){
+// 		wheels_Stop();
+// 		return;
+// 	}
 
-	/* Calculate the speeds of each wheel by looking at the encoders */
-	computeWheelSpeeds(wheels_measured_speeds);
+// 	/* Calculate the speeds of each wheel by looking at the encoders and updates wheels_measured_speeds */
+// 	computeWheelSpeeds();
 
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Calculate the velocity error
-		float angular_velocity_error = wheels_commanded_speeds[wheel] - wheels_measured_speeds[wheel];
+// 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+// 		// Calculate the velocity error
+// 		float angular_velocity_error = wheels_commanded_speeds[wheel] - wheels_measured_speeds[wheel];
 
-		// If the error is very small, ignore it (why is this here?)
-		if (fabs(angular_velocity_error) < 0.1) {
-			angular_velocity_error = 0.0;
-			wheelsK[wheel].I = 0;
-		}
+// 		// If the error is very small, ignore it (why is this here?)
+// 		if (fabs(angular_velocity_error) < 0.1) {
+// 			angular_velocity_error = 0.0;
+// 			wheelsK[wheel].I = 0;
+// 		}
 
-		float feed_forward[4];
-		float threshold = 0.05;
+// 		float feed_forward[4];
+// 		float threshold = 0.05;
 
-		if (abs(wheels_commanded_speeds[wheel]) < threshold) {
-    feed_forward[wheel] = 0;
-		} 
-		else if (wheels_commanded_speeds[wheel] > 0) {
-	feed_forward[wheel] = wheels_commanded_speeds[wheel] + 13;
-    	}
-		else if (wheels_commanded_speeds[wheel] < 0) {
-	feed_forward[wheel] = wheels_commanded_speeds[wheel] - 13;
-    	}
+// 		if (abs(wheels_commanded_speeds[wheel]) < threshold) {
+//     feed_forward[wheel] = 0;
+// 		} 
+// 		else if (wheels_commanded_speeds[wheel] > 0) {
+// 	feed_forward[wheel] = wheels_commanded_speeds[wheel] + 13;
+//     	}
+// 		else if (wheels_commanded_speeds[wheel] < 0) {
+// 	feed_forward[wheel] = wheels_commanded_speeds[wheel] - 13;
+//     	}
 
-		// Add PID to commanded speed and convert to PWM
-		int32_t wheel_speed = OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+// 		// Add PID to commanded speed and convert to PWM
+// 		int32_t wheel_speed = OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
 
-		// Determine direction and if pwm is negative, switch directions
-		// PWM < 0 : CounterClockWise. Direction = 0
-		// 0 < PWM : ClockWise. Direction = 1
-		wheels_commanded_directions[wheel] = 0 <= wheel_speed;
-		wheel_pwms[wheel] = abs(wheel_speed);
-	}
+// 		// Determine direction and if pwm is negative, switch directions
+// 		// PWM < 0 : CounterClockWise. Direction = 0
+// 		// 0 < PWM : ClockWise. Direction = 1
+// 		wheels_commanded_directions[wheel] = 0 <= wheel_speed;
+// 		wheel_pwms[wheel] = abs(wheel_speed);
+// 	}
 
-	setWheelDirections(wheels_commanded_directions);
-	setWheelPWMs(wheel_pwms);
-}
+// 	setWheelDirections(wheels_commanded_directions);
+// 	setWheelPWMs(wheel_pwms);
+// }
 
 /**
  * @brief Stores the commanded wheel speeds, in rad/s, to be used in the next wheels_Update() call
@@ -222,6 +217,24 @@ void wheels_GetMeasuredSpeeds(float speeds[4]) {
 }
 
 /**
+ * @brief Sets the current wheel PWMs
+ * 
+ * @param wheel_pwm_list uint32_t[4]{RF, LF, LB, RB} iput array in which the wheel PWMs are stored
+ */
+void wheels_SetPWM(uint32_t wheel_pwm_list[4]) {
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Determine direction and if pwm is negative, switch directions
+		// PWM < 0 : CounterClockWise. Direction = 0
+		// 0 < PWM : ClockWise. Direction = 1
+		wheels_commanded_directions[wheel] = 0 <= wheel_pwm_list[wheel];
+		wheel_pwms[wheel] = abs(wheel_pwm_list[wheel]);
+	}
+	setWheelDirections(wheels_commanded_directions);
+	setWheelPWMs(wheel_pwms);
+}
+
+// TODO: The function below might not give the direction, this should of course also be included. Check if the direction information is included, if not, add it.
+/**
  * @brief Get the current wheel PWMs
  * 
  * @param pwms uint32_t[4]{RF, LF, LB, RB} output array in which the wheel PWMs will be stored
@@ -231,14 +244,6 @@ void wheels_GetPWM(uint32_t pwms[4]) {
 	pwms[wheels_RB] = get_PWM(PWM_RB);
 	pwms[wheels_LB] = get_PWM(PWM_LB);
 	pwms[wheels_LF] = get_PWM(PWM_LF);
-}
-
-void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		wheelsK[wheel].kP = PIDGains->Pwheels;
-		wheelsK[wheel].kI = PIDGains->Iwheels;
-    	wheelsK[wheel].kD = PIDGains->Dwheels;
-	}
 }
 
 /**
@@ -277,6 +282,26 @@ void wheels_Unbrake(){
 	wheels_braking = false;
 }
 
+/**
+ * @brief Calculates angular velocity in rad/s for each wheel based on their encoder values
+ * 
+ * @todo This function requires to be called every 10 milliseconds, as dictated by the variable TIME_DIFF contained
+ * within the variable ENCODERtoOMEGA. This can of course not always be perfectly guaranteed. Therefore, a timer should
+ * be used to calculate the time difference between two calculations.
+ * 
+ * @param speeds float[4]{RF, LF, LB, RB} output array in which the calculated wheels speeds will be placed
+ */
+void computeWheelSpeeds(){
+	int16_t encoder_values[4] = {0};
+	getEncoderData(encoder_values);
+	resetWheelEncoders();
+	
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Convert encoder values to rad/s
+		// We define clockwise as positive, therefore we have a minus sign here
+		wheels_measured_speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
+	}	
+}
 
 
 
@@ -303,27 +328,6 @@ static void resetWheelEncoders() {
 	__HAL_TIM_SET_COUNTER(ENC_RB, 0);
 	__HAL_TIM_SET_COUNTER(ENC_LB, 0);
 	__HAL_TIM_SET_COUNTER(ENC_LF, 0);
-}
-
-/**
- * @brief Calculates angular velocity in rad/s for each wheel based on their encoder values
- * 
- * @todo This function requires to be called every 10 milliseconds, as dictated by the variable TIME_DIFF contained
- * within the variable ENCODERtoOMEGA. This can of course not always be perfectly guaranteed. Therefore, a timer should
- * be used to calculate the time difference between two calculations.
- * 
- * @param speeds float[4]{RF, LF, LB, RB} output array in which the calculated wheels speeds will be placed
- */
-static void computeWheelSpeeds(float speeds[4]){
-	int16_t encoder_values[4] = {0};
-	getEncoderData(encoder_values);
-	resetWheelEncoders();
-	
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Convert encoder values to rad/s
-		// We define clockwise as positive, therefore we have a minus sign here
-		speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
-	}	
 }
 
 /**

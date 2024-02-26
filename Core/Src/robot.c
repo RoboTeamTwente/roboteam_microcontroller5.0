@@ -864,10 +864,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		stateInfo.rateOfTurn = MTi->gyr[2];
 		stateEstimation_Update(&stateInfo);
 
-		if(test_isTestRunning(wheels) || test_isTestRunning(normal)) {
-            wheels_Update();
-            return;
-        }
+		// if(test_isTestRunning(wheels) || test_isTestRunning(normal)) {
+        //     wheels_Update();
+        //     return;
+        // }
 
 		if(halt && !test_isTestRunning(square)) {
 			unix_initalized = false;
@@ -878,10 +878,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		// State control
 		float stateLocal[4] = {0.0f};
 		stateEstimation_GetState(stateLocal);
+		// TODO: Possibly move the wheel speeds to the statement below as well, instead of including it in the stateControl_Full() code. Although you do add some delay to the wheel speed measurement then which unnecessarily gives you a slightly outdated wheel velocity.
 		stateControl_SetState(stateLocal);
-		stateControl_Update();
+		// stateControl_Update();
 
-		wheels_SetSpeeds( stateControl_GetWheelRef() );
+		float* refSpeedWheelsPointer;
+		refSpeedWheelsPointer = stateControl_GetWheelRef();
+
+		// wheels_SetSpeeds( stateControl_GetWheelRef() );
+
 
 		// In order to drain the battery as fast as possible we instruct the wheels to go their maximum possible speeds.
 		// However, for the sake of safety we make sure that if the robot actually turns it immediately stops doing this, since you
@@ -893,14 +898,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			// Instruct each wheel to go 30 rad/s
 			float wheel_speeds[4] = {30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI};
-			wheels_SetSpeeds(wheel_speeds);
+			// 
+			// 
+			// !!!!!!!!!!!!!!!!!!!!!!!! get the line below working again with the new architecture:
+			// 
+			// 
+			// wheels_SetSpeeds(wheel_speeds);
 
 			// If the gyroscope detects some rotational movement, we stop the drainage program.
 			if (fabs(MTi->gyr[2]) > 0.3f) {
 				DRAIN_BATTERY = false;
 			}
 		}
-		wheels_Update();
+
+		stateControl_Full();
 
 		/* == Fill robotFeedback packet == */ {
 			robotFeedback.timestamp = unix_timestamp;
@@ -939,6 +950,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			robotStateInfo.bodyYIntegral = stateControl_GetIntegral(vel_y);
 			robotStateInfo.bodyWIntegral = stateControl_GetIntegral(vel_w);
 			robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(yaw);
+			robotStateInfo.wheel1Integral = refSpeedWheelsPointer[0];
+			robotStateInfo.wheel2Integral = refSpeedWheelsPointer[1];
+			robotStateInfo.wheel3Integral = refSpeedWheelsPointer[2];
+			robotStateInfo.wheel4Integral = refSpeedWheelsPointer[3];
 		}
 
 		flag_sdcard_write_feedback = true;

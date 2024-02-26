@@ -53,9 +53,24 @@ int stateControl_Init();
 int stateControl_DeInit();
 
 /**
- * If initialised the wheel reference wheels speeds are determined based on the current and reference state of the robot.
+ * If initialised the wheel pwms are determined based on the current and reference state of the robot.
  */
-void stateControl_Update();
+void stateControl_Full();
+
+/**
+ * If initialised the wheel reference speeds are determined based on the current and reference state of the robot.
+ */
+void stateControl_Update_Body();
+
+/**
+ * If initialised the wheel pwms are determined based on the current wheel reference speeds.
+ */
+void stateControl_Update_Wheels();
+
+/**
+ * Given a motor voltage, convert it to the corresponding PWM signal depending on the current battery voltage
+ */
+void stateControl_voltage2PWM();
 
 /**
  * Set the new reference values that the robot should achieve.
@@ -105,6 +120,13 @@ void stateControl_useAbsoluteAngle(bool angularControl);
  * @param pidConfig The kP kI kD values for each direction.
  */
 void stateControl_SetPIDGains(REM_RobotSetPIDGains* pidConfig);
+
+/**
+ * Updates thewheel PID gains with new values.
+ * 
+ * @param pidConfig The kP kI kD values for the wheel controllers.
+ */
+void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains);
 
 /**
  * Reset the integral used for the angle.

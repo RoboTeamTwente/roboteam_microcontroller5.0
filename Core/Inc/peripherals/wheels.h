@@ -32,25 +32,29 @@
 
 // Initializes the PIDs / PWM timers / encoders
 void wheels_Init();
+// Returns boolean value to is inititiales (true) or not (false)
+bool wheels_Initialized();
 // Deinitializes the PWM timers / encoders
 void wheels_DeInit();
 // Stops the wheels without deinitializing them 
 void wheels_Stop();
-// Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
-void wheels_Update();
+// // Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
+// void wheels_Update();
 // Stores the commanded wheel speeds, in rad/s, to be used in the next wheels_Update() call
 void wheels_SetSpeeds(const float speeds[4]);
 // Get the last measured wheel speeds in rad/s
 void wheels_GetMeasuredSpeeds(float speeds[4]);
+// Set the current wheel PWMs
+void wheels_SetPWM(uint32_t wheel_pwm_list[4]);
 // Get the current wheel PWMs
 void wheels_GetPWM(uint32_t pwms[4]);
-// Set the PID gains for the wheels
-void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains);
 // Get the current status of the brakes
 bool wheels_GetWheelsBraking();
 // Enable the brakes
 void wheels_Brake();
 // Disable the brakes
 void wheels_Unbrake();
+// Calculates angular velocity in rad/s for each wheel based on their encoder values
+void computeWheelSpeeds();
 
 #endif /* WHEELS_H_ */
