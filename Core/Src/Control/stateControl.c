@@ -192,8 +192,8 @@ void stateControl_Update_Wheels(){
 				wheelsK[wheel].I = 0;
 			}
 
-			// Add PID to commanded speed and convert to voltage
-			float PIDvoltageoutputfactor = 0.004; // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
+			// Add PID to commanded speed and convert to voltage 
+			float PIDvoltageoutputfactor = 0.004; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
 			voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * PID(angular_velocity_error, &wheelsK[wheel]); 
 		}
 
