@@ -20,25 +20,25 @@
 #include "REM_RobotSetPIDGains.h"
 
 // Set default PID values
-#define default_P_gain_u 0.2
-#define default_I_gain_u 0.0
-#define default_D_gain_u 0.0
+#define default_P_gain_u 0.2f
+#define default_I_gain_u 0.0f
+#define default_D_gain_u 0.0f
 
-#define default_P_gain_v 0.3
-#define default_I_gain_v 0.0
-#define default_D_gain_v 0.0
+#define default_P_gain_v 0.2f
+#define default_I_gain_v 0.0f
+#define default_D_gain_v 0.0f
 
-#define default_P_gain_w 0.25
-#define default_I_gain_w 5.0
-#define default_D_gain_w 0.0
+#define default_P_gain_w 0.2f
+#define default_I_gain_w 0.0f
+#define default_D_gain_w 0.0f
 
-#define default_P_gain_yaw 20.0
-#define default_I_gain_yaw 5.0
-#define default_D_gain_yaw 0.0
+#define default_P_gain_yaw 0.2f
+#define default_I_gain_yaw 0.0f
+#define default_D_gain_yaw 0.0f
 
-#define default_P_gain_wheels 2.0
-#define default_I_gain_wheels 0.0
-#define default_D_gain_wheels 0.0
+#define default_P_gain_wheels 0.2f
+#define default_I_gain_wheels 0.0f
+#define default_D_gain_wheels 0.0f
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
