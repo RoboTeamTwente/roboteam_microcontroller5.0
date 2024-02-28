@@ -30,9 +30,6 @@ static void getEncoderData(int16_t output_array[4]);
 // Resets the wheel encoders
 static void resetWheelEncoders();
 
-// Calculates angular velocity in rad/s for each wheel based on their encoder values
-static void computeWheelSpeeds(float speeds[4]);
-
 // Clamps PWM values between PWM_CUTOFF and MAX_PWM
 static void limitWheelPWMs(uint32_t pwms[4]);
 
@@ -157,8 +154,7 @@ void wheels_Update(){
 		return;
 	}
 
-	/* Calculate the speeds of each wheel by looking at the encoders */
-	computeWheelSpeeds(wheels_measured_speeds);
+	int32_t wheel_pwm_list[4] = {0.0f};
 
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 		// Calculate the velocity error
@@ -170,31 +166,23 @@ void wheels_Update(){
 			wheelsK[wheel].I = 0;
 		}
 
-		float feed_forward[4];
+		float feed_forward[4] = {0.0f};
 		float threshold = 0.05;
 
 		if (abs(wheels_commanded_speeds[wheel]) < threshold) {
-    feed_forward[wheel] = 0;
+    		feed_forward[wheel] = 0;
 		} 
 		else if (wheels_commanded_speeds[wheel] > 0) {
-	feed_forward[wheel] = wheels_commanded_speeds[wheel] + 13;
+			feed_forward[wheel] = wheels_commanded_speeds[wheel] + 13;
     	}
 		else if (wheels_commanded_speeds[wheel] < 0) {
-	feed_forward[wheel] = wheels_commanded_speeds[wheel] - 13;
+			feed_forward[wheel] = wheels_commanded_speeds[wheel] - 13;
     	}
 
 		// Add PID to commanded speed and convert to PWM
-		int32_t wheel_speed = OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
-
-		// Determine direction and if pwm is negative, switch directions
-		// PWM < 0 : CounterClockWise. Direction = 0
-		// 0 < PWM : ClockWise. Direction = 1
-		wheels_commanded_directions[wheel] = 0 <= wheel_speed;
-		wheel_pwms[wheel] = abs(wheel_speed);
+		wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
 	}
-
-	setWheelDirections(wheels_commanded_directions);
-	setWheelPWMs(wheel_pwms);
+	wheels_SetPWM(wheel_pwm_list);
 }
 
 /**
@@ -219,6 +207,18 @@ void wheels_GetMeasuredSpeeds(float speeds[4]) {
 	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++) {
 		speeds[wheel] = wheels_measured_speeds[wheel];
 	}
+}
+
+void wheels_SetPWM(int32_t wheel_pwm_list[4]) {
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Determine direction and if pwm is negative, switch directions
+		// PWM < 0 : CounterClockWise. Direction = 0
+		// 0 < PWM : ClockWise. Direction = 1
+		wheels_commanded_directions[wheel] = 0 <= wheel_pwm_list[wheel];
+		wheel_pwms[wheel] = abs(wheel_pwm_list[wheel]);
+	}
+	setWheelDirections(wheels_commanded_directions);
+	setWheelPWMs(wheel_pwms);
 }
 
 /**
@@ -277,7 +277,26 @@ void wheels_Unbrake(){
 	wheels_braking = false;
 }
 
-
+/**
+ * @brief Calculates angular velocity in rad/s for each wheel based on their encoder values
+ * 
+ * @todo This function requires to be called every 10 milliseconds, as dictated by the variable TIME_DIFF contained
+ * within the variable ENCODERtoOMEGA. This can of course not always be perfectly guaranteed. Therefore, a timer should
+ * be used to calculate the time difference between two calculations.
+ * 
+ * @param speeds float[4]{RF, LF, LB, RB} output array in which the calculated wheels speeds will be placed
+ */
+void computeWheelSpeeds(){
+	int16_t encoder_values[4] = {0};
+	getEncoderData(encoder_values);
+	resetWheelEncoders();
+	
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Convert encoder values to rad/s
+		// We define clockwise as positive, therefore we have a minus sign here
+		wheels_measured_speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel];
+	}	
+}
 
 
 
@@ -303,27 +322,6 @@ static void resetWheelEncoders() {
 	__HAL_TIM_SET_COUNTER(ENC_RB, 0);
 	__HAL_TIM_SET_COUNTER(ENC_LB, 0);
 	__HAL_TIM_SET_COUNTER(ENC_LF, 0);
-}
-
-/**
- * @brief Calculates angular velocity in rad/s for each wheel based on their encoder values
- * 
- * @todo This function requires to be called every 10 milliseconds, as dictated by the variable TIME_DIFF contained
- * within the variable ENCODERtoOMEGA. This can of course not always be perfectly guaranteed. Therefore, a timer should
- * be used to calculate the time difference between two calculations.
- * 
- * @param speeds float[4]{RF, LF, LB, RB} output array in which the calculated wheels speeds will be placed
- */
-static void computeWheelSpeeds(float speeds[4]){
-	int16_t encoder_values[4] = {0};
-	getEncoderData(encoder_values);
-	resetWheelEncoders();
-	
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Convert encoder values to rad/s
-		// We define clockwise as positive, therefore we have a minus sign here
-		speeds[wheel] = -1 * WHEEL_ENCODER_TO_OMEGA * encoder_values[wheel]; 
-	}	
 }
 
 /**

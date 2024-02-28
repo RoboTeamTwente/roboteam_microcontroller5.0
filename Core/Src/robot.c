@@ -900,6 +900,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 				DRAIN_BATTERY = false;
 			}
 		}
+		/* Calculate the speeds of each wheel by looking at the encoders */
+		computeWheelSpeeds();
 		wheels_Update();
 
 		/* == Fill robotFeedback packet == */ {

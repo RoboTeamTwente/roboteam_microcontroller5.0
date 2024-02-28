@@ -1,6 +1,7 @@
 
 #include "stateControl.h"
 #include "logging.h"
+#include "wheels.h"
 
 ///////////////////////////////////////////////////// VARIABLES
 
@@ -108,6 +109,45 @@ void stateControl_Update(){
 			wheelRef[wheel] = velocityWheelRef[wheel] + angularRef;
 		}
 	}
+}
+
+void stateControl_wheels_Update(){
+	/* Don't run the wheels if these are not initialized */
+	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
+	// if(!wheels_initialized){
+	// 	wheels_Stop();
+	// 	return;
+	// }
+
+	// int32_t wheel_pwm_list[4] = {0.0f};
+
+	// for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+	// 	// Calculate the velocity error
+	// 	float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds[wheel];
+
+	// 	// If the error is very small, ignore it (why is this here?)
+	// 	if (fabs(angular_velocity_error) < 0.1) {
+	// 		angular_velocity_error = 0.0;
+	// 		wheelsK[wheel].I = 0;
+	// 	}
+
+	// 	float feed_forward[4] = {0.0f};
+	// 	float threshold = 0.05;
+
+	// 	if (abs(wheelRef[wheel]) < threshold) {
+    // 		feed_forward[wheel] = 0;
+	// 	} 
+	// 	else if (wheelRef[wheel] > 0) {
+	// 		feed_forward[wheel] = wheelRef[wheel] + 13;
+    // 	}
+	// 	else if (wheelRef[wheel] < 0) {
+	// 		feed_forward[wheel] = wheelRef[wheel] - 13;
+    // 	}
+
+	// 	// Add PID to commanded speed and convert to PWM
+	// 	wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+	// }
+	// wheels_SetPWM(wheel_pwm_list);
 }
 
 void stateControl_SetRef(float _stateGlobalRef[4]){

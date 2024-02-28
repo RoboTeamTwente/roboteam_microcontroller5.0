@@ -42,6 +42,8 @@ void wheels_Update();
 void wheels_SetSpeeds(const float speeds[4]);
 // Get the last measured wheel speeds in rad/s
 void wheels_GetMeasuredSpeeds(float speeds[4]);
+// Set the current wheel PWMs
+void wheels_SetPWM(int32_t wheel_pwm_list[4]);
 // Get the current wheel PWMs
 void wheels_GetPWM(uint32_t pwms[4]);
 // Set the PID gains for the wheels
@@ -52,5 +54,7 @@ bool wheels_GetWheelsBraking();
 void wheels_Brake();
 // Disable the brakes
 void wheels_Unbrake();
+// Calculates angular velocity in rad/s for each wheel based on their encoder values
+void computeWheelSpeeds();
 
 #endif /* WHEELS_H_ */
