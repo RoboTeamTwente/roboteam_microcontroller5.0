@@ -3,6 +3,10 @@
 #include "logging.h"
 #include "wheels.h"
 
+///////////////////////////////////////////////////// STRUCTS
+
+static PIDvariables wheelsK[4];
+
 ///////////////////////////////////////////////////// VARIABLES
 
 // The current status of the system.
@@ -75,6 +79,12 @@ int stateControl_Init(){
 	initPID(&stateLocalK[yaw], default_P_gain_yaw, default_I_gain_yaw, default_D_gain_yaw);
 	HAL_TIM_Base_Start_IT(TIM_CONTROL);
 
+	/* Initialize wheel controllers */
+	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		initPID(&wheelsK[wheel], default_P_gain_wheels, default_I_gain_wheels, default_D_gain_wheels);
+	}
+
+
 	// Initialize the velocity coupling matrix.
 	D[0] = -sinFront;
 	D[1] = cosFront; 
@@ -114,40 +124,43 @@ void stateControl_Update(){
 void stateControl_wheels_Update(){
 	/* Don't run the wheels if these are not initialized */
 	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-	// if(!wheels_initialized){
-	// 	wheels_Stop();
-	// 	return;
-	// }
+	if(!wheels_Initialized()){
+		wheels_Stop();
+		return;
+	}
 
-	// int32_t wheel_pwm_list[4] = {0.0f};
+	int32_t wheel_pwm_list[4] = {0.0f};
 
-	// for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-	// 	// Calculate the velocity error
-	// 	float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds[wheel];
+	float wheels_measured_speeds[4] = {0.0f};
+	wheels_GetMeasuredSpeeds(wheels_measured_speeds);
 
-	// 	// If the error is very small, ignore it (why is this here?)
-	// 	if (fabs(angular_velocity_error) < 0.1) {
-	// 		angular_velocity_error = 0.0;
-	// 		wheelsK[wheel].I = 0;
-	// 	}
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Calculate the velocity error
+		float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds[wheel];
 
-	// 	float feed_forward[4] = {0.0f};
-	// 	float threshold = 0.05;
+		// If the error is very small, ignore it (why is this here?)
+		if (fabs(angular_velocity_error) < 0.1) {
+			angular_velocity_error = 0.0;
+			wheelsK[wheel].I = 0;
+		}
 
-	// 	if (abs(wheelRef[wheel]) < threshold) {
-    // 		feed_forward[wheel] = 0;
-	// 	} 
-	// 	else if (wheelRef[wheel] > 0) {
-	// 		feed_forward[wheel] = wheelRef[wheel] + 13;
-    // 	}
-	// 	else if (wheelRef[wheel] < 0) {
-	// 		feed_forward[wheel] = wheelRef[wheel] - 13;
-    // 	}
+		float feed_forward[4] = {0.0f};
+		float threshold = 0.05;
 
-	// 	// Add PID to commanded speed and convert to PWM
-	// 	wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
-	// }
-	// wheels_SetPWM(wheel_pwm_list);
+		if (abs(wheelRef[wheel]) < threshold) {
+    		feed_forward[wheel] = 0;
+		} 
+		else if (wheelRef[wheel] > 0) {
+			feed_forward[wheel] = wheelRef[wheel] + 13;
+    	}
+		else if (wheelRef[wheel] < 0) {
+			feed_forward[wheel] = wheelRef[wheel] - 13;
+    	}
+
+		// Add PID to commanded speed and convert to PWM
+		wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+	}
+	wheels_SetPWM(wheel_pwm_list);
 }
 
 void stateControl_SetRef(float _stateGlobalRef[4]){

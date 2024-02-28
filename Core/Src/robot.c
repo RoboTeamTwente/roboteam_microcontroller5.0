@@ -902,7 +902,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 		/* Calculate the speeds of each wheel by looking at the encoders */
 		computeWheelSpeeds();
-		wheels_Update();
+		stateControl_wheels_Update();
+		// wheels_Update();
 
 		/* == Fill robotFeedback packet == */ {
 			robotFeedback.timestamp = unix_timestamp;

@@ -96,6 +96,13 @@ void wheels_Init(){
 }
 
 /**
+ * @brief Returns boolean value to is inititiales (true) or not (false)
+ */
+bool wheels_Initialized(){
+	return wheels_initialized;
+}
+
+/**
  * @brief Deinitializes the PIDs / PWM timers / encoders
  */
 void wheels_DeInit(){
