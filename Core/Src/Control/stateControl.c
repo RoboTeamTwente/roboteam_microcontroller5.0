@@ -15,7 +15,7 @@ static PIDvariables stateLocalK[4];
 ///////////////////////////////////////////////////// VARIABLES
 
 // The current status of the system.
-static PID_states status = off;
+static PID_states status_control = off;
 
 // The global x, y, w and yaw velocities to be achieved [m/s]
 static float stateGlobalRef[4] = {0.0f}; 
@@ -83,7 +83,7 @@ static float absoluteAngleControl(float angleRef, float angle);
 
 
 int stateControl_Init(){
-	status = on;
+	status_control = on;
 	initPID(&stateLocalK[vel_u], default_P_gain_u, default_I_gain_u, default_D_gain_u);
 	initPID(&stateLocalK[vel_v], default_P_gain_v, default_I_gain_v, default_D_gain_v);
 	initPID(&stateLocalK[vel_w], default_P_gain_w, default_I_gain_w, default_D_gain_w); 
@@ -114,18 +114,22 @@ int stateControl_Init(){
 }
 
 int stateControl_DeInit(){
-	status = off;
+	status_control = off;
 	HAL_TIM_Base_Stop_IT(TIM_CONTROL);
 	return 0;
 }
 
 void stateControl_Full(){
-
-	stateControl_Update_Body();
-	stateControl_Update_Wheels();
-	stateControl_voltage2PWM();
-	wheels_SetPWM(pwm_list);
+	// Temp hotfix please remove:
+	status_control = on;
 	
+	if (status_control == on){
+		stateControl_Update_Body();
+		stateControl_Update_Wheels();
+
+		stateControl_voltage2PWM();
+		wheels_SetPWM(pwm_list);
+	}
 
 	/* 
 	 - implement the feedforward such that it outputs voltage (use file I made already on google drive)
@@ -141,63 +145,66 @@ void stateControl_Full(){
 }
 
 void stateControl_Update_Body(){
-	if (status == on){
-		velocityControl(stateLocal, stateGlobalRef, wheelRef);
-	}
+	
+	velocityControl(stateLocal, stateGlobalRef, wheelRef);
+
 }
 
 void stateControl_Update_Wheels(){
-	if (status == on){
-		// Below is what formerly used to be in wheel.c, but is now moved to control instead of the wheel peripherals:
 
-		/* Don't run the wheels if these are not initialized */
-		/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-		if(!wheels_Initialized()){
-			wheels_Stop();
-			return;
-		}
+	// Below is what formerly used to be in wheel.c, but is now moved to control instead of the wheel peripherals:
 
-		body2Wheels(wheelRef, stateLocalRef); //translate velocity to wheel speed
-		float vu = stateLocalRef[vel_u];
-		float vv = stateLocalRef[vel_v];
-		float rho = sqrt(vu*vu + vv*vv);
-		float theta_local = atan2(vu, vv);
-		float omega = stateLocalRef[vel_w];
-
-		/* Calculate the speeds of each wheel by looking at the encoders */
-		float wheels_measured_speeds[4] = {0.0f};
-		computeWheelSpeeds();
-		wheels_GetMeasuredSpeeds(wheels_measured_speeds);
-
-		float feed_forward[4] = {0.0f};
-		
-		for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-			// Feedforward
-			float identified_friction = 1.15f;
-			float identified_damping = 0.0888f;
-			if (wheelRef[wheel] > 0) {
-				feed_forward[wheel] = identified_damping*wheelRef[wheel] + identified_friction;
-			}
-			else if (wheelRef[wheel] < 0) {
-				feed_forward[wheel] = identified_damping*wheelRef[wheel] - identified_friction;
-			}
-
-			// Feedback
-			// Calculate the velocity error
-			float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds[wheel];
-
-			// If the error is very small, ignore it (why is this here?)
-			if (fabs(angular_velocity_error) < 0.1) {
-				angular_velocity_error = 0.0f;
-				wheelsK[wheel].I = 0;
-			}
-
-			// Add PID to commanded speed and convert to voltage 
-			float PIDvoltageoutputfactor = 0.004f; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
-			voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * PID(angular_velocity_error, &wheelsK[wheel]); 
-		}
-
+	/* Don't run the wheels if these are not initialized */
+	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
+	if(!wheels_Initialized()){
+		wheels_Stop();
+		return;
 	}
+
+	body2Wheels(wheelRef, stateLocalRef); //translate velocity to wheel speed
+	float vu = stateLocalRef[vel_u];
+	float vv = stateLocalRef[vel_v];
+	float rho = sqrt(vu*vu + vv*vv);
+	float theta_local = atan2(vu, vv);
+	float omega = stateLocalRef[vel_w];
+
+	/* Calculate the speeds of each wheel by looking at the encoders */
+	float wheels_measured_speeds[4] = {0.0f};
+	computeWheelSpeeds();
+	wheels_GetMeasuredSpeeds(wheels_measured_speeds);
+
+	float feed_forward[4] = {0.0f};
+	
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Feedforward
+		float identified_friction = 1.15f;
+		float identified_damping = 0.0888f;
+		if (wheelRef[wheel] > 0) {
+			feed_forward[wheel] = identified_damping*wheelRef[wheel] + identified_friction;
+		}
+		else if (wheelRef[wheel] < 0) {
+			feed_forward[wheel] = identified_damping*wheelRef[wheel] - identified_friction;
+		}
+
+		// Feedback
+		// Calculate the velocity error
+		float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds[wheel];
+
+		// If the error is very small, ignore it (why is this here?)
+		if (fabs(angular_velocity_error) < 0.1) {
+			angular_velocity_error = 0.0f;
+			wheelsK[wheel].I = 0;
+		}
+
+		// Add PID to commanded speed and convert to voltage 
+		float PIDvoltageoutputfactor = 0.004f; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
+		voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * PID(angular_velocity_error, &wheelsK[wheel]); 
+	}
+	// for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+	// 	voltage_list[wheel] = 1.5f;
+	// }
+
+	
 }
 
 void stateControl_voltage2PWM(){

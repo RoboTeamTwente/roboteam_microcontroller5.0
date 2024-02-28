@@ -881,13 +881,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		// TODO: Possibly move the wheel speeds to the statement below as well, instead of including it in the stateControl_Full() code. Although you do add some delay to the wheel speed measurement then which unnecessarily gives you a slightly outdated wheel velocity.
 		stateControl_SetState(stateLocal);
 		// stateControl_Update();
-		stateControl_Full();
+		
 
 		float* refSpeedWheelsPointer;
 		refSpeedWheelsPointer = stateControl_GetWheelRef();
 
 		// wheels_SetSpeeds( stateControl_GetWheelRef() );
-
+		stateControl_Full();
 
 		// In order to drain the battery as fast as possible we instruct the wheels to go their maximum possible speeds.
 		// However, for the sake of safety we make sure that if the robot actually turns it immediately stops doing this, since you
@@ -896,9 +896,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		// TODO: Once the battery meter has been implemented in software, it would perhaps be nice to stop the drainaige at programmable level.
 		//       Currently you are stuck on the automated shutdown value that is controlled by the powerboard.
 		if(DRAIN_BATTERY){
-
+			
 			// Instruct each wheel to go 30 rad/s
-			float wheel_speeds[4] = {30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI};
+			// float wheel_speeds[4] = {30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI};
 			// 
 			// 
 			// !!!!!!!!!!!!!!!!!!!!!!!! get the line below working again with the new architecture:
