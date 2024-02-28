@@ -881,6 +881,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		// TODO: Possibly move the wheel speeds to the statement below as well, instead of including it in the stateControl_Full() code. Although you do add some delay to the wheel speed measurement then which unnecessarily gives you a slightly outdated wheel velocity.
 		stateControl_SetState(stateLocal);
 		// stateControl_Update();
+		stateControl_Full();
 
 		float* refSpeedWheelsPointer;
 		refSpeedWheelsPointer = stateControl_GetWheelRef();
@@ -911,7 +912,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			}
 		}
 
-		stateControl_Full();
+		
 
 		/* == Fill robotFeedback packet == */ {
 			robotFeedback.timestamp = unix_timestamp;
