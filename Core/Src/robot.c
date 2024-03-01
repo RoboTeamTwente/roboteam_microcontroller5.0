@@ -975,27 +975,31 @@ void stateControl_wheels_Update2(wheel_names wheel, float wheels_measured_speeds
 	
 		
 
-		// If the error is very small, ignore it (why is this here?)
-		if (fabs(angular_velocity_error) < 0.1) {
-			angular_velocity_error = 0.0;
-			wheelsK_test[wheel].I = 0;
-		}
+		// // If the error is very small, ignore it (why is this here?)
+		// if (fabs(angular_velocity_error) < 0.1) {
+		// 	angular_velocity_error = 0.0;
+		// 	wheelsK_test[wheel].I = 0;
+		// }
 
-		float feed_forward[4] = {0.0f};
-		float threshold = 0.05;
+		// float feed_forward[4] = {0.0f};
+		// float threshold = 0.05;
 
-		if (abs(wheels_commanded_speeds_test[wheel]) < threshold) {
-    		feed_forward[wheel] = 0;
-		} 
-		else if (wheels_commanded_speeds_test[wheel] > 0) {
-			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
-    	}
-		else if (wheels_commanded_speeds_test[wheel] < 0) {
-			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
-    	}
+		// if (abs(wheels_commanded_speeds_test[wheel]) < threshold) {
+    	// 	feed_forward[wheel] = 0;
+		// } 
+		// else if (wheels_commanded_speeds_test[wheel] > 0) {
+		// 	feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
+    	// }
+		// else if (wheels_commanded_speeds_test[wheel] < 0) {
+		// 	feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
+    	// }
 
-		// Add PID to commanded speed and convert to PWM
-		wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
+		// // Add PID to commanded speed and convert to PWM
+		// wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
+
+
+
+		
 	
 	// wheels_SetPWM(wheel_pwm_list);
 

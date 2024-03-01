@@ -135,6 +135,27 @@ void stateControl_Update(){
 
 		PIDvariables* wheelsK_test = wheels_GiveWheelsK();
 		
+		// If the error is very small, ignore it (why is this here?)
+		if (fabs(angular_velocity_error) < 0.1) {
+			angular_velocity_error = 0.0;
+			wheelsK_test[wheel].I = 0;
+		}
+
+		float feed_forward[4] = {0.0f};
+		float threshold = 0.5;
+
+		if (fabs(wheels_commanded_speeds_test[wheel]) < threshold) {
+    		feed_forward[wheel] = 0;
+		} 
+		else if (wheels_commanded_speeds_test[wheel] > 0) {
+			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
+    	}
+		else if (wheels_commanded_speeds_test[wheel] < 0) {
+			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
+    	}
+
+		// Add PID to commanded speed and convert to PWM
+		wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
 		stateControl_wheels_Update2(wheel,wheels_measured_speeds_test,wheels_commanded_speeds_test,wheel_pwm_list,wheelsK_test,angular_velocity_error);
 	}
 
