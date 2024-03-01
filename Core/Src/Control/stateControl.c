@@ -2,7 +2,12 @@
 #include "stateControl.h"
 #include "logging.h"
 #include "wheels.h"
-#include "robot.h"
+#include "main.h"
+
+///////////////////////////////////////////////////// STRUCTS
+
+// The PID values for the wheels
+static PIDvariables wheelsK[4];
 
 ///////////////////////////////////////////////////// VARIABLES
 
@@ -18,8 +23,17 @@ static float stateGlobalRef[4] = {0.0f};
 // The wheel velocities to be achieved [rad/s]
 static float wheelRef[4] = {0.0f};
 
+// The voltages to be sent to the wheels
+static float voltage_list[4] = {0.0f};
+
+// The pwm values sent to the wheels
+static int32_t wheel_pwm_list[4] = {0.0f};
+
 // The current global u, v, w and yaw velocities.
 static float stateLocal[4] = {0.0f};
+
+// The reference u, v, w reference velocities.
+static float stateLocalRef[4] = {0.0f};
 
 // Whether to move to an absolute angle. If true yes, otherwise use angular velocity.
 static bool useAbsoluteAngle = true;
@@ -74,21 +88,27 @@ int stateControl_Init(){
 	initPID(&stateLocalK[vel_v], default_P_gain_v, default_I_gain_v, default_D_gain_v);
 	initPID(&stateLocalK[vel_w], default_P_gain_w, default_I_gain_w, default_D_gain_w); 
 	initPID(&stateLocalK[yaw], default_P_gain_yaw, default_I_gain_yaw, default_D_gain_yaw);
+
+	/* Initialize wheel controllers */
+	for (wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		initPID(&wheelsK[wheel], default_P_gain_wheels, default_I_gain_wheels, default_D_gain_wheels);
+	}
+
 	HAL_TIM_Base_Start_IT(TIM_CONTROL);
 
 	// Initialize the velocity coupling matrix.
 	D[0] = -sinFront;
 	D[1] = cosFront; 
-	D[2] = 1;
+	D[2] = rad_robot;
 	D[3] = -sinFront;
 	D[4] = -cosFront;
-	D[5] = 1;
+	D[5] = rad_robot;
 	D[6] = sinBack;
 	D[7] = -cosBack;
-	D[8] = 1;
+	D[8] = rad_robot;
 	D[9] = sinBack;
 	D[10] = cosBack;
-	D[11] = 1;
+	D[11] = rad_robot;
 
 	return 0;
 }
@@ -101,117 +121,96 @@ int stateControl_DeInit(){
 
 void stateControl_Update(){
 	if (status == on){
-		float velocityWheelRef[4] = {0.0f};
-		velocityControl(stateLocal, stateGlobalRef, velocityWheelRef);
+		stateControl_Update_Body();
+		computeWheelSpeeds();
+		stateControl_Update_Wheels();
+		stateControl_voltage2PWM();
+		wheels_SetPWM(wheel_pwm_list);
+	}	
+}
 
-		float angularRef = useAbsoluteAngle ? absoluteAngleControl(stateGlobalRef[yaw], stateLocal[yaw]) : 0.0f;
+void stateControl_Update_Body() {
 
-		for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
-			wheelRef[wheel] = velocityWheelRef[wheel] + angularRef;
-		}
-	}
+	// velocityControl(stateLocal, stateGlobalRef, velocityWheelRef);
+	velocityControl(stateLocal, stateGlobalRef, wheelRef);
 
-	
-	// wheels_SetSpeeds( stateControl_GetWheelRef() );
-	computeWheelSpeeds();
-	// wheels_Update();
+}
 
-	/* Don't run the wheels if these are not initialized */
+void stateControl_Update_Wheels() {
+		/* Don't run the wheels if these are not initialized */
 	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
 	if(!wheels_AreInitialized()){
 		wheels_Stop();
 		return;
 	}
+	
+	body2Wheels(wheelRef, stateLocalRef); //translate velocity to wheel speed
+	float vu = stateLocalRef[vel_u];
+	float vv = stateLocalRef[vel_v];
+	float rho = sqrt(vu*vu + vv*vv);
+	float theta_local = atan2(vu, vv);
+	float omega = stateLocalRef[vel_w];
 
 	float wheels_measured_speeds_test[4] = {0.0f};
 	wheels_GetMeasuredSpeeds(wheels_measured_speeds_test);
-	float* wheels_commanded_speeds_test;
-	wheels_commanded_speeds_test = stateControl_GetWheelRef();
 
-	int32_t wheel_pwm_list[4] = {0.0f};
+	float feed_forward[4] = {0.0f};
+
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Calculate the velocity error
-		float angular_velocity_error = wheels_commanded_speeds_test[wheel] - wheels_measured_speeds_test[wheel];
 
-		PIDvariables* wheelsK_test = wheels_GiveWheelsK();
+		// Feedforward
+		double threshold = 0.5;
+		float identified_friction = 13.0f;
+		float identified_damping = 1.0f;
+
+		if (fabs(wheelRef[wheel]) < threshold) {
+    		feed_forward[wheel] = 0;
+		} 
+		else if (wheelRef[wheel] > 0) {
+			feed_forward[wheel] = identified_damping*wheelRef[wheel] + identified_friction;
+    	}
+		else if (wheelRef[wheel] < 0) {
+			feed_forward[wheel] = identified_damping*wheelRef[wheel] - identified_friction;
+    	}
+
+		// Feedback
+		// Calculate the velocity error
+		float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds_test[wheel];
 		
 		// If the error is very small, ignore it (why is this here?)
 		if (fabs(angular_velocity_error) < 0.1) {
 			angular_velocity_error = 0.0;
-			wheelsK_test[wheel].I = 0;
+			wheelsK[wheel].I = 0;
 		}
 
-		float feed_forward[4] = {0.0f};
-		float threshold = 0.5;
-
-		if (fabs(wheels_commanded_speeds_test[wheel]) < threshold) {
-    		feed_forward[wheel] = 0;
-		} 
-		else if (wheels_commanded_speeds_test[wheel] > 0) {
-			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
-    	}
-		else if (wheels_commanded_speeds_test[wheel] < 0) {
-			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
-    	}
-
 		// Add PID to commanded speed and convert to PWM
-		wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
-		stateControl_wheels_Update2(wheel,wheels_measured_speeds_test,wheels_commanded_speeds_test,wheel_pwm_list,wheelsK_test,angular_velocity_error);
+		float PIDvoltageoutputfactor = 0.004f; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
+		voltage_list[wheel] = PIDvoltageoutputfactor * OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel]));
+		// // Add PID to commanded speed and convert to voltage 
+		// float PIDvoltageoutputfactor = 0.004f; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
+		// voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel]));
 	}
 
-	wheels_SetPWM(wheel_pwm_list);
-
-	
 }
 
-void stateControl_wheels_Update3(){
-	float a = 1;
+void stateControl_voltage2PWM(){
+	// Needs to be:
+	// float batteryVoltage = getBatteryVoltage();
+	// once the battery voltage is actually recorded somewhere. Then also directly input in the pwm equation instead of uselessly creating an intermediate variable
+	// For now just assume:
+	float batteryVoltage = 24;
+
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		wheel_pwm_list[wheel] = (int32_t) (voltage_list[wheel]*(MAX_PWM/batteryVoltage));
+	}
 }
 
-void stateControl_wheels_Update1(){
-	// /* Don't run the wheels if these are not initialized */
-	// /* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-	// if(!wheels_AreInitialized()){
-	// 	wheels_Stop();
-	// 	return;
-	// }
-
-	// int32_t wheel_pwm_list[4] = {0.0f};
-
-	// float wheels_measured_speeds_test[4] = {0.0f};
-	// wheels_GetMeasuredSpeeds(wheels_measured_speeds_test);
-	// float* wheels_commanded_speeds_test;
-	// wheels_commanded_speeds_test = stateControl_GetWheelRef();
-
-	// for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-	// 	// Calculate the velocity error
-	// 	float angular_velocity_error = wheels_commanded_speeds_test[wheel] - wheels_measured_speeds_test[wheel];
-
-	// 	PIDvariables* wheelsK_test = wheels_GiveWheelsK();
-
-	// 	// If the error is very small, ignore it (why is this here?)
-	// 	if (fabs(angular_velocity_error) < 0.1) {
-	// 		angular_velocity_error = 0.0;
-	// 		wheelsK_test[wheel].I = 0;
-	// 	}
-
-	// 	float feed_forward[4] = {0.0f};
-	// 	float threshold = 0.05;
-
-	// 	if (abs(wheels_commanded_speeds_test[wheel]) < threshold) {
-    // 		feed_forward[wheel] = 0;
-	// 	} 
-	// 	else if (wheels_commanded_speeds_test[wheel] > 0) {
-	// 		feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
-    // 	}
-	// 	else if (wheels_commanded_speeds_test[wheel] < 0) {
-	// 		feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
-    // 	}
-
-	// 	// Add PID to commanded speed and convert to PWM
-	// 	wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
-	// }
-	// wheels_SetPWM(wheel_pwm_list);
+void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		wheelsK[wheel].kP = PIDGains->Pwheels;
+		wheelsK[wheel].kI = PIDGains->Iwheels;
+    	wheelsK[wheel].kD = PIDGains->Dwheels;
+	}
 }
 
 void stateControl_SetRef(float _stateGlobalRef[4]){
@@ -297,6 +296,18 @@ void stateControl_ResetPID(){
 
 static void body2Wheels(float wheelSpeed[4], float stateLocal[3]){
 
+	// // Translate the local u, v, and omega velocities into wheel velocities.
+	// wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1]  + stateLocal[vel_w] * D[2];
+	// wheelSpeed[wheels_LF] = stateLocal[vel_u] * D[3] + stateLocal[vel_v] * D[4]  + stateLocal[vel_w] * D[5];
+	// wheelSpeed[wheels_LB] = stateLocal[vel_u] * D[6] + stateLocal[vel_v] * D[7]  + stateLocal[vel_w] * D[8];
+	// wheelSpeed[wheels_RB] = stateLocal[vel_u] * D[9] + stateLocal[vel_v] * D[10] + stateLocal[vel_w] * D[11];
+
+	// // Translate wheel velocities into angular velocities
+	// wheelSpeed[wheels_RF] = wheelSpeed[wheels_RF] / rad_wheel;
+	// wheelSpeed[wheels_LF] = wheelSpeed[wheels_LF] / rad_wheel;
+	// wheelSpeed[wheels_LB] = wheelSpeed[wheels_LB] / rad_wheel;
+	// wheelSpeed[wheels_RB] = wheelSpeed[wheels_RB] / rad_wheel;
+
 	// Translate the local u, v, and omega velocities into wheel velocities.
 	wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1];
 	wheelSpeed[wheels_LF] = stateLocal[vel_u] * D[3] + stateLocal[vel_v] * D[4];
@@ -325,7 +336,6 @@ static void global2Local(float global[4], float local[4], float angle){
 }
 
 static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float velocityWheelRef[4]){
-	float stateLocalRef[3] = {0, 0, 0};
 	global2Local(stateGlobalRef, stateLocalRef, stateLocal[yaw]); //transfer global to local
 
 	// Local control
@@ -333,11 +343,16 @@ static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float 
 	float velvErr = (stateLocalRef[vel_v] - stateLocal[vel_v]);
 	float velwErr = (stateLocalRef[vel_w] - stateLocal[vel_w]);
 
-	stateLocalRef[vel_u] += PID(veluErr, &stateLocalK[vel_u]);
-	stateLocalRef[vel_v] += PID(velvErr, &stateLocalK[vel_v]);
-	stateLocalRef[vel_w] += PID(velwErr, &stateLocalK[vel_w]);
+	stateLocalRef[vel_u] = stateLocalRef[vel_u] + PID(veluErr, &stateLocalK[vel_u]);
+	stateLocalRef[vel_v] = stateLocalRef[vel_v] + PID(velvErr, &stateLocalK[vel_v]);
+	stateLocalRef[vel_w] = stateLocalRef[vel_w] + PID(velwErr, &stateLocalK[vel_w]);
 
-	body2Wheels(velocityWheelRef, stateLocalRef); //translate velocity to wheel speed
+	// In case absolute angle control is used define the w (omega) differently based on absolute angle controller
+	if (useAbsoluteAngle) {
+		float angularRef = absoluteAngleControl(stateGlobalRef[yaw], stateLocal[yaw]);
+    	stateLocalRef[vel_w] = (rad_wheel/rad_robot)*angularRef;
+	}
+
 }
 
 static float absoluteAngleControl(float angleRef, float angle){

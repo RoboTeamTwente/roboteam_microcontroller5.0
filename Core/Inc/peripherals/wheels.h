@@ -38,20 +38,12 @@ bool wheels_AreInitialized();
 void wheels_DeInit();
 // Stops the wheels without deinitializing them 
 void wheels_Stop();
-// Returns pointer to wheel controller
-PIDvariables* wheels_GiveWheelsK();
-// Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
-void wheels_Update();
-// Stores the commanded wheel speeds, in rad/s, to be used in the next wheels_Update() call
-void wheels_SetSpeeds(const float speeds[4]);
 // Get the last measured wheel speeds in rad/s
 void wheels_GetMeasuredSpeeds(float speeds[4]);
 // Set the current wheel PWMs
 void wheels_SetPWM(int32_t wheel_pwm_list[4]);
 // Get the current wheel PWMs
 void wheels_GetPWM(uint32_t pwms[4]);
-// Set the PID gains for the wheels
-void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains);
 // Get the current status of the brakes
 bool wheels_GetWheelsBraking();
 // Enable the brakes

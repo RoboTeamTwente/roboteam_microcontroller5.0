@@ -20,25 +20,25 @@
 #include "REM_RobotSetPIDGains.h"
 
 // Set default PID values
-#define default_P_gain_u 0.2
-#define default_I_gain_u 0.0
-#define default_D_gain_u 0.0
+#define default_P_gain_u 0.2f
+#define default_I_gain_u 0.0f
+#define default_D_gain_u 0.0f
 
-#define default_P_gain_v 0.3
-#define default_I_gain_v 0.0
-#define default_D_gain_v 0.0
+#define default_P_gain_v 0.3f
+#define default_I_gain_v 0.0f
+#define default_D_gain_v 0.0f
 
-#define default_P_gain_w 0.25
-#define default_I_gain_w 5.0
-#define default_D_gain_w 0.0
+#define default_P_gain_w 0.25f
+#define default_I_gain_w 5.0f
+#define default_D_gain_w 0.0f
 
-#define default_P_gain_yaw 20.0
-#define default_I_gain_yaw 5.0
-#define default_D_gain_yaw 0.0
+#define default_P_gain_yaw 20.0f
+#define default_I_gain_yaw 5.0f
+#define default_D_gain_yaw 0.0f
 
-#define default_P_gain_wheels 2.0
-#define default_I_gain_wheels 0.0
-#define default_D_gain_wheels 0.0
+#define default_P_gain_wheels 2.0f
+#define default_I_gain_wheels 0.0f
+#define default_D_gain_wheels 0.0f
 
 ///////////////////////////////////////////////////// PUBLIC FUNCTION DECLARATIONS
 
@@ -57,9 +57,27 @@ int stateControl_DeInit();
  */
 void stateControl_Update();
 
-// // Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
-void stateControl_wheels_Update1();
-void stateControl_wheels_Update3();
+/**
+ * If initialised the wheel reference speeds are determined based on the current and reference state of the robot.
+ */
+void stateControl_Update_Body();
+
+/**
+ * If initialised the wheel pwms are determined based on the current wheel reference speeds.
+ */
+void stateControl_Update_Wheels();
+
+/**
+ * Given a motor voltage, convert it to the corresponding PWM signal depending on the current battery voltage
+ */
+void stateControl_voltage2PWM();
+
+/**
+ * Updates thewheel PID gains with new values.
+ * 
+ * @param pidConfig The kP kI kD values for the wheel controllers.
+ */
+void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains);
 
 /**
  * Set the new reference values that the robot should achieve.

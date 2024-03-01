@@ -865,7 +865,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		stateEstimation_Update(&stateInfo);
 
 		if(test_isTestRunning(wheels) || test_isTestRunning(normal)) {
-            wheels_Update();
+			// 
+			// 
+			// MAKE THIS WORK AGAIN!
+			// 
+			// 
+            // wheels_Update();
             return;
         }
 
@@ -879,7 +884,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		float stateLocal[4] = {0.0f};
 		stateEstimation_GetState(stateLocal);
 		stateControl_SetState(stateLocal);
-		stateControl_Update();
+		
 
 		
 
@@ -893,7 +898,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			// Instruct each wheel to go 30 rad/s
 			float wheel_speeds[4] = {30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI, 30.0f * M_PI};
-			wheels_SetSpeeds(wheel_speeds);
+			// 
+			// 
+			// MAKE THIS WORK AGAIN!
+			// 
+			// 
+			// wheels_SetSpeeds(wheel_speeds);
 
 			// If the gyroscope detects some rotational movement, we stop the drainage program.
 			if (fabs(MTi->gyr[2]) > 0.3f) {
@@ -902,8 +912,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		}
 		/* Calculate the speeds of each wheel by looking at the encoders */
 		
-		// stateControl_wheels_Update3();
-		// wheels_Update();
+		stateControl_Update();
+
+		float* refSpeedWheelsPointer;
+		refSpeedWheelsPointer = stateControl_GetWheelRef();
 
 		/* == Fill robotFeedback packet == */ {
 			robotFeedback.timestamp = unix_timestamp;
@@ -942,6 +954,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			robotStateInfo.bodyYIntegral = stateControl_GetIntegral(vel_y);
 			robotStateInfo.bodyWIntegral = stateControl_GetIntegral(vel_w);
 			robotStateInfo.bodyYawIntegral = stateControl_GetIntegral(yaw);
+			robotStateInfo.wheel1Integral = refSpeedWheelsPointer[0];
+			robotStateInfo.wheel2Integral = refSpeedWheelsPointer[1];
+			robotStateInfo.wheel3Integral = refSpeedWheelsPointer[2];
+			robotStateInfo.wheel4Integral = refSpeedWheelsPointer[3];
 		}
 
 		flag_sdcard_write_feedback = true;
@@ -958,53 +974,4 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		shoot_Callback();
 	}
 
-}
-
-void stateControl_wheels_Update2(wheel_names wheel, float wheels_measured_speeds_test[4],float* wheels_commanded_speeds_test,int32_t wheel_pwm_list[4],PIDvariables* wheelsK_test,float angular_velocity_error){
-	// /* Don't run the wheels if these are not initialized */
-	// /* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-	// if(!wheels_AreInitialized()){
-	// 	wheels_Stop();
-	// 	return;
-	// }
-
-	// int32_t wheel_pwm_list[4] = {0.0f};
-
-	
-
-	
-		
-
-		// // If the error is very small, ignore it (why is this here?)
-		// if (fabs(angular_velocity_error) < 0.1) {
-		// 	angular_velocity_error = 0.0;
-		// 	wheelsK_test[wheel].I = 0;
-		// }
-
-		// float feed_forward[4] = {0.0f};
-		// float threshold = 0.05;
-
-		// if (abs(wheels_commanded_speeds_test[wheel]) < threshold) {
-    	// 	feed_forward[wheel] = 0;
-		// } 
-		// else if (wheels_commanded_speeds_test[wheel] > 0) {
-		// 	feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
-    	// }
-		// else if (wheels_commanded_speeds_test[wheel] < 0) {
-		// 	feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
-    	// }
-
-		// // Add PID to commanded speed and convert to PWM
-		// wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
-
-
-
-		
-	
-	// wheels_SetPWM(wheel_pwm_list);
-
-	// return wheel_pwm_list;
-
-	
-	
 }

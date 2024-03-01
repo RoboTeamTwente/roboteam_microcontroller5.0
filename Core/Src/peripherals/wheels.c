@@ -134,85 +134,6 @@ void wheels_Stop(){
 	
 }
 
-// Returns pointer to wheel controller
-PIDvariables* wheels_GiveWheelsK(){
-	return wheelsK;
-}
-
-/**
- * @brief Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
- * 
- * This function is resonsible for getting the wheels to the commanded speeds, as stored in the file-local variable
- * "wheels_commanded_speeds". Wheel speeds, given in rad/s, are converted directly to a PWM value with help of the
- * conversion variable OMEGAtoPWM. This variable is based on information from the Maxon Motor datasheet. 
- * 
- * A PID controller is used to handle any error between the commanded and actual wheel speeds. First, the current wheel
- * speeds are measured by reading out the encoders and converting these values to rad/s. The commanded wheel speeds are
- * then subtracted from these measured wheel speeds, giving the error. This error is put through a PID controller, and
- * the resulting PID value is added to the commanded speeds before being converted to a PWM value. 
- * 
- * The resulting PWM values can be both positive and negative. This is split up into a "direction" boolean and a 
- * "PWN" integer. The "direction" boolean is false for CounterClockWise, and true for ClockWise. Finally both the 
- * directions and PWMs are sent to the wheels.
- */
-void wheels_Update(){
-	/* Don't run the wheels if these are not initialized */
-	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-	if(!wheels_AreInitialized()){
-		wheels_Stop();
-		return;
-	}
-
-	int32_t wheel_pwm_list[4] = {0.0f};
-
-	float wheels_measured_speeds_test[4] = {0.0f};
-	wheels_GetMeasuredSpeeds(wheels_measured_speeds_test);
-	float* wheels_commanded_speeds_test;
-	wheels_commanded_speeds_test = stateControl_GetWheelRef();
-
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		// Calculate the velocity error
-		float angular_velocity_error = wheels_commanded_speeds_test[wheel] - wheels_measured_speeds_test[wheel];
-
-		PIDvariables* wheelsK_test = wheels_GiveWheelsK();
-
-		// If the error is very small, ignore it (why is this here?)
-		if (fabs(angular_velocity_error) < 0.1) {
-			angular_velocity_error = 0.0;
-			wheelsK_test[wheel].I = 0;
-		}
-
-		float feed_forward[4] = {0.0f};
-		float threshold = 0.05;
-
-		if (abs(wheels_commanded_speeds_test[wheel]) < threshold) {
-    		feed_forward[wheel] = 0;
-		} 
-		else if (wheels_commanded_speeds_test[wheel] > 0) {
-			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
-    	}
-		else if (wheels_commanded_speeds_test[wheel] < 0) {
-			feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
-    	}
-
-		// Add PID to commanded speed and convert to PWM
-		wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
-	}
-	wheels_SetPWM(wheel_pwm_list);
-}
-
-/**
- * @brief Stores the commanded wheel speeds, in rad/s, to be used in the next wheels_Update() call
- * 
- * @param speeds float[4]{RF, LF, LB, RB} commanded wheels speeds, in rad/s. These values are stored in the file-local
- * variable 'wheels_commanded_speeds'. This variable will later be used in wheels_Update() to control the wheels.
- */
-void wheels_SetSpeeds(const float speeds[4]){
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		wheels_commanded_speeds[wheel] = speeds[wheel];
-	}
-}
-
 /**
  * @brief Get the last measured wheel speeds in rad/s
  * 
@@ -249,13 +170,13 @@ void wheels_GetPWM(uint32_t pwms[4]) {
 	pwms[wheels_LF] = get_PWM(PWM_LF);
 }
 
-void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
-	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
-		wheelsK[wheel].kP = PIDGains->Pwheels;
-		wheelsK[wheel].kI = PIDGains->Iwheels;
-    	wheelsK[wheel].kD = PIDGains->Dwheels;
-	}
-}
+// void wheels_SetPIDGains(REM_RobotSetPIDGains* PIDGains){
+// 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+// 		wheelsK[wheel].kP = PIDGains->Pwheels;
+// 		wheelsK[wheel].kI = PIDGains->Iwheels;
+//     	wheelsK[wheel].kD = PIDGains->Dwheels;
+// 	}
+// }
 
 /**
  * @brief Get the current status of the brakes
