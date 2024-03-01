@@ -57,8 +57,9 @@ int stateControl_DeInit();
  */
 void stateControl_Update();
 
-// Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
-void stateControl_wheels_Update();
+// // Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
+void stateControl_wheels_Update1();
+void stateControl_wheels_Update3();
 
 /**
  * Set the new reference values that the robot should achieve.

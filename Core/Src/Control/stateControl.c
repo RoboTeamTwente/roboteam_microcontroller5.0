@@ -2,6 +2,7 @@
 #include "stateControl.h"
 #include "logging.h"
 #include "wheels.h"
+#include "robot.h"
 
 ///////////////////////////////////////////////////// VARIABLES
 
@@ -109,43 +110,85 @@ void stateControl_Update(){
 			wheelRef[wheel] = velocityWheelRef[wheel] + angularRef;
 		}
 	}
-}
 
-void stateControl_wheels_Update(){
+	
+	// wheels_SetSpeeds( stateControl_GetWheelRef() );
+	computeWheelSpeeds();
+	// wheels_Update();
+
 	/* Don't run the wheels if these are not initialized */
 	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
-	// if(!wheels_initialized){
+	if(!wheels_AreInitialized()){
+		wheels_Stop();
+		return;
+	}
+
+	float wheels_measured_speeds_test[4] = {0.0f};
+	wheels_GetMeasuredSpeeds(wheels_measured_speeds_test);
+	float* wheels_commanded_speeds_test;
+	wheels_commanded_speeds_test = stateControl_GetWheelRef();
+
+	int32_t wheel_pwm_list[4] = {0.0f};
+	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
+		// Calculate the velocity error
+		float angular_velocity_error = wheels_commanded_speeds_test[wheel] - wheels_measured_speeds_test[wheel];
+
+		PIDvariables* wheelsK_test = wheels_GiveWheelsK();
+		
+		stateControl_wheels_Update2(wheel,wheels_measured_speeds_test,wheels_commanded_speeds_test,wheel_pwm_list,wheelsK_test,angular_velocity_error);
+	}
+
+	wheels_SetPWM(wheel_pwm_list);
+
+	
+}
+
+void stateControl_wheels_Update3(){
+	float a = 1;
+}
+
+void stateControl_wheels_Update1(){
+	// /* Don't run the wheels if these are not initialized */
+	// /* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
+	// if(!wheels_AreInitialized()){
 	// 	wheels_Stop();
 	// 	return;
 	// }
 
 	// int32_t wheel_pwm_list[4] = {0.0f};
 
+	// float wheels_measured_speeds_test[4] = {0.0f};
+	// wheels_GetMeasuredSpeeds(wheels_measured_speeds_test);
+	// float* wheels_commanded_speeds_test;
+	// wheels_commanded_speeds_test = stateControl_GetWheelRef();
+
 	// for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 	// 	// Calculate the velocity error
-	// 	float angular_velocity_error = wheelRef[wheel] - wheels_measured_speeds[wheel];
+	// 	float angular_velocity_error = wheels_commanded_speeds_test[wheel] - wheels_measured_speeds_test[wheel];
+
+	// 	PIDvariables* wheelsK_test = wheels_GiveWheelsK();
 
 	// 	// If the error is very small, ignore it (why is this here?)
 	// 	if (fabs(angular_velocity_error) < 0.1) {
 	// 		angular_velocity_error = 0.0;
-	// 		wheelsK[wheel].I = 0;
+	// 		wheelsK_test[wheel].I = 0;
 	// 	}
 
 	// 	float feed_forward[4] = {0.0f};
 	// 	float threshold = 0.05;
 
-	// 	if (abs(wheelRef[wheel]) < threshold) {
+	// 	if (abs(wheels_commanded_speeds_test[wheel]) < threshold) {
     // 		feed_forward[wheel] = 0;
 	// 	} 
-	// 	else if (wheelRef[wheel] > 0) {
-	// 		feed_forward[wheel] = wheelRef[wheel] + 13;
+	// 	else if (wheels_commanded_speeds_test[wheel] > 0) {
+	// 		feed_forward[wheel] = wheels_commanded_speeds_test[wheel] + 13;
     // 	}
-	// 	else if (wheelRef[wheel] < 0) {
-	// 		feed_forward[wheel] = wheelRef[wheel] - 13;
+	// 	else if (wheels_commanded_speeds_test[wheel] < 0) {
+	// 		feed_forward[wheel] = wheels_commanded_speeds_test[wheel] - 13;
     // 	}
 
 	// 	// Add PID to commanded speed and convert to PWM
-	// 	wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel])); 
+	// 	wheel_pwm_list[wheel] = (int32_t) OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK_test[wheel])); 
 	// }
 	// wheels_SetPWM(wheel_pwm_list);
 }
