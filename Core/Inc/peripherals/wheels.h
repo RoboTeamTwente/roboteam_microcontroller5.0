@@ -32,10 +32,14 @@
 
 // Initializes the PIDs / PWM timers / encoders
 void wheels_Init();
+// Returns boolean value to is inititiales (true) or not (false)
+bool wheels_AreInitialized();
 // Deinitializes the PWM timers / encoders
 void wheels_DeInit();
 // Stops the wheels without deinitializing them 
 void wheels_Stop();
+// Returns pointer to wheel controller
+PIDvariables* wheels_GiveWheelsK();
 // Updates the wheels towards the commanded wheel speeds using the encoders and a PID controller.
 void wheels_Update();
 // Stores the commanded wheel speeds, in rad/s, to be used in the next wheels_Update() call
