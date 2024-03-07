@@ -136,6 +136,27 @@ void stateControl_Update_Body() {
 
 }
 
+float sineEval(float x,float a,float b,float c) {
+	float y = a*sinf(b*x+c);
+	return y;
+}
+
+float constEval(float x,float b,float c, float d) {
+	float y_sign = sineEval(x,d,b,c);
+	float y = 0.0f;
+	if (y_sign>0) {
+		y = d;
+	} else {
+		y = -d;
+	}
+	return y;
+}
+
+float constsineEval(float x,float a,float b,float c, float d) {
+	float y = sineEval(x,a,b,c) + constEval(x,b,c,d);
+	return y;
+}
+
 void stateControl_Update_Wheels() {
 		/* Don't run the wheels if these are not initialized */
 	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
@@ -160,17 +181,39 @@ void stateControl_Update_Wheels() {
 
 		// Feedforward
 		double threshold = 0.5;
-		float identified_friction = 13.0f;
-		float identified_damping = 1.0f;
+		float identified_friction = 1.15f;
+		float identified_damping = 0.0888f;
+		// float identified_friction = 13.0f;
+		// float identified_damping = 1.0f;
+		float a_const = 1.3577f;
+		float d_const = 1.0035f;
+		float a2_const = 0.8264f;
+		float d2_const = 0.4132f;
+
+		float sine_frequency[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
+		float sine_phase[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
+		
+
+		
+		// float friction_this_wheel_this_angle = ;
+
+		// if (fabs(wheelRef[wheel]) < threshold) {
+    	// 	feed_forward[wheel] = 0;
+		// } 
+		// else if (wheelRef[wheel] > 0) {
+		// 	feed_forward[wheel] = identified_damping*wheelRef[wheel] + identified_friction;
+    	// }
+		// else if (wheelRef[wheel] < 0) {
+		// 	feed_forward[wheel] = identified_damping*wheelRef[wheel] - identified_friction;
+    	// }
 
 		if (fabs(wheelRef[wheel]) < threshold) {
     		feed_forward[wheel] = 0;
 		} 
-		else if (wheelRef[wheel] > 0) {
-			feed_forward[wheel] = identified_damping*wheelRef[wheel] + identified_friction;
-    	}
-		else if (wheelRef[wheel] < 0) {
-			feed_forward[wheel] = identified_damping*wheelRef[wheel] - identified_friction;
+		else {
+			// feed_forward[wheel] = identified_damping*wheelRef[wheel] + constEval(wheelRef[wheel],sine_frequency[wheel],sine_frequency[wheel],d_const);
+			// feed_forward[wheel] = identified_damping*wheelRef[wheel] + sineEval(wheelRef[wheel],a_const,sine_frequency[wheel],sine_frequency[wheel]);
+			feed_forward[wheel] = identified_damping*wheelRef[wheel] + constsineEval(wheelRef[wheel],a2_const,sine_frequency[wheel],sine_frequency[wheel],d2_const);
     	}
 
 		// Feedback
@@ -185,9 +228,9 @@ void stateControl_Update_Wheels() {
 
 		// Add PID to commanded speed and convert to PWM
 		float PIDvoltageoutputfactor = 0.004f; // (24V /6000pwm) // Get rid of this factor and the OMEGAtoPWM factor by simply removing them and multiplying the P,IandD gains by (OMEGAtoPWM*PIDvoltageoutputfactor)
-		voltage_list[wheel] = PIDvoltageoutputfactor * OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel]));
-		// // Add PID to commanded speed and convert to voltage 
-		// voltage_list[wheel] = feed_forward[wheel] + OMEGAtoPWM * PIDvoltageoutputfactor * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel]));
+		// voltage_list[wheel] = PIDvoltageoutputfactor * OMEGAtoPWM * (feed_forward[wheel] + PID(angular_velocity_error, &wheelsK[wheel]));
+		voltage_list[wheel] = feed_forward[wheel] + PIDvoltageoutputfactor * OMEGAtoPWM * (PID(angular_velocity_error, &wheelsK[wheel]));
+		
 	}
 
 }
