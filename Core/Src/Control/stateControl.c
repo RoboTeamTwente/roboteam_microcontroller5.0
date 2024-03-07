@@ -338,35 +338,35 @@ void stateControl_ResetPID(){
 
 static void body2Wheels(float wheelSpeed[4], float stateLocal[3]){
 
-	// // Translate the local u, v, and omega velocities into wheel velocities.
-	// wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1]  + stateLocal[vel_w] * D[2];
-	// wheelSpeed[wheels_LF] = stateLocal[vel_u] * D[3] + stateLocal[vel_v] * D[4]  + stateLocal[vel_w] * D[5];
-	// wheelSpeed[wheels_LB] = stateLocal[vel_u] * D[6] + stateLocal[vel_v] * D[7]  + stateLocal[vel_w] * D[8];
-	// wheelSpeed[wheels_RB] = stateLocal[vel_u] * D[9] + stateLocal[vel_v] * D[10] + stateLocal[vel_w] * D[11];
-
-	// // Translate wheel velocities into angular velocities
-	// wheelSpeed[wheels_RF] = wheelSpeed[wheels_RF] / rad_wheel;
-	// wheelSpeed[wheels_LF] = wheelSpeed[wheels_LF] / rad_wheel;
-	// wheelSpeed[wheels_LB] = wheelSpeed[wheels_LB] / rad_wheel;
-	// wheelSpeed[wheels_RB] = wheelSpeed[wheels_RB] / rad_wheel;
-
 	// Translate the local u, v, and omega velocities into wheel velocities.
-	wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1];
-	wheelSpeed[wheels_LF] = stateLocal[vel_u] * D[3] + stateLocal[vel_v] * D[4];
-	wheelSpeed[wheels_LB] = stateLocal[vel_u] * D[6] + stateLocal[vel_v] * D[7];
-	wheelSpeed[wheels_RB] = stateLocal[vel_u] * D[9] + stateLocal[vel_v] * D[10];
+	wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1]  + stateLocal[vel_w] * D[2];
+	wheelSpeed[wheels_LF] = stateLocal[vel_u] * D[3] + stateLocal[vel_v] * D[4]  + stateLocal[vel_w] * D[5];
+	wheelSpeed[wheels_LB] = stateLocal[vel_u] * D[6] + stateLocal[vel_v] * D[7]  + stateLocal[vel_w] * D[8];
+	wheelSpeed[wheels_RB] = stateLocal[vel_u] * D[9] + stateLocal[vel_v] * D[10] + stateLocal[vel_w] * D[11];
 
 	// Translate wheel velocities into angular velocities
-	for (wheel_names wheel=wheels_RF; wheel <= wheels_RB; wheel++) {
-		wheelSpeed[wheel] = wheelSpeed[wheel] / rad_wheel;
-	}
+	wheelSpeed[wheels_RF] = wheelSpeed[wheels_RF] / rad_wheel;
+	wheelSpeed[wheels_LF] = wheelSpeed[wheels_LF] / rad_wheel;
+	wheelSpeed[wheels_LB] = wheelSpeed[wheels_LB] / rad_wheel;
+	wheelSpeed[wheels_RB] = wheelSpeed[wheels_RB] / rad_wheel;
 
-	// If we do not use angular velocities (w), remove these.
-	if (!useAbsoluteAngle) {
-        for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
-            wheelSpeed[wheel] += stateLocal[vel_w] * rad_robot / rad_wheel;
-        }
-	}
+	// // Translate the local u, v, and omega velocities into wheel velocities.
+	// wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1];
+	// wheelSpeed[wheels_LF] = stateLocal[vel_u] * D[3] + stateLocal[vel_v] * D[4];
+	// wheelSpeed[wheels_LB] = stateLocal[vel_u] * D[6] + stateLocal[vel_v] * D[7];
+	// wheelSpeed[wheels_RB] = stateLocal[vel_u] * D[9] + stateLocal[vel_v] * D[10];
+
+	// // Translate wheel velocities into angular velocities
+	// for (wheel_names wheel=wheels_RF; wheel <= wheels_RB; wheel++) {
+	// 	wheelSpeed[wheel] = wheelSpeed[wheel] / rad_wheel;
+	// }
+
+	// // If we do not use angular velocities (w), remove these.
+	// if (!useAbsoluteAngle) {
+    //     for (wheel_names wheel=wheels_RF; wheel<=wheels_RB; wheel++){
+    //         wheelSpeed[wheel] += stateLocal[vel_w] * rad_robot / rad_wheel;
+    //     }
+	// }
 }
 
 static void global2Local(float global[4], float local[4], float angle){
