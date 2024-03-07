@@ -68,7 +68,7 @@ static void global2Local(float global[4], float local[4], float angle);
  * @param stateGlobalRef 			The instructed global x, y, w and yaw speeds
  * @param velocityWheelRef 	The resulting wheel speeds that should be achieved for each wheel
  */
-static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float velocityWheelRef[4]);
+static void velocityControl(float stateLocal[4], float stateGlobalRef[4], float velocityWheelRef[4]);
 
 /**
  * Determine the speed that the wheels should achieve in order to move towards a desired angle.
@@ -334,7 +334,7 @@ static void global2Local(float global[4], float local[4], float angle){
 	local[yaw] = global[yaw];
 }
 
-static void velocityControl(float stateLocal[3], float stateGlobalRef[4], float velocityWheelRef[4]){
+static void velocityControl(float stateLocal[4], float stateGlobalRef[4], float velocityWheelRef[4]){
 	global2Local(stateGlobalRef, stateLocalRef, stateLocal[yaw]); //transfer global to local
 
 	// Local control
