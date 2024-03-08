@@ -185,16 +185,10 @@ void stateControl_Update_Wheels() {
 		float identified_damping = 0.0888f;
 		// float identified_friction = 13.0f;
 		// float identified_damping = 1.0f;
-		float a_const = 1.3577f;
-		float d_const = 1.0035f;
-		float a2_const = 0.8264f;
-		float d2_const = 0.4132f;
-
-		float sine_frequency[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
-		float sine_phase[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
+		
 		
 
-		
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
 		// float friction_this_wheel_this_angle = ;
 
 		// if (fabs(wheelRef[wheel]) < threshold) {
@@ -206,6 +200,15 @@ void stateControl_Update_Wheels() {
 		// else if (wheelRef[wheel] < 0) {
 		// 	feed_forward[wheel] = identified_damping*wheelRef[wheel] - identified_friction;
     	// }
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		float a_const = 1.3577f;
+		float d_const = 1.0035f;
+		float a2_const = 0.8264f;
+		float d2_const = 0.4132f;
+
+		float sine_frequency[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
+		float sine_phase[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
 
 		if (fabs(wheelRef[wheel]) < threshold) {
     		feed_forward[wheel] = 0;
