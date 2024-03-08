@@ -157,6 +157,55 @@ float constsineEval(float x,float a,float b,float c, float d) {
 	return y;
 }
 
+float feedforwardFriction(float wheelRef, float rho, float theta, float omega, wheel_names wheel) {
+	// Parameters to tune
+	float vw_max_round_to_rotational_scaling = 1;
+	float rotation_feedforward_value[4] = {0.8f,0.8f,0.8f,0.8f};
+	
+	float a_list[4] = {0.8264f,0.8264f,0.8264f,0.8264f};
+	float b_list[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
+	float c_list[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
+	float d_list[4] = {0.4132f,0.4132f,0.4132f,0.4132f};
+
+	// Calculations
+	float vw_max_round_to_rotational = vw_max_round_to_rotational_scaling*(rho/rad_robot);
+	float z_rotational = rotation_feedforward_value[wheel];
+	float z_translation = constsineEval(theta,a_list[wheel],b_list[wheel],c_list[wheel],d_list[wheel]);
+
+	int wheel_velocity_larger_than_zero;
+	if(wheelRef > 0) {
+		wheel_velocity_larger_than_zero = 1;
+	}
+	else {
+		wheel_velocity_larger_than_zero = 0;
+	}
+
+	float z_rotational_fixed;
+	float z_translation_fixed = z_translation;
+	if(wheel_velocity_larger_than_zero == 1) {
+		z_rotational_fixed = z_rotational;
+		if(z_translation < 0) {
+			z_translation_fixed = d_list[wheel];
+		}
+	}
+	else {
+		z_rotational_fixed = -1*z_rotational;
+		if(z_translation > 0) {
+			z_translation_fixed = -d_list[wheel];
+		}
+	}
+
+	float gamma = 0.5-0.5*cos(M_PI * fabs(omega/vw_max_round_to_rotational));
+	if (fabs(omega) > vw_max_round_to_rotational) {
+		gamma = 1;
+	}
+	if (gamma > 1) {
+		gamma = 1;
+	}
+	float feedforwardFrictionValue = ((1-gamma)*z_translation_fixed + gamma*z_rotational_fixed);
+	return feedforwardFrictionValue;
+}
+
 void stateControl_Update_Wheels() {
 		/* Don't run the wheels if these are not initialized */
 	/* Not that anything would happen anyway, because the PWM timers wouldn't be running, but still .. */
@@ -202,22 +251,25 @@ void stateControl_Update_Wheels() {
     	// }
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-		float a_const = 1.3577f;
-		float d_const = 1.0035f;
-		float a2_const = 0.8264f;
-		float d2_const = 0.4132f;
+		// float a_const = 1.3577f;
+		// float d_const = 1.0035f;
+		// float a2_const = 0.8264f;
+		// float d2_const = 0.4132f;
 
-		float sine_frequency[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
-		float sine_phase[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
+		// float sine_frequency[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
+		// float sine_phase[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
 
-		if (fabs(wheelRef[wheel]) < threshold) {
-    		feed_forward[wheel] = 0;
-		} 
-		else {
-			// feed_forward[wheel] = identified_damping*wheelRef[wheel] + constEval(wheelRef[wheel],sine_frequency[wheel],sine_frequency[wheel],d_const);
-			// feed_forward[wheel] = identified_damping*wheelRef[wheel] + sineEval(wheelRef[wheel],a_const,sine_frequency[wheel],sine_frequency[wheel]);
-			feed_forward[wheel] = identified_damping*wheelRef[wheel] + constsineEval(wheelRef[wheel],a2_const,sine_frequency[wheel],sine_frequency[wheel],d2_const);
-    	}
+		// if (fabs(wheelRef[wheel]) < threshold) {
+    	// 	feed_forward[wheel] = 0;
+		// } 
+		// else {
+		// 	// feed_forward[wheel] = identified_damping*wheelRef[wheel] + constEval(theta_local[wheel],sine_frequency[wheel],sine_phase[wheel],d_const);
+		// 	// feed_forward[wheel] = identified_damping*wheelRef[wheel] + sineEval(theta_local[wheel],a_const,sine_frequency[wheel],sine_phase[wheel]);
+		// 	feed_forward[wheel] = identified_damping*wheelRef[wheel] + constsineEval(theta_local,a2_const,sine_frequency[wheel],sine_phase[wheel],d2_const);
+    	// }
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////
+		feed_forward[wheel] = identified_damping*wheelRef[wheel] + feedforwardFriction(wheelRef[wheel], rho, theta_local, omega, wheel);
 
 		// Feedback
 		// Calculate the velocity error
