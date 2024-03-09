@@ -32,7 +32,7 @@
 
 // Initializes the PIDs / PWM timers / encoders
 void wheels_Init();
-// Returns boolean value to is inititiales (true) or not (false)
+// Returns boolean value to is initialised (true) or not (false)
 bool wheels_AreInitialized();
 // Deinitializes the PWM timers / encoders
 void wheels_DeInit();

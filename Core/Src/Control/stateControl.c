@@ -1,5 +1,6 @@
 
 #include "stateControl.h"
+#include "stateEstimation.h"
 #include "logging.h"
 #include "wheels.h"
 #include "main.h"
@@ -55,7 +56,7 @@ static float feedforwardFriction(float wheelRef, float rho, float theta, float o
  * @param wheelSpeed The speed to be achieved for each wheel [rad/s]
  * @param stateLocal The velocities to be achieved seen from the body perspective {vel_u, vel_v, vel_w} [m/s]
  */
-static void body2Wheels(float wheelSpeed[4], float stateLocal[3]);
+static void body2Wheels(float wheelSpeed[4], float stateLocal[4]);
 
 /**
  * Translates the global coordinate frame to the local coordinate frame.
@@ -136,7 +137,6 @@ void stateControl_Update(){
 
 void stateControl_Update_Body() {
 
-	// velocityControl(stateLocal, stateGlobalRef, velocityWheelRef);
 	velocityControl(stateLocal, stateGlobalRef, wheelRef);
 
 }
@@ -225,7 +225,7 @@ void stateControl_Update_Wheels() {
 	float rho = sqrt(vu*vu + vv*vv);
 	float theta_local = atan2(vu, vv);
 	float omega = stateLocalRef[vel_w];
-
+	
 	float wheels_measured_speeds_test[4] = {0.0f};
 	wheels_GetMeasuredSpeeds(wheels_measured_speeds_test);
 
@@ -407,7 +407,7 @@ void stateControl_ResetPID(){
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION IMPLEMENTATIONS
 
-static void body2Wheels(float wheelSpeed[4], float stateLocal[3]){
+static void body2Wheels(float wheelSpeed[4], float stateLocal[4]){
 
 	// Translate the local u, v, and omega velocities into wheel velocities.
 	wheelSpeed[wheels_RF] = stateLocal[vel_u] * D[0] + stateLocal[vel_v] * D[1]  + stateLocal[vel_w] * D[2];
@@ -456,9 +456,9 @@ static void velocityControl(float stateLocal[4], float stateGlobalRef[4], float 
 	float velvErr = (stateLocalRef[vel_v] - stateLocal[vel_v]);
 	float velwErr = (stateLocalRef[vel_w] - stateLocal[vel_w]);
 
-	stateLocalRef[vel_u] = stateLocalRef[vel_u] + PID(veluErr, &stateLocalK[vel_u]);
-	stateLocalRef[vel_v] = stateLocalRef[vel_v] + PID(velvErr, &stateLocalK[vel_v]);
-	stateLocalRef[vel_w] = stateLocalRef[vel_w] + PID(velwErr, &stateLocalK[vel_w]);
+	stateLocalRef[vel_u] = stateLocalRef[vel_u]/SLIPPAGE_FACTOR_U + PID(veluErr, &stateLocalK[vel_u]);
+	stateLocalRef[vel_v] = stateLocalRef[vel_v]/SLIPPAGE_FACTOR_V + PID(velvErr, &stateLocalK[vel_v]);
+	stateLocalRef[vel_w] = stateLocalRef[vel_w]/SLIPPAGE_FACTOR_W + PID(velwErr, &stateLocalK[vel_w]);
 
 	// In case absolute angle control is used define the w (omega) differently based on absolute angle controller
 	if (useAbsoluteAngle) {
