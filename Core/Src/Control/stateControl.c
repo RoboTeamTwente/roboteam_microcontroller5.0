@@ -44,6 +44,11 @@ static float D[12] = {0.0f};
 
 ///////////////////////////////////////////////////// PRIVATE FUNCTION DECLARATIONS
 
+static float sineEval(float x,float a,float b,float c);
+static float constEval(float x,float b,float c,float d);
+static float constsineEval(float x,float a,float b,float c,float d);
+static float feedforwardFriction(float wheelRef, float rho, float theta, float omega, wheel_names wheel);
+
 /**
  * Translates the velocity from a local perspective to wheel speeds.
  * 
@@ -141,7 +146,7 @@ float sineEval(float x,float a,float b,float c) {
 	return y;
 }
 
-float constEval(float x,float b,float c, float d) {
+float constEval(float x,float b,float c,float d) {
 	float y_sign = sineEval(x,d,b,c);
 	float y = 0.0f;
 	if (y_sign>0) {
@@ -152,7 +157,7 @@ float constEval(float x,float b,float c, float d) {
 	return y;
 }
 
-float constsineEval(float x,float a,float b,float c, float d) {
+float constsineEval(float x,float a,float b,float c,float d) {
 	float y = sineEval(x,a,b,c) + constEval(x,b,c,d);
 	return y;
 }
@@ -229,7 +234,7 @@ void stateControl_Update_Wheels() {
 	for(wheel_names wheel = wheels_RF; wheel <= wheels_RB; wheel++){
 
 		// Feedforward
-		double threshold = 0.5;
+		
 		float identified_friction = 1.15f;
 		float identified_damping = 0.0888f;
 		// float identified_friction = 13.0f;
@@ -240,6 +245,7 @@ void stateControl_Update_Wheels() {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
 		// float friction_this_wheel_this_angle = ;
 
+		// double threshold = 0.5;
 		// if (fabs(wheelRef[wheel]) < threshold) {
     	// 	feed_forward[wheel] = 0;
 		// } 
@@ -259,6 +265,7 @@ void stateControl_Update_Wheels() {
 		// float sine_frequency[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
 		// float sine_phase[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
 
+		// double threshold = 0.5;
 		// if (fabs(wheelRef[wheel]) < threshold) {
     	// 	feed_forward[wheel] = 0;
 		// } 
@@ -272,8 +279,8 @@ void stateControl_Update_Wheels() {
 		// feed_forward[wheel] = identified_damping*wheelRef[wheel] + feedforwardFriction(wheelRef[wheel], rho, theta_local, omega, wheel);
 
 		// If statement to prevent vibrating/rattling with sound of the wheels close to 0 velocity. I suspect this is due to the backlash in the gears and the feedforward expecting a friction which is of course not there when moving through the play region of the gearbox, thus overshooting and correcting the other way passing through the play region again, and repeat.
-		float wheel_speed_threshold = 0.5f;
-		if (wheelRef[wheel] < wheel_speed_threshold) {
+		double wheel_speed_threshold = 0.5f;
+		if (fabs(wheelRef[wheel]) < wheel_speed_threshold) {
 			feed_forward[wheel] = identified_damping*wheelRef[wheel];
 		}
 		else {
