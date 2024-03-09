@@ -163,8 +163,8 @@ float feedforwardFriction(float wheelRef, float rho, float theta, float omega, w
 	float rotation_feedforward_value[4] = {0.8f,0.8f,0.8f,0.8f};
 	
 	float a_list[4] = {0.8264f,0.8264f,0.8264f,0.8264f};
-	float b_list[4] = {(2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360, (2*M_PI)/360};
-	float c_list[4] = {60*(M_PI/180), -60*(M_PI/180), -150*(M_PI/180), 150*(M_PI/180)};
+	float b_list[4] = {(2.0f*M_PI)/360.0f, (2.0f*M_PI)/360.0f, (2.0f*M_PI)/360.0f, (2.0f*M_PI)/360.0f};
+	float c_list[4] = {60.0f*(M_PI/180.0f), -60.0f*(M_PI/180.0f), -150.0f*(M_PI/180.0f), 150.0f*(M_PI/180.0f)};
 	float d_list[4] = {0.4132f,0.4132f,0.4132f,0.4132f};
 
 	// Calculations
@@ -269,7 +269,16 @@ void stateControl_Update_Wheels() {
     	// }
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////
-		feed_forward[wheel] = identified_damping*wheelRef[wheel] + feedforwardFriction(wheelRef[wheel], rho, theta_local, omega, wheel);
+		// feed_forward[wheel] = identified_damping*wheelRef[wheel] + feedforwardFriction(wheelRef[wheel], rho, theta_local, omega, wheel);
+
+		// If statement to prevent vibrating/rattling with sound of the wheels close to 0 velocity. I suspect this is due to the backlash in the gears and the feedforward expecting a friction which is of course not there when moving through the play region of the gearbox, thus overshooting and correcting the other way passing through the play region again, and repeat.
+		float wheel_speed_threshold = 0.5f;
+		if (wheelRef[wheel] < wheel_speed_threshold) {
+			feed_forward[wheel] = identified_damping*wheelRef[wheel];
+		}
+		else {
+			feed_forward[wheel] = identified_damping*wheelRef[wheel] + feedforwardFriction(wheelRef[wheel], rho, theta_local, omega, wheel);
+		}
 
 		// Feedback
 		// Calculate the velocity error
@@ -277,8 +286,8 @@ void stateControl_Update_Wheels() {
 		
 		// If the error is very small, ignore it (why is this here?)
 		if (fabs(angular_velocity_error) < 0.1) {
-			angular_velocity_error = 0.0;
-			wheelsK[wheel].I = 0;
+			angular_velocity_error = 0.0f;
+			wheelsK[wheel].I = 0.0f;
 		}
 
 		// Add PID to commanded speed and convert to PWM
