@@ -863,13 +863,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		stateInfo.xsensYaw = (MTi->angles[2]*M_PI/180); //Gradients to Radians
 		stateInfo.rateOfTurn = MTi->gyr[2];
  
-		if(counter_TIM_CONTROL < 500) { // Robot tries to connect to Vision for 5 seconds, after that, control loop will be normally executed (if Vision is not detected, eg: during python tests)
-			if(!yaw_hasCalibratedOnce()) {
-				wheels_Stop();
-				stateEstimation_Update(&stateInfo);
-				return;
-			}
+		// if(counter_TIM_CONTROL < 500) { // Robot tries to connect to Vision for 5 seconds, after that, control loop will be normally executed (if Vision is not detected, eg: during python tests)
+		if(!yaw_hasCalibratedOnce()) {
+			wheels_Stop();
+			stateEstimation_Update(&stateInfo);
+			return;
 		}
+		// }
 
 		if(test_isTestRunning(wheels) || test_isTestRunning(normal)) {
             wheels_Update();
